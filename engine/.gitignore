@@ -1,0 +1,9 @@
+# https://git-scm.com/docs/gitignore
+# https://www.atlassian.com/ru/git/tutorials/saving-changes/gitignore
+
+# Игнорируем папки, которые создаёт VS Code
+/.vscode/
+/build/
+
+# Игнорируем скомпилированные SPIR-V шейдеры
+/data/**/*.spv
