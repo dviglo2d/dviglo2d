@@ -1,0 +1,36 @@
+[submodule "engine/third_party/external/freetype/repo"]
+	path = engine/third_party/external/freetype/repo
+	url = https://github.com/freetype/freetype
+	shallow = true
+[submodule "engine/third_party/external/glm/repo"]
+	path = engine/third_party/external/glm/repo
+	url = https://github.com/g-truc/glm
+	shallow = true
+[submodule "engine/third_party/external/miniz/repo"]
+	path = engine/third_party/external/miniz/repo
+	url = https://github.com/richgel999/miniz
+	shallow = true
+[submodule "engine/third_party/external/pugixml/repo"]
+	path = engine/third_party/external/pugixml/repo
+	url = https://github.com/zeux/pugixml
+	shallow = true
+[submodule "engine/third_party/external/sdl/repo"]
+	path = engine/third_party/external/sdl/repo
+	url = https://github.com/libsdl-org/SDL
+	shallow = true
+[submodule "engine/third_party/external/sdl_mixer/repo"]
+	path = engine/third_party/external/sdl_mixer/repo
+	url = https://github.com/libsdl-org/SDL_mixer
+	shallow = true
+[submodule "engine/third_party/external/stb/repo"]
+	path = engine/third_party/external/stb/repo
+	url = https://github.com/nothings/stb
+	shallow = true
+[submodule "third_party/external/entt/repo"]
+	path = third_party/external/entt/repo
+	url = https://github.com/skypjack/entt
+	shallow = true
+[submodule "third_party/external/imgui/repo"]
+	path = third_party/external/imgui/repo
+	url = https://github.com/ocornut/imgui
+	shallow = true
