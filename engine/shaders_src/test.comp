@@ -1,0 +1,28 @@
+#version 450
+
+// Включаем поддержку VK_EXT_descriptor_indexing
+#extension GL_EXT_nonuniform_qualifier : require
+
+layout(local_size_x = 1024) in;
+
+// Bindless массив буферов (SSBO)
+layout(std430, set = 0, binding = 0) buffer InOutBuffer
+{
+    float values[];
+} in_out_buffers[];
+
+// Передаем индекс нужного буфера с процессора
+layout(push_constant) uniform InPush
+{
+    uint buffer_index;
+} in_push;
+
+void main()
+{
+    uint idx = gl_GlobalInvocationID.x;
+
+    if (idx >= 1024)
+        return;
+
+    in_out_buffers[in_push.buffer_index].values[idx]++;
+}

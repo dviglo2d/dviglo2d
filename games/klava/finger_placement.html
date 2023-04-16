@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang='ru'>
+<head>
+<title>Постановка пальцев</title>
+<style>
+.keyboard {
+    background: #ccc;
+    padding: 16px;
+    border-radius: 8px;
+    display: inline-block;
+    box-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+}
+
+.row {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 4px;
+}
+
+.key {
+    width: 40px;
+    height: 40px;
+    border-radius: 4px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: Arial;
+    font-size: 20px;
+    box-shadow: 1px 1px 3px rgba(0,0,0,0.3);
+}
+
+.l_little { background: #2196F3; } /* Синий, мизинец */
+.l_ring   { background: #4CAF50; } /* Зелёный, безымянный */
+.l_middle { background: #FFEB3B; } /* Жёлтый, средний */
+.l_index  { background: #FF5722; } /* Оранжевый, указательный */
+.r_index  { background: #2196F3; } /* Синий, указательный */
+.r_middle { background: #4CAF50; } /* Зелёный, средний */
+.r_ring   { background: #FFEB3B; } /* Жёлтый, безымянный */
+.r_little { background: #FF5722; } /* Оранжевый, мизинец */
+
+.backspace { width: 62px; }
+.tab       { width: 62px; }
+.caps      { width: 70px; }
+.enter     { width: 76px; }
+.l_shift   { width: 92px; }
+.r_shift   { width: 98px; }
+
+</style>
+</head>
+<body>
+<div class='keyboard'>
+    <div class='row'>
+        <div class='key l_little'>Ё</div>
+        <div class='key l_ring'>1</div>
+        <div class='key l_ring'>2</div>
+        <div class='key l_middle'>3</div>
+        <div class='key l_middle'>4</div>
+        <div class='key l_index'>5</div>
+        <div class='key l_index'>6</div>
+        <div class='key r_index'>7</div>
+        <div class='key r_middle'>8</div>
+        <div class='key r_middle'>9</div>
+        <div class='key r_ring'>0</div>
+        <div class='key r_little'>-</div>
+        <div class='key r_little'>+</div>
+        <div class='key r_little backspace'>←</div>
+    </div>
+    
+    <div class='row'>
+        <div class='key l_little tab'>Tab</div>
+        <div class='key l_little'>Й</div>
+        <div class='key l_ring'>Ц</div>
+        <div class='key l_middle'>У</div>
+        <div class='key l_index'>К</div>
+        <div class='key l_index'>Е</div>
+        <div class='key r_index'>Н</div>
+        <div class='key r_index'>Г</div>
+        <div class='key r_middle'>Ш</div>
+        <div class='key r_ring'>Щ</div>
+        <div class='key r_little'>З</div>
+        <div class='key r_little'>Х</div>
+        <div class='key r_little'>Ъ</div>
+        <div class='key r_little'>\</div>
+    </div>
+    
+    <div class='row'>
+        <div class='key l_little caps'>Caps</div>
+        <div class='key l_little'>Ф</div>
+        <div class='key l_ring'>Ы</div>
+        <div class='key l_middle'>В</div>
+        <div class='key l_index'>А</div>
+        <div class='key l_index'>П</div>
+        <div class='key r_index'>Р</div>
+        <div class='key r_index'>О</div>
+        <div class='key r_middle'>Л</div>
+        <div class='key r_ring'>Д</div>
+        <div class='key r_little'>Ж</div>
+        <div class='key r_little'>Э</div>
+        <div class='key r_little enter'>↵</div>
+    </div>
+    
+    <div class='row'>
+        <div class='key l_little l_shift'>⇧</div>
+        <div class='key l_ring'>Я</div>
+        <div class='key l_middle'>Ч</div>
+        <div class='key l_index'>С</div>
+        <div class='key l_index'>М</div>
+        <div class='key l_index'>И</div>
+        <div class='key r_index'>Т</div>
+        <div class='key r_index'>Ь</div>
+        <div class='key r_middle'>Б</div>
+        <div class='key r_ring'>Ю</div>
+        <div class='key r_little'>.</div>
+        <div class='key r_little r_shift'>⇧</div>
+    </div>
+</div>
+</body>
+</html>
