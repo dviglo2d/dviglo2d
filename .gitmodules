@@ -1,0 +1,37 @@
+[submodule "engine/third_party/external/freetype/repo"]
+	path = engine/third_party/external/freetype/repo
+	url = https://github.com/dviglo2d/freetype
+	shallow = true
+[submodule "engine/third_party/external/glm/repo"]
+	path = engine/third_party/external/glm/repo
+	url = https://github.com/dviglo2d/glm
+	shallow = true
+[submodule "engine/third_party/external/miniz/repo"]
+	path = engine/third_party/external/miniz/repo
+	url = https://github.com/dviglo2d/miniz
+	shallow = true
+[submodule "engine/third_party/external/pugixml/repo"]
+	path = engine/third_party/external/pugixml/repo
+	url = https://github.com/dviglo2d/pugixml
+	shallow = true
+[submodule "engine/third_party/external/sdl/repo"]
+	path = engine/third_party/external/sdl/repo
+	url = https://github.com/dviglo2d/sdl
+	shallow = true
+[submodule "engine/third_party/external/sdl_mixer/repo"]
+	path = engine/third_party/external/sdl_mixer/repo
+	url = https://github.com/dviglo2d/sdl_mixer
+	branch = dv_2024_11_06
+	shallow = true
+[submodule "engine/third_party/external/stb/repo"]
+	path = engine/third_party/external/stb/repo
+	url = https://github.com/dviglo2d/stb
+	shallow = true
+[submodule "third_party/external/entt/repo"]
+	path = third_party/external/entt/repo
+	url = https://github.com/dviglo2d/entt
+	shallow = true
+[submodule "third_party/external/imgui/repo"]
+	path = third_party/external/imgui/repo
+	url = https://github.com/dviglo2d/imgui
+	shallow = true
