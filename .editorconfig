@@ -1,0 +1,15 @@
+# Заставляем VS и другие IDE сохранять файлы в кодировке UTF-8
+# https://editorconfig.org
+
+# В родительских папках .editorconfig искаться не будет
+root = true
+
+[*]
+charset = utf-8
+trim_trailing_whitespace = true
+insert_final_newline = true
+indent_style = space
+indent_size = 4
+
+# Не меняет формат концов строк. Может возникнуть конфликт с настройками git
+#end_of_line = lf
