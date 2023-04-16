@@ -2,9 +2,12 @@
 // Copyright (c) 2008-2023 the Urho3D project
 // License: MIT
 
-#if defined(_WIN32) && !defined(DV_WIN32_CONSOLE)
+#pragma once
+
+#if defined _WIN32 && !defined DV_WIN32_CONSOLE
 #include <Windows.h>
 #endif
+
 
 #if defined _WIN32 && !defined DV_WIN32_CONSOLE
 
