@@ -1,0 +1,9 @@
+# https://git-scm.com/docs/gitignore
+# https://www.atlassian.com/ru/git/tutorials/saving-changes/gitignore
+
+# Папки, которые создаёт VS Code
+/.vscode/
+/build/
+
+# Остальные папки
+__pycache__/

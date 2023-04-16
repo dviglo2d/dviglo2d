@@ -1,0 +1,121 @@
+# Библиотека + тесты
+
+name: DvBigInt
+
+on:
+  push:
+    paths:
+    - 'libs/dv_big_int/**'
+    - '!libs/dv_big_int/docs/**'
+  pull_request:
+    paths:
+    - 'libs/dv_big_int/**'
+    - '!libs/dv_big_int/docs/**'
+  workflow_dispatch:
+
+jobs:
+  linux:
+    runs-on: ubuntu-24.04
+
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler:
+        - {
+            id: gcc,
+            c: gcc-13,
+            cxx: g++-13,
+          }
+        - {
+            id: clang,
+            c: clang-18,
+            cxx: clang++-18,
+          }
+        build_type: [debug, release]
+
+    name: 🐧-${{ matrix.compiler.id }}-${{ matrix.build_type }}
+
+    steps:
+    - name: Устанавливаем новейший CMake
+      uses: ssrobins/install-cmake@v1
+
+    - name: Скачиваем репозиторий
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        path: repo
+
+    - name: Генерируем проекты
+      run: |
+        cmake repo/libs/dv_big_int -B build -G "Unix Makefiles" \
+          -D CMAKE_C_COMPILER=${{ matrix.compiler.c }} -D CMAKE_CXX_COMPILER=${{ matrix.compiler.cxx }} \
+          -D CMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+          -D DV_BIG_INT_TESTER=1 -D DV_BIG_INT_UB_SANITIZER=1
+
+    - name: Компилируем
+      run: |
+        cmake --build build --parallel
+
+    - name: CTest
+      run: |
+        ctest --verbose --test-dir build --timeout 60
+
+  windows:
+    runs-on: windows-2025
+
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler: [vs, mingw]
+        build_type: [debug, release]
+
+    name: 🔲-${{ matrix.compiler }}-${{ matrix.build_type }}
+
+    steps:
+    - name: Устанавливаем новейший CMake
+      uses: ssrobins/install-cmake@v1
+
+    - name: Скачиваем репозиторий
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        path: repo
+
+    - name: Генерируем проекты
+      shell: bash
+      run: |
+        args=(repo/libs/dv_big_int -B build -D DV_BIG_INT_TESTER=1 -D DV_BIG_INT_UB_SANITIZER=1)
+
+        if [ "${{ matrix.compiler }}" == "vs" ]
+        then
+          args+=(-G "Visual Studio 17 2022")
+        else
+          args+=(-G "MinGW Makefiles")
+          args+=(-D CMAKE_BUILD_TYPE=${{ matrix.build_type }})
+        fi
+
+        cmake "${args[@]}"
+
+    - name: Компилируем
+      shell: bash
+      run: |
+        args=(--build build --parallel)
+
+        if [ "${{ matrix.compiler }}" == "vs" ]
+        then
+          args+=(--config ${{ matrix.build_type }})
+        fi
+
+        cmake "${args[@]}"
+
+    - name: CTest
+      shell: bash
+      run: |
+        args=(--verbose --test-dir build --timeout 60)
+
+        if [ "${{ matrix.compiler }}" == "vs" ]
+        then
+          args+=(-C ${{ matrix.build_type }})
+        fi
+
+        ctest "${args[@]}"
