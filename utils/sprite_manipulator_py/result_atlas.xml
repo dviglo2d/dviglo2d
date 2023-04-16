@@ -1,0 +1,10 @@
+<tiles>
+    <tile x="2" y="2" width="16" height="32" />
+    <tile x="22" y="2" width="16" height="32" />
+    <tile x="42" y="2" width="16" height="32" />
+    <tile x="62" y="2" width="16" height="32" />
+    <tile x="2" y="38" width="16" height="32" />
+    <tile x="22" y="38" width="16" height="32" />
+    <tile x="42" y="38" width="16" height="32" />
+    <tile x="62" y="38" width="16" height="32" />
+</tiles>
