@@ -1,0 +1,157 @@
+# Движок + тесты
+
+name: Engine
+
+on:
+  push:
+    paths:
+    - 'engine/**'
+  pull_request:
+    paths:
+    - 'engine/**'
+  workflow_dispatch:
+
+jobs:
+  linux:
+    runs-on: ubuntu-24.04
+
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler:
+        - {
+            id: gcc,
+            c: gcc-13,
+            cxx: g++-13,
+          }
+        - {
+            id: clang,
+            c: clang-18,
+            cxx: clang++-18,
+          }
+        build_type: [debug, release]
+
+    name: 🐧-${{ matrix.compiler.id }}-${{ matrix.build_type }}
+
+    steps:
+    - name: Устанавливаем новейший CMake
+      uses: ssrobins/install-cmake@v1
+
+    - name: Устанавливаем зависимости
+      run: |
+        sudo apt update
+        # mesa-vulkan-drivers содержит lavapipe для софтварной эмуляции Vulkan
+        sudo apt install glslc libgl1-mesa-dev libxrandr-dev libxi-dev libasound2-dev libxcursor-dev libxss-dev libxtst-dev mesa-vulkan-drivers
+
+        if [ "${{ matrix.compiler.id }}" == "clang" ]
+        then
+          sudo apt install libomp-18-dev
+        fi
+
+        if [ "${{ matrix.build_type }}" == "debug" ]
+        then
+          sudo apt install vulkan-validationlayers
+        fi
+
+    - name: Скачиваем репозиторий
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        submodules: recursive
+        path: repo
+
+    - name: Генерируем проекты
+      run: |
+        cmake repo/engine -B build -G "Unix Makefiles" \
+          -D CMAKE_C_COMPILER=${{ matrix.compiler.c }} -D CMAKE_CXX_COMPILER=${{ matrix.compiler.cxx }} \
+          -D CMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+          -D DV_CTEST=1 -D DV_OPENMP=1 -D DV_ENGINE_TESTS=1
+
+    - name: Компилируем
+      run: |
+        cmake --build build --parallel
+
+    - name: CTest
+      run: |
+        export VK_LOADER_LAYERS_DISABLE=VK_LAYER_MESA_device_select # Этот слой вызывает ошибку
+        xvfb-run ctest --verbose --test-dir build --timeout 60
+
+  windows:
+    runs-on: windows-2025
+
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler: [vs, mingw]
+        build_type: [debug, release]
+
+    name: 🔲-${{ matrix.compiler }}-${{ matrix.build_type }}
+
+    steps:
+    - name: Устанавливаем новейший CMake
+      uses: ssrobins/install-cmake@v1
+
+    - name: Качаем Vulkan SDK
+      uses: humbletim/install-vulkan-sdk@v1.2
+      with:
+        cache: true
+
+    - name: Скачиваем репозиторий
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        submodules: recursive
+        path: repo
+
+    - name: Генерируем проекты
+      shell: bash
+      run: |
+        args=(repo/engine -B build)
+
+        if [ "${{ matrix.compiler }}" == "vs" ]
+        then
+          args+=(-G "Visual Studio 17 2022")
+        else
+          args+=(-G "MinGW Makefiles")
+          args+=(-D CMAKE_BUILD_TYPE=${{ matrix.build_type }})
+        fi
+
+        args+=(-D DV_CTEST=1 -D DV_OPENMP=1 -D DV_ENGINE_TESTS=1)
+
+        cmake "${args[@]}"
+
+    - name: Компилируем
+      shell: bash
+      run: |
+        args=(--build build --parallel)
+
+        if [ "${{ matrix.compiler }}" == "vs" ]
+        then
+          args+=(--config ${{ matrix.build_type }})
+        fi
+
+        cmake "${args[@]}"
+
+    - name: Регистрируем слой валидации Vulkan
+      if: matrix.build_type == 'debug'
+      shell: bash
+      run: reg add "HKEY_LOCAL_MACHINE\\SOFTWARE\\Khronos\\Vulkan\\ExplicitLayers" //t REG_DWORD //v "${VULKAN_SDK//\//\\}\\Bin\\VkLayer_khronos_validation.json" //d 0 //f
+
+    - name: Качаем и регистрируем lavapipe
+      shell: bash
+      run: |
+        curl.exe --location --output mesa.7z --url https://github.com/pal1000/mesa-dist-win/releases/download/25.3.3/mesa3d-25.3.3-release-msvc.7z
+        7z x mesa.7z -omesa
+        reg add "HKEY_LOCAL_MACHINE\\SOFTWARE\\Khronos\\Vulkan\\Drivers" //t REG_DWORD //v "${GITHUB_WORKSPACE//\//\\}\\mesa\\x64\\lvp_icd.x86_64.json" //d 0 //f
+
+    - name: CTest
+      shell: bash
+      run: |
+        args=(--verbose --test-dir build --timeout 60)
+
+        if [ "${{ matrix.compiler }}" == "vs" ]
+        then
+          args+=(-C ${{ matrix.build_type }})
+        fi
+
+        ctest "${args[@]}"
