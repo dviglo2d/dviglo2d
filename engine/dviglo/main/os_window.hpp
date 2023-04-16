@@ -1,0 +1,45 @@
+// Copyright (c) the Dviglo project
+// License: MIT
+
+#pragma once
+
+#include <dv_subsystem.hpp>
+#include <glm/glm.hpp>
+#include <SDL3/SDL.h>
+
+
+namespace dviglo
+{
+
+class OsWindow final : public Subsystem
+{
+private:
+    // Инициализируется в конструкторе
+    inline static OsWindow* instance_ = nullptr;
+
+    SDL_Window* window_ = nullptr;
+    SDL_GLContext gl_context_ = nullptr;
+
+public:
+    static OsWindow* instance()
+    {
+        assert(instance_);
+        return instance_;
+    }
+
+    OsWindow();
+    ~OsWindow();
+
+    // Запрещаем копирование
+    OsWindow(const OsWindow&) = delete;
+    OsWindow& operator =(const OsWindow&) = delete;
+
+    SDL_Window* window() const { return window_; }
+    SDL_GLContext gl_context() const { return gl_context_; }
+
+    glm::ivec2 get_size_in_pixels() const;
+};
+
+} // namespace dviglo
+
+#define DV_OS_WINDOW (dviglo::OsWindow::instance())
