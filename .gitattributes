@@ -1,0 +1,6 @@
+libs/third_party/* linguist-vendored
+
+# Автоматически нормализуем концы строк, если у пользователя не настроен параметр autocrlf
+# https://docs.github.com/en/get-started/getting-started-with-git/configuring-git-to-handle-line-endings
+# https://www.aleksandrhovhannisyan.com/blog/crlf-vs-lf-normalizing-line-endings-in-git/
+* text=auto
