@@ -14,22 +14,14 @@
 namespace dviglo
 {
 
-/// \todo Удалить при переходе на C++23
-constexpr bool contains(const std::string& str, char value) noexcept
+constexpr bool contains(std::string_view str, char c) noexcept
 {
-    return str.find(value) != std::string::npos;
+    return str.find(c) != std::string::npos;
 }
 
-/// \todo Удалить при переходе на C++23
-constexpr bool contains(const std::string& str, const char* value) noexcept
+constexpr bool contains(std::string_view str, std::string_view substr) noexcept
 {
-    return str.find(value) != std::string::npos;
-}
-
-/// \todo Удалить при переходе на C++23
-constexpr bool contains(const std::string& str, std::string_view value) noexcept
-{
-    return str.find(value) != std::string::npos;
+    return str.find(substr) != std::string::npos;
 }
 
 constexpr std::string replace_all(std::string_view str, std::string_view old_substr, std::string_view new_substr)
