@@ -15,7 +15,7 @@ void run()
 
 int main(int argc, char* argv[])
 {
-    std::setlocale(LC_CTYPE, "en_US.UTF-8");
+    setlocale(LC_CTYPE, "en_US.UTF-8");
 
     run();
 
