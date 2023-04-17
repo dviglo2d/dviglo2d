@@ -20,6 +20,9 @@ else()
     add_library(${TARGET_NAME} STATIC ${source_files} ${generated_src_files})
 endif()
 
+# При компиляции библиотеки и при использовании библиотеки h-файлы отличаются
+target_compile_definitions(${TARGET_NAME} PRIVATE DV_IS_BUILDING=1)
+
 # Подключаем библиотеки из папки third_party
 target_link_libraries(${TARGET_NAME} PUBLIC SDL3-static)
 
