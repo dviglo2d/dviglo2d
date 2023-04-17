@@ -5,7 +5,7 @@
 #pragma once
 
 #if defined _WIN32 && !defined DV_WIN32_CONSOLE
-#include <Windows.h>
+#include "../common/win_wrapped.h"
 #endif
 
 
