@@ -1,12 +1,15 @@
 // Copyright (c) 2022-2023 the Dviglo project
 // License: MIT
 
+#include <dviglo/common/primitive_types.h>
 #include <dviglo/main/main.h>
 
 #include <SDL.h>
 
+using namespace dviglo;
 
-int run()
+
+i32 run()
 {
     SDL_Window* window = SDL_CreateWindowWithPosition(
         "Окно закроется через 3 секунды",
