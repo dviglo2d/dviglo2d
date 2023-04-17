@@ -15,19 +15,19 @@ namespace dviglo
 {
 
 /// \todo Удалить при переходе на C++23
-inline constexpr bool contains(const std::string& str, char value) noexcept
+constexpr bool contains(const std::string& str, char value) noexcept
 {
     return str.find(value) != std::string::npos;
 }
 
 /// \todo Удалить при переходе на C++23
-inline constexpr bool contains(const std::string& str, const char* value) noexcept
+constexpr bool contains(const std::string& str, const char* value) noexcept
 {
     return str.find(value) != std::string::npos;
 }
 
 /// \todo Удалить при переходе на C++23
-inline constexpr bool contains(const std::string& str, std::string_view value) noexcept
+constexpr bool contains(const std::string& str, std::string_view value) noexcept
 {
     return str.find(value) != std::string::npos;
 }
