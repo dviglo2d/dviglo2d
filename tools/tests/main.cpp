@@ -1,16 +1,16 @@
 // Copyright (c) 2022-2023 the Dviglo project
 // License: MIT
 
-#include "force_assert.h"
-
 #include <iostream>
 
 using namespace std;
 
 
+void test_std_utils_str();
+
 void run()
 {
-    assert(1 == 1);
+    test_std_utils_str();
 }
 
 int main(int argc, char* argv[])
