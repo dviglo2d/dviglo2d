@@ -6,6 +6,8 @@
 
 #pragma once
 
+#include "../common/config.h"
+
 #include <string>
 
 
@@ -29,5 +31,7 @@ inline constexpr bool contains(const std::string& str, std::string_view value) n
 {
     return str.find(value) != std::string::npos;
 }
+
+DV_API constexpr std::string replace_all(std::string_view str, std::string_view old_substr, std::string_view new_substr);
 
 } // namespace dviglo

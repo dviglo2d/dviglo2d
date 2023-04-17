@@ -17,4 +17,9 @@ void test_std_utils_str()
         assert(contains(str, "иве"));
         assert(contains(str, string("иве")));
     }
+
+    {
+        const string str("привет привет");
+        assert(replace_all(str, "иве", "ави") == "правит правит");
+    }
 }
