@@ -32,6 +32,24 @@ constexpr bool contains(const std::string& str, std::string_view value) noexcept
     return str.find(value) != std::string::npos;
 }
 
-DV_API constexpr std::string replace_all(std::string_view str, std::string_view old_substr, std::string_view new_substr);
+constexpr std::string replace_all(std::string_view str, std::string_view old_substr, std::string_view new_substr)
+{
+    std::string ret;
+
+    std::size_t offset = 0;
+    std::size_t pos = str.find(old_substr); // Позиция old_value в исходной строке
+
+    while (pos != std::string::npos)
+    {
+        ret.append(str, offset, pos - offset); // Копируем фрагмент до найденной подстроки
+        ret += new_substr;
+        offset = pos + old_substr.length(); // Смещение после найденной подстроки
+        pos = str.find(old_substr, offset);
+    }
+
+    ret += str.substr(offset); // Копируем остаток строки
+
+    return ret;
+}
 
 } // namespace dviglo
