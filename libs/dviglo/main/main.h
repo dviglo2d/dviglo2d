@@ -12,7 +12,8 @@
 #if defined _WIN32 && !defined DV_WIN32_CONSOLE
 
     #define DV_DEFINE_MAIN(func) \
-        int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, PSTR cmdLine, int showCmd) \
+        int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, \
+                           _In_ LPSTR lpCmdLine, _In_ int nShowCmd) \
         { \
             return func(); \
         }
