@@ -12,10 +12,10 @@ using namespace std;
 void test_std_utils_str()
 {
     {
-        string str("привет");
-        assert(contains(str, 'и'));
-        assert(contains(str, "иве"));
-        assert(contains(str, string("иве")));
+        string str("hello");
+        assert(contains(str, 'e'));
+        assert(contains(str, "ell"));
+        assert(contains(str, string("ell")));
     }
 
     {
