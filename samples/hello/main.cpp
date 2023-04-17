@@ -5,6 +5,7 @@
 
 #include <SDL.h>
 
+
 int run()
 {
     SDL_Window* window = SDL_CreateWindowWithPosition(
