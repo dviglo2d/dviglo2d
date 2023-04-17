@@ -25,3 +25,4 @@ dv_set_bin_dir(${dviglo_BINARY_DIR}/bin)
 
 add_subdirectory(libs)
 add_subdirectory(samples)
+add_subdirectory(tools)
