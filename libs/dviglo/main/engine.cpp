@@ -4,6 +4,12 @@
 
 #include "engine.h"
 
+
+namespace dviglo
+{
+
 Engine::Engine()
 {
 }
+
+} // namespace dviglo
