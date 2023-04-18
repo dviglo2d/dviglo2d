@@ -8,6 +8,7 @@
 
 #include "../common/config.h"
 
+#include <algorithm>
 #include <string>
 
 
@@ -40,6 +41,41 @@ constexpr std::string replace_all(std::string_view str, std::string_view old_sub
     }
 
     ret += str.substr(offset); // Копируем остаток строки
+
+    return ret;
+}
+
+/// В отличие от std::tolower() может работать в compile time
+constexpr char to_lower(char c)
+{
+    return (c >= 'A' && c <= 'Z') ? c + ('a' - 'A') : c;
+}
+
+/// В отличие от std::toupper() может работать в compile time
+constexpr char to_upper(char c)
+{
+    return (c >= 'a' && c <= 'z') ? c - ('a' - 'A') : c;
+}
+
+// Работает только для ASCII-строк
+constexpr std::string replace_all(std::string_view str, char old_c, char new_c, bool case_sensitive = true)
+{
+    std::string ret(str);
+
+    if (case_sensitive)
+    {
+        std::replace(ret.begin(), ret.end(), old_c, new_c);
+    }
+    else
+    {
+        old_c = to_lower(old_c);
+
+        for (size_t i = 0; i < str.length(); ++i)
+        {
+            if (to_lower(ret[i]) == old_c)
+                ret[i] = new_c;
+        }
+    }
 
     return ret;
 }
