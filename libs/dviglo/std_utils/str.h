@@ -21,6 +21,7 @@ constexpr bool contains(std::string_view ascii_str, char ascii_c) noexcept
     return ascii_str.find(ascii_c) != std::string::npos;
 }
 
+/// Используется также для поиска одиночных UTF-8-символов
 constexpr bool contains(std::string_view utf8_str, std::string_view utf8_substr) noexcept
 {
     return utf8_str.find(utf8_substr) != std::string::npos;

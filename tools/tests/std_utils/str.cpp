@@ -17,8 +17,8 @@ void test_std_utils_str()
     }
 
     {
-        const string str("привет");
-        assert(contains(str, "иве"));
+        const string str("привет🍌");
+        assert(contains(str, "🍌"));
         assert(contains(str, string("иве")));
     }
 
