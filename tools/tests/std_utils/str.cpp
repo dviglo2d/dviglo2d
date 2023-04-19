@@ -12,12 +12,12 @@ using namespace std;
 void test_std_utils_str()
 {
     {
-        const string str("hello");
+        const StrAscii str("hello");
         assert(contains(str, 'e'));
     }
 
     {
-        const string str("привет🍌");
+        const StrUtf8 str("привет🍌");
         assert(contains(str, "🍌"));
         assert(contains(str, string("иве")));
     }
@@ -28,18 +28,18 @@ void test_std_utils_str()
     }
 
     {
-        const string str("привет привет");
+        const StrUtf8 str("привет привет");
         assert(replace_all(str, "иве", "ави") == "правит правит");
     }
 
     {
-        const string str = "heLlo";
+        const StrAscii str = "heLlo";
         assert(replace_all(str, 'L', '2') == "he2lo");
         assert(replace_all(str, 'l', '2', false) == "he22o");
     }
 
     {
-        const string str = "привет🍌";
+        const StrUtf8 str = "привет🍌";
         size_t offset = 0;
         // https://en.cppreference.com/w/cpp/language/character_literal
         assert(next_code_point(str, offset) == U'п');
@@ -53,7 +53,7 @@ void test_std_utils_str()
 
 #ifdef _WIN32
     {
-        const string str = "🍏привет🍌";
+        const StrUtf8 str = "🍏привет🍌";
         const wstring wstr = to_wstring(str);
         assert(wstr[0] == L'\xd83c');
         assert(wstr[1] == L'\xdf4f');

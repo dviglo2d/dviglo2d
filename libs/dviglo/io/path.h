@@ -13,34 +13,34 @@ namespace dviglo
 {
 
 /// Заменяет '\\' на '/'
-constexpr std::string to_internal(std::string_view utf8_path)
+constexpr StrUtf8 to_internal(StrViewUtf8 path)
 {
-    return replace_all(utf8_path, '\\', '/');
+    return replace_all(path, '\\', '/');
 }
 
 /// В Windows заменяет '/' на '\\'
-constexpr std::string to_native(std::string_view utf8_path)
+constexpr StrUtf8 to_native(StrViewUtf8 path)
 {
 #ifdef _WIN32
-    return replace_all(utf8_path, '/', '\\');
+    return replace_all(path, '/', '\\');
 #else
-    return std::string(utf8_path);
+    return StrUtf8(path);
 #endif
 }
 
 #ifdef _WIN32
 /// В Windows заменяет '/' на '\\' и преобразует в кодировку UTF-16.
 /// В Linux для путей используется кодировка UTF-8, поэтому преобразование не требуется
-constexpr std::wstring to_win_native(std::string_view utf8_path)
+constexpr std::wstring to_win_native(StrViewUtf8 path)
 {
-    return to_wstring(replace_all(utf8_path, '/', '\\'));
+    return to_wstring(replace_all(path, '/', '\\'));
 }
 #endif
 
 /// Удаляет один '/' в конце строки, если он есть
-constexpr std::string trim_end_slash(std::string_view utf8_path)
+constexpr StrUtf8 trim_end_slash(StrViewUtf8 path)
 {
-    std::string ret(utf8_path);
+    StrUtf8 ret(path);
 
     if (!ret.empty() && ret.back() == '/')
         ret.resize(ret.length() - 1);
@@ -49,14 +49,14 @@ constexpr std::string trim_end_slash(std::string_view utf8_path)
 }
 
 /// Возвращает родительский путь (с / в конце) или пустую строку
-constexpr std::string get_parent(std::string_view utf8_path)
+constexpr StrUtf8 get_parent(StrViewUtf8 path)
 {
-    size_t pos = trim_end_slash(utf8_path).find_last_of('/');
+    size_t pos = trim_end_slash(path).find_last_of('/');
 
-    if (pos != std::string::npos)
-        return std::string(utf8_path.substr(0, pos + 1));
+    if (pos != StrUtf8::npos)
+        return StrUtf8(path.substr(0, pos + 1));
     else
-        return std::string();
+        return StrUtf8();
 }
 
 } // namespace dviglo

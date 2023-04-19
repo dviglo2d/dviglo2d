@@ -13,37 +13,47 @@
 #include <string>
 
 
+namespace dvt
+{
+
+using StrUtf8 = std::string;
+using StrAscii = std::string;
+using StrViewUtf8 = std::string_view;
+using StrViewAscii = std::string_view;
+
+} // namespace dvt
+
 namespace dviglo
 {
 
-constexpr bool contains(std::string_view ascii_str, char ascii_c) noexcept
+constexpr bool contains(StrViewAscii str, char ascii_c) noexcept
 {
-    return ascii_str.find(ascii_c) != std::string::npos;
+    return str.find(ascii_c) != StrViewAscii::npos;
 }
 
-/// Используется также для поиска одиночных UTF-8-символов
-constexpr bool contains(std::string_view utf8_str, std::string_view utf8_substr) noexcept
+/// Используется также для поиска UTF-8-символов
+constexpr bool contains(StrViewUtf8 str, StrViewUtf8 substr) noexcept
 {
-    return utf8_str.find(utf8_substr) != std::string::npos;
+    return str.find(substr) != StrViewUtf8::npos;
 }
 
-constexpr std::string replace_all(std::string_view utf8_str,
-                                  std::string_view utf8_old_substr, std::string_view utf8_new_substr)
+/// Используется также для замены UTF-8-символов
+constexpr StrUtf8 replace_all(StrViewUtf8 str, StrViewUtf8 old_substr, StrViewUtf8 new_substr)
 {
-    std::string ret;
+    StrUtf8 ret;
 
-    std::size_t offset = 0;
-    std::size_t pos = utf8_str.find(utf8_old_substr); // Позиция utf8_old_substr в исходной строке
+    size_t offset = 0;
+    size_t pos = str.find(old_substr); // Позиция old_substr в исходной строке
 
-    while (pos != std::string::npos)
+    while (pos != StrViewUtf8::npos)
     {
-        ret.append(utf8_str, offset, pos - offset); // Копируем фрагмент до найденной подстроки
-        ret += utf8_new_substr;
-        offset = pos + utf8_old_substr.length(); // Смещение после найденной подстроки
-        pos = utf8_str.find(utf8_old_substr, offset);
+        ret.append(str, offset, pos - offset); // Копируем фрагмент до найденной подстроки
+        ret += new_substr;
+        offset = pos + old_substr.length(); // Смещение после найденной подстроки
+        pos = str.find(old_substr, offset);
     }
 
-    ret += utf8_str.substr(offset); // Копируем остаток строки
+    ret += str.substr(offset); // Копируем остаток строки
 
     return ret;
 }
@@ -60,24 +70,24 @@ constexpr char to_upper(char ascii_c)
     return (ascii_c >= 'a' && ascii_c <= 'z') ? ascii_c - ('a' - 'A') : ascii_c;
 }
 
-constexpr std::string replace_all(std::string_view ascii_str,
-                                  char ascii_old_c, char ascii_new_c,
-                                  bool case_sensitive = true)
+constexpr StrAscii replace_all(StrViewAscii str,
+                               char old_ascii_c, char new_ascii_c,
+                               bool case_sensitive = true)
 {
-    std::string ret(ascii_str);
+    StrAscii ret(str);
 
     if (case_sensitive)
     {
-        std::replace(ret.begin(), ret.end(), ascii_old_c, ascii_new_c);
+        std::replace(ret.begin(), ret.end(), old_ascii_c, new_ascii_c);
     }
     else
     {
-        ascii_old_c = to_lower(ascii_old_c);
+        old_ascii_c = to_lower(old_ascii_c);
 
-        for (size_t i = 0; i < ascii_str.length(); ++i)
+        for (size_t i = 0; i < str.length(); ++i)
         {
-            if (to_lower(ret[i]) == ascii_old_c)
-                ret[i] = ascii_new_c;
+            if (to_lower(ret[i]) == old_ascii_c)
+                ret[i] = new_ascii_c;
         }
     }
 
@@ -88,22 +98,22 @@ constexpr std::string replace_all(std::string_view ascii_str,
 /// Использование:
 /// size_t offset = 0;
 /// while (offset < str.length()) { c32 code_point = next_code_point(str, offset); }
-constexpr c32 next_code_point(std::string_view utf8_str, size_t& offset)
+constexpr c32 next_code_point(StrViewUtf8 str, size_t& offset)
 {
     // goto не разрешены в constexpr функциях, поэтому вместо перехода в конец функции используем макрос 
     #define NEXT_CODE_POINT_ERROR \
         { \
             /* При ошибке прерываем декодирование строки */ \
-            offset = utf8_str.length(); \
+            offset = str.length(); \
             /* Необходимо что-то вернуть */ \
             return '?'; \
         }
 
-    if (offset >= utf8_str.length())
+    if (offset >= str.length())
         return 0;
 
     // Получаем байт из строки и после этого инкрементируем смещение
-    u8 byte1 = utf8_str[offset++];
+    u8 byte1 = str[offset++];
 
     // Если первый бит первого байта - ноль, значит последовательность состоит из единственного байта.
     // 0xxxxxxx (x - биты, в которой хранится кодовая позиция)
@@ -120,11 +130,11 @@ constexpr c32 next_code_point(std::string_view utf8_str, size_t& offset)
     // 110xxxxx 10xxxxxx (x - биты, в которой хранится кодовая позиция)
     if (byte1 <= 0b11011111u) // Выше мы уже проверили, что byte1 >= 11000000
     {
-        if (offset == utf8_str.length()) // Проверяем, что второй байт вообще есть (offset уже указывает на очередной байт)
+        if (offset == str.length()) // Проверяем, что второй байт вообще есть (offset уже указывает на очередной байт)
             NEXT_CODE_POINT_ERROR
 
         // Получаем второй байт последовательности
-        u8 byte2 = utf8_str[offset++];
+        u8 byte2 = str[offset++];
 
         // Проверяем, что второй байт начинается с 10
         if ((byte2 & 0b11000000u) != 0b10000000u)
@@ -139,11 +149,11 @@ constexpr c32 next_code_point(std::string_view utf8_str, size_t& offset)
     // 1110xxxx 10xxxxxx 10xxxxxx
     if (byte1 <= 0b11101111u) // Выше мы уже проверили, что byte1 >= 11100000
     {
-        if (offset + 1 >= utf8_str.length())
+        if (offset + 1 >= str.length())
             NEXT_CODE_POINT_ERROR
 
-        u8 byte2 = utf8_str[offset++];
-        u8 byte3 = utf8_str[offset++];
+        u8 byte2 = str[offset++];
+        u8 byte3 = str[offset++];
 
         // Проверяем, что второй и третий байты начинаются с 10
         if ((byte2 & 0b11000000u) != 0b10000000u || (byte3 & 0b11000000u) != 0b10000000u)
@@ -157,12 +167,12 @@ constexpr c32 next_code_point(std::string_view utf8_str, size_t& offset)
     // 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
     if (byte1 <= 0b11110111u) // Выше мы уже проверили, что byte1 >= 11110000
     {
-        if (offset + 2 >= utf8_str.length())
+        if (offset + 2 >= str.length())
             NEXT_CODE_POINT_ERROR
 
-        u8 byte2 = utf8_str[offset++];
-        u8 byte3 = utf8_str[offset++];
-        u8 byte4 = utf8_str[offset++];
+        u8 byte2 = str[offset++];
+        u8 byte3 = str[offset++];
+        u8 byte4 = str[offset++];
 
         if ((byte2 & 0b11000000u) != 0b10000000u || (byte3 & 0b11000000u) != 0b10000000u || (byte4 & 0b11000000u) != 0b10000000u)
             NEXT_CODE_POINT_ERROR
@@ -176,15 +186,15 @@ constexpr c32 next_code_point(std::string_view utf8_str, size_t& offset)
 #ifdef _WIN32
 /// Преобразует UTF-8 в UTF-16 little-endian для взаимодействия с Windows.
 /// Только в Windows размер wchar_t - 16 бит
-constexpr std::wstring to_wstring(std::string_view utf8_str)
+constexpr std::wstring to_wstring(StrViewUtf8 str)
 {
     std::wstring ret;
 
     size_t offset = 0;
 
-    while (offset < utf8_str.length())
+    while (offset < str.length())
     {
-        c32 code_point = next_code_point(utf8_str, offset);
+        c32 code_point = next_code_point(str, offset);
 
         if (code_point < 0x10000) // Символы 0 - 0xffff кодируются как есть
         {
