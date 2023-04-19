@@ -14,8 +14,12 @@ void test_std_utils_str()
     {
         const string str("hello");
         assert(contains(str, 'e'));
-        assert(contains(str, "ell"));
-        assert(contains(str, string("ell")));
+    }
+
+    {
+        const string str("привет");
+        assert(contains(str, "иве"));
+        assert(contains(str, string("иве")));
     }
 
     {
