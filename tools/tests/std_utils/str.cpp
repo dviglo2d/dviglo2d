@@ -51,6 +51,12 @@ void test_std_utils_str()
         assert(next_code_point(str, offset) == U'🍌');
     }
 
+    {
+        assert(to_utf8(U'7') == "7");
+        assert(to_utf8(U'п') == "п");
+        assert(to_utf8(U'🍌') == "🍌");
+    }
+
 #ifdef _WIN32
     {
         const StrUtf8 str = "🍏привет🍌";
