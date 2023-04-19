@@ -50,4 +50,22 @@ void test_std_utils_str()
         assert(next_code_point(str, offset) == U'т');
         assert(next_code_point(str, offset) == U'🍌');
     }
+
+#ifdef _WIN32
+    {
+        const string str = "🍏привет🍌";
+        const wstring wstr = to_wstring(str);
+        assert(wstr[0] == L'\xd83c');
+        assert(wstr[1] == L'\xdf4f');
+        assert(wstr[2] == L'п');
+        assert(wstr[3] == L'р');
+        assert(wstr[4] == L'и');
+        assert(wstr[5] == L'в');
+        assert(wstr[6] == L'е');
+        assert(wstr[7] == L'т');
+        assert(wstr[8] == L'\xd83c');
+        assert(wstr[9] == L'\xdf4c');
+    }
+#endif
+
 }

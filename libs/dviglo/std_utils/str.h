@@ -173,4 +173,34 @@ constexpr c32 next_code_point(std::string_view utf8_str, size_t& offset)
     NEXT_CODE_POINT_ERROR
 }
 
+#ifdef _WIN32
+/// Преобразует UTF-8 в UTF-16 little-endian для взаимодействия с Windows.
+/// Только в Windows размер wchar_t - 16 бит
+constexpr std::wstring to_wstring(std::string_view utf8_str)
+{
+    std::wstring ret;
+
+    size_t offset = 0;
+
+    while (offset < utf8_str.length())
+    {
+        c32 code_point = next_code_point(utf8_str, offset);
+
+        if (code_point < 0x10000) // Символы 0 - 0xffff кодируются как есть
+        {
+            ret += (wchar_t)code_point;
+        }
+        else
+        {
+            // Принцип кодирования описан тут: https://ru.wikipedia.org/wiki/UTF-16
+            code_point -= 0x10000;
+            ret += ((code_point >> 10) & 0b11'11111111) | 0xd800;
+            ret += (code_point & 0b11'11111111) | 0xdc00;
+        }
+    }
+
+    return ret;
+}
+#endif // def _WIN32
+
 } // namespace dviglo
