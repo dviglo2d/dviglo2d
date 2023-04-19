@@ -67,5 +67,4 @@ void test_std_utils_str()
         assert(wstr[9] == L'\xdf4c');
     }
 #endif
-
 }
