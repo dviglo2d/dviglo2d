@@ -71,6 +71,7 @@ void test_std_utils_str()
         assert(wstr[7] == L'т');
         assert(wstr[8] == L'\xd83c');
         assert(wstr[9] == L'\xdf4c');
+        assert(from_wstring(wstr) == "🍏привет🍌");
     }
 #endif
 }

@@ -223,6 +223,7 @@ constexpr StrUtf8 to_utf8(c32 utf32_c)
 }
 
 #ifdef _WIN32
+
 /// Преобразует UTF-8 в UTF-16 little-endian для взаимодействия с Windows.
 /// Только в Windows размер wchar_t - 16 бит
 constexpr std::wstring to_wstring(StrViewUtf8 str)
@@ -250,6 +251,55 @@ constexpr std::wstring to_wstring(StrViewUtf8 str)
 
     return ret;
 }
+
+/// Преобразует UTF-16 little-endian в UTF-8 для взаимодействия с Windows.
+/// Только в Windows размер wchar_t - 16 бит
+constexpr StrUtf8 from_wstring(std::wstring_view wstr)
+{
+    StrUtf8 ret;
+
+    // Алгоритм декодирования: https://ru.wikipedia.org/wiki/UTF-16
+    for (auto it = wstr.cbegin(); it != wstr.cend(); ++it)
+    {
+        wchar_t word1 = *it; // Получаем первый квант
+
+        // Изучаем первый квант
+        if (word1 < 0xd800 || word1 > 0xdfff) // Квант всего один
+        {
+            ret += to_utf8((c32)word1);
+        }
+        else if (word1 >= 0xdc00) // Ошибка
+        {
+            ret += '?';
+            break;
+        }
+        else // Изучаем второй квант
+        {
+            if (++it == wstr.cend()) // Ошибка: нет второго кванта
+            {
+                ret += '?';
+                break;
+            }
+
+            wchar_t word2 = *it; // Получаем второй квант
+
+            if (word2 < 0xdc00 || word2 > 0xdfff) // Ошибка
+            {
+                ret += '?';
+                break;
+            }
+
+            word1 = word1 & 0x3ff;
+            word2 = word2 & 0x3ff;
+
+            c32 code_point = ((word1 << 10) | word2) + 0x10000;
+            ret += to_utf8(code_point);
+        }
+    }
+
+    return ret;
+}
+
 #endif // def _WIN32
 
 } // namespace dviglo
