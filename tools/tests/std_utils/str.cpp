@@ -35,13 +35,15 @@ void test_std_utils_str()
     }
 
     {
-        const string str = "привет";
+        const string str = "привет🍌";
         size_t offset = 0;
-        assert(next_code_point(str, offset) == U'\x43f');
-        assert(next_code_point(str, offset) == U'\x440');
-        assert(next_code_point(str, offset) == U'\x438');
-        assert(next_code_point(str, offset) == U'\x432');
-        assert(next_code_point(str, offset) == U'\x435');
-        assert(next_code_point(str, offset) == U'\x442');
+        // https://en.cppreference.com/w/cpp/language/character_literal
+        assert(next_code_point(str, offset) == U'п');
+        assert(next_code_point(str, offset) == U'р');
+        assert(next_code_point(str, offset) == U'и');
+        assert(next_code_point(str, offset) == U'в');
+        assert(next_code_point(str, offset) == U'е');
+        assert(next_code_point(str, offset) == U'т');
+        assert(next_code_point(str, offset) == U'🍌');
     }
 }
