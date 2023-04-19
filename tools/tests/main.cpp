@@ -6,10 +6,12 @@
 using namespace std;
 
 
+void test_io_path();
 void test_std_utils_str();
 
 void run()
 {
+    test_io_path();
     test_std_utils_str();
 }
 
