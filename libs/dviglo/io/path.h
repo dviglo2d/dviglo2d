@@ -24,7 +24,7 @@ constexpr std::string to_native(std::string_view utf8_path)
 #ifdef _WIN32
     return replace_all(utf8_path, '/', '\\');
 #else
-    return utf8_path;
+    return std::string(utf8_path);
 #endif
 }
 
