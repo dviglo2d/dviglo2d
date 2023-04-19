@@ -59,7 +59,6 @@ constexpr char to_upper(char ascii_c)
     return (ascii_c >= 'a' && ascii_c <= 'z') ? ascii_c - ('a' - 'A') : ascii_c;
 }
 
-/// Работает только для ASCII-строк
 constexpr std::string replace_all(std::string_view ascii_str,
                                   char ascii_old_c, char ascii_new_c,
                                   bool case_sensitive = true)
