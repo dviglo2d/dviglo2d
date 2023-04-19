@@ -20,7 +20,7 @@ static_assert(sizeof(char32_t) == 4);
 static_assert(sizeof(long) == 4);
 static_assert(sizeof(wchar_t) == 2);
 #else // Unix
-static_assert(sizeof(long) == sizeof(void*)); // 4 or 8
+static_assert(sizeof(long) == sizeof(void*)); // 4 или 8
 static_assert(sizeof(wchar_t) == 4);
 #endif
 
