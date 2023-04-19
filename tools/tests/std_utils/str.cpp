@@ -33,4 +33,15 @@ void test_std_utils_str()
         assert(replace_all(str, 'L', '2') == "he2lo");
         assert(replace_all(str, 'l', '2', false) == "he22o");
     }
+
+    {
+        const string str = "привет";
+        size_t offset = 0;
+        assert(next_code_point(str, offset) == U'\x43f');
+        assert(next_code_point(str, offset) == U'\x440');
+        assert(next_code_point(str, offset) == U'\x438');
+        assert(next_code_point(str, offset) == U'\x432');
+        assert(next_code_point(str, offset) == U'\x435');
+        assert(next_code_point(str, offset) == U'\x442');
+    }
 }
