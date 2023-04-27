@@ -1,7 +1,7 @@
 // Copyright (c) 2022-2023 the Dviglo project
 // License: MIT
 
-#include <dviglo/main/engine.h>
+#include <dviglo/main/application.h>
 #include <dviglo/main/main.h>
 #include <dviglo/std_utils/scope_guard.h>
 
@@ -13,9 +13,20 @@ using namespace dviglo;
 using namespace std;
 
 
+class App : public Application
+{
+public:
+    App()
+    {
+        log_path_ = "путь/к/логу";
+    }
+};
+
+
 i32 run()
 {
-    unique_ptr<Engine> engine = make_unique<Engine>();
+    unique_ptr<App> app = make_unique<App>();
+    app->run();
 
     // Вызываем SDL_Quit(), даже если SDL_Init() вернул ошибку
     const ScopeGuard sg_sdl_quit = [] { SDL_Quit(); };

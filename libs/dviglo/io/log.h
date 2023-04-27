@@ -11,8 +11,8 @@ namespace dviglo
 
 class DV_API Log
 {
-    /// Только Engine может создать и уничтожить лог
-    friend class Engine;
+    /// Только Application может создать и уничтожить лог
+    friend class Application;
 
 private:
     /// Инициализируется в конструкторе
