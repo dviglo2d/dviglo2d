@@ -1,17 +1,22 @@
 // Copyright (c) 2022-2023 the Dviglo project
 // License: MIT
 
-#include <dviglo/common/primitive_types.h>
+#include <dviglo/main/engine.h>
 #include <dviglo/main/main.h>
 #include <dviglo/std_utils/scope_guard.h>
 
 #include <SDL.h>
 
+#include <memory>
+
 using namespace dviglo;
+using namespace std;
 
 
 i32 run()
 {
+    unique_ptr<Engine> engine = make_unique<Engine>();
+
     // Вызываем SDL_Quit(), даже если SDL_Init() вернул ошибку
     const ScopeGuard sg_sdl_quit = [] { SDL_Quit(); };
 

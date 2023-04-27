@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "../common/config.h"
+#include "../io/log.h"
 
 
 namespace dviglo
@@ -13,6 +13,7 @@ class DV_API Engine
 {
 public:
     Engine();
+    ~Engine();
 };
 
 } // namespace dviglo
