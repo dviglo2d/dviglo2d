@@ -24,7 +24,7 @@ endif()
 target_compile_definitions(${TARGET_NAME} PRIVATE DV_IS_BUILDING=1)
 
 # Подключаем библиотеки из папки third_party
-target_link_libraries(${TARGET_NAME} PUBLIC SDL3-static)
+target_link_libraries(${TARGET_NAME} PUBLIC SDL3-static entt)
 
 # Опции, которые не требуют ничего, кроме создания дефайнов
 foreach(opt
