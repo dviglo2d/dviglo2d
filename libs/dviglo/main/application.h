@@ -18,9 +18,6 @@ class DV_API Application
 private:
     SDL_Window* window_ = nullptr;
 
-    /// Главный объект ECS
-    entt::registry ecs_;
-
 protected:
     // Параметры движка, используемые при инициализации
 
@@ -29,11 +26,11 @@ protected:
     Application();
     ~Application();
 
+    virtual void start() = 0;
+    virtual void update() = 0;
+
 public:
     SDL_Window* window() const { return window_; }
-
-    /// Главный объект ECS
-    entt::registry& ecs() { return ecs_; }
 
     i32 run();
 };

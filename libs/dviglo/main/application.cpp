@@ -47,6 +47,8 @@ i32 Application::run()
     if (!window_)
         return 1;
 
+    start();
+
     bool should_exit = false;
 
     while (!should_exit)
@@ -63,6 +65,10 @@ i32 Application::run()
                 break;
             }
         }
+
+        update();
+
+        SDL_Delay(500);
     }
 
     return 0;
