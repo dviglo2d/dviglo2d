@@ -20,8 +20,7 @@ protected:
     ~Application();
 
 public:
-
-    void run();
+    i32 run();
 };
 
 } // namespace dviglo
