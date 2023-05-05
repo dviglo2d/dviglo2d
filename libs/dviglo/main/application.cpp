@@ -22,30 +22,48 @@ Application::Application()
 
 Application::~Application()
 {
+    if (window_)
+        SDL_DestroyWindow(window_);
+
+    SDL_Quit();
 }
 
 i32 Application::run()
 {
     unique_ptr<Log> log = make_unique<Log>(log_path_);
 
-    // Вызываем SDL_Quit(), даже если SDL_Init() вернул ошибку
-    const ScopeGuard sg_sdl_quit = [] { SDL_Quit(); };
-
-    if (SDL_Init(SDL_INIT_VIDEO) < 0)
+    if (SDL_Init(0) < 0)
         return 1;
 
-    SDL_Window* window = SDL_CreateWindowWithPosition(
-        "Окно закроется через 3 секунды",
+    if (SDL_InitSubSystem(SDL_INIT_VIDEO) < 0)
+        return 1;
+
+    window_ = SDL_CreateWindowWithPosition(
+        "Игра",
         SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 800, 600,
         0
     );
 
-    if (!window)
+    if (!window_)
         return 1;
 
-    const ScopeGuard sg_destroy_window = [window] { SDL_DestroyWindow(window); };
+    bool should_exit = false;
 
-    SDL_Delay(3000);
+    while (!should_exit)
+    {
+        SDL_PumpEvents();
+        SDL_Event event;
+
+        while (SDL_PollEvent(&event))
+        {
+            switch (event.type)
+            {
+            case SDL_EVENT_QUIT:
+                should_exit = true;
+                break;
+            }
+        }
+    }
 
     return 0;
 }
