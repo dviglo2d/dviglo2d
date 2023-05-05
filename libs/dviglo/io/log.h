@@ -11,9 +11,6 @@ namespace dviglo
 
 class DV_API Log
 {
-    /// Только Application может создать и уничтожить лог
-    friend class Application;
-
 private:
     /// Инициализируется в конструкторе
     inline static Log* log_ = nullptr;
@@ -21,11 +18,8 @@ private:
 public:
     Log* get_instance() const { return log_; }
 
-private:
     Log(StrViewUtf8 path);
     ~Log();
-
-public:
 };
 
 } // namespace dviglo

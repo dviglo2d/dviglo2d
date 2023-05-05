@@ -5,6 +5,10 @@
 
 #include "../io/log.h"
 
+#include <memory>
+
+using namespace std;
+
 
 namespace dviglo
 {
@@ -19,8 +23,7 @@ Application::~Application()
 
 void Application::run()
 {
-    new Log(log_path_); // Указатель на лог хранится в Log::log_
-    delete Log::log_;
+    unique_ptr<Log> log = make_unique<Log>(log_path_);
 }
 
 } // namespace dviglo
