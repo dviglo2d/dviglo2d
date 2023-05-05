@@ -5,7 +5,7 @@
 set(TARGET_NAME entt)
 
 # Создаём список файлов
-file(GLOB_RECURSE source_files src/*.h)
+file(GLOB_RECURSE source_files src/*.h src/*.hpp)
 
 # Создаём интерфейсную библиотеку. Интерфейсная библиотека не компилируется,
 # так как состоит только из включаемых файлов
