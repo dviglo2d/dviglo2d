@@ -5,6 +5,8 @@
 
 #include "../io/log.h"
 
+#include <entt/entt.hpp>
+
 
 struct SDL_Window;
 
@@ -16,6 +18,9 @@ class DV_API Application
 private:
     SDL_Window* window_ = nullptr;
 
+    /// Главный объект ECS
+    entt::registry ecs_;
+
 protected:
     // Параметры движка, используемые при инициализации
 
@@ -26,6 +31,9 @@ protected:
 
 public:
     SDL_Window* window() const { return window_; }
+
+    /// Главный объект ECS
+    entt::registry& ecs() { return ecs_; }
 
     i32 run();
 };
