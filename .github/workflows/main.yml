@@ -257,7 +257,7 @@ jobs:
     - name: CTest
       shell: bash {0} # Разрешаем перехват ошибок
       run: |
-        xvfb-run ctest --test-dir engine_build
+        xvfb-run ctest --test-dir engine_build --timeout 60
         EXIT_CODE=$? # Exit code of the previous command
 
         if (( $EXIT_CODE != 0 )) 
