@@ -56,6 +56,12 @@ i32 Application::run()
 
     while (!should_exit)
     {
+#if DV_TESTING
+        // При CTest выходим через 5 секунд после запуска приложения
+        if (SDL_GetTicks() > 5 * 1000)
+            should_exit = true;
+#endif
+
         SDL_PumpEvents();
         SDL_Event event;
 
