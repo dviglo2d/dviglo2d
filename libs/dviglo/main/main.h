@@ -14,8 +14,6 @@
 
 #include "../std_utils/str.h"
 
-#include <vector>
-
 
 namespace dviglo
 {

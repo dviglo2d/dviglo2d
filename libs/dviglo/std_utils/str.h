@@ -11,6 +11,7 @@
 
 #include <algorithm>
 #include <string>
+#include <vector>
 
 
 namespace dvt
@@ -89,6 +90,21 @@ constexpr StrAscii replace_all(StrViewAscii str,
             if (to_lower(ret[i]) == old_ascii_c)
                 ret[i] = new_ascii_c;
         }
+    }
+
+    return ret;
+}
+
+constexpr StrUtf8 join(const std::vector<StrUtf8>& values, const StrUtf8& separator)
+{
+    StrUtf8 ret;
+
+    for (const StrUtf8& value : values)
+    {
+        if (!ret.empty())
+            ret += separator;
+
+        ret += value;
     }
 
     return ret;

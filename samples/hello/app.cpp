@@ -9,12 +9,7 @@
 App::App(const std::vector<StrUtf8>& args)
     : Application(args)
 {
-    cout << "Командная строка: ";
-
-    for (const StrUtf8& arg : args)
-        cout << arg << " ";
-
-    cout << endl;
+    cout << "Командная строка: " << join(args, " ") << endl;
 
     log_path_ = "путь/к/логу";
 }
