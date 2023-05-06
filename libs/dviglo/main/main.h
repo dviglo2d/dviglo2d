@@ -4,34 +4,65 @@
 
 #pragma once
 
-#if defined _WIN32 && !defined DV_WIN32_CONSOLE
-#include "../common/win_wrapped.h"
+#ifdef _WIN32
+
+    #include "../common/win_wrapped.h"
+
+    #include <clocale> // std::setlocale
+
+#endif // def _WIN32
+
+#include "../std_utils/str.h"
+
+#include <vector>
+
+
+namespace dviglo
+{
+
+#ifdef _WIN32
+DV_API std::vector<StrUtf8> get_win_command_line_args();
 #endif
 
-#include <clocale>
+} // namespace dviglo
 
+#ifdef _WIN32
 
-#if defined _WIN32 && !defined DV_WIN32_CONSOLE
+    #ifdef DV_WIN32_CONSOLE
 
-    #define DV_DEFINE_MAIN(func) \
-        int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, \
-                           _In_ LPSTR lpCmdLine, _In_ int nShowCmd) \
-        { \
-            /* Позволяет выводить UTF-8 в консоль в Windows. В Linux консоль в кодировке UTF-8 по умолчанию */ \
-            std::setlocale(LC_CTYPE, "en_US.UTF-8"); \
-            \
-            return func(); \
-        }
+        #define DV_DEFINE_MAIN(func) \
+            int main(int argc, char* argv[]) \
+            { \
+                /* Позволяет выводить UTF-8 в консоль */ \
+                std::setlocale(LC_CTYPE, "en_US.UTF-8"); \
+                \
+                /* Не используем argv, чтобы не было проблем с кодировкой */ \
+                return func(get_win_command_line_args()); \
+            }
 
-#else // Linux или консольное приложение Windows
+    #else
+
+        #define DV_DEFINE_MAIN(func) \
+            int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, \
+                               _In_ LPSTR lpCmdLine, _In_ int nShowCmd) \
+            { \
+                return func(get_win_command_line_args()); \
+            }
+
+    #endif // def DV_WIN32_CONSOLE
+
+#else // Linux
 
     #define DV_DEFINE_MAIN(func) \
         int main(int argc, char* argv[]) \
         { \
-            /* Позволяет выводить UTF-8 в консоль в Windows. В Linux консоль в кодировке UTF-8 по умолчанию */ \
-            std::setlocale(LC_CTYPE, "en_US.UTF-8"); \
+            std::vector<dvt::StrUtf8> args; \
+            args.reserve(argc); \
             \
-            return func(); \
+            for (int i = 0; i < argc; ++i) \
+                args.push_back(argv[i]); \
+            \
+            return func(args); \
         }
 
-#endif
+#endif // def _WIN32
