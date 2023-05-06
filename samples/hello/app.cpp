@@ -3,9 +3,19 @@
 
 #include "app.h"
 
+#include <iostream>
 
-App::App()
+
+App::App(const std::vector<StrUtf8>& args)
+    : Application(args)
 {
+    cout << "Командная строка: ";
+
+    for (const StrUtf8& arg : args)
+        cout << arg << " ";
+
+    cout << endl;
+
     log_path_ = "путь/к/логу";
 }
 

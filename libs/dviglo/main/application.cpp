@@ -16,7 +16,8 @@ using namespace std;
 namespace dviglo
 {
 
-Application::Application()
+Application::Application(const vector<StrUtf8>& args)
+    : args_(args)
 {
 }
 

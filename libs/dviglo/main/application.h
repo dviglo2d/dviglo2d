@@ -18,12 +18,15 @@ class DV_API Application
 private:
     SDL_Window* window_ = nullptr;
 
+    /// Аргументы командной строки
+    const std::vector<StrUtf8>& args_;
+
 protected:
     // Параметры движка, используемые при инициализации
 
     std::string log_path_;
 
-    Application();
+    Application(const std::vector<StrUtf8>& args);
     ~Application();
 
     virtual void start() = 0;

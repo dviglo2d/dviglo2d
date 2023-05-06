@@ -14,7 +14,7 @@ class App : public Application
     STest s_test_;
 
 public:
-    App();
+    App(const std::vector<StrUtf8>& args);
 
     entt::registry& ecs() { return ecs_; }
 

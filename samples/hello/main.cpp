@@ -5,20 +5,11 @@
 
 #include <dviglo/main/main.h>
 
-#include <iostream>
 
-
-i32 run(const vector<StrUtf8>& args)
+i32 app_main(const vector<StrUtf8>& args)
 {
-    cout << "Командная строка: ";
-
-    for (const StrUtf8& arg : args)
-        cout << arg << " ";
-
-    cout << endl;
-
-    unique_ptr<App> app = make_unique<App>();
+    unique_ptr<App> app = make_unique<App>(args);
     return app->run();
 }
 
-DV_DEFINE_MAIN(run);
+DV_DEFINE_MAIN(app_main);
