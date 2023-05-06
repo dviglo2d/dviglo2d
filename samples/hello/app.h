@@ -19,5 +19,5 @@ public:
     entt::registry& ecs() { return ecs_; }
 
     void start() override;
-    void update() override;
+    void update(u64 ms) override;
 };

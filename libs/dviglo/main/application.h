@@ -27,7 +27,7 @@ protected:
     ~Application();
 
     virtual void start() = 0;
-    virtual void update() = 0;
+    virtual void update(u64 ms) = 0;
 
 public:
     SDL_Window* window() const { return window_; }

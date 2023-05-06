@@ -51,6 +51,8 @@ i32 Application::run()
 
     bool should_exit = false;
 
+    u64 old_ticks = SDL_GetTicks();
+
     while (!should_exit)
     {
         SDL_PumpEvents();
@@ -66,7 +68,11 @@ i32 Application::run()
             }
         }
 
-        update();
+        u64 new_ticks = SDL_GetTicks();
+        u64 ms = new_ticks - old_ticks;
+        old_ticks = new_ticks;
+
+        update(ms);
 
         SDL_Delay(500);
     }

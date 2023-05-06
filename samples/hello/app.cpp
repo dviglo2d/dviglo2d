@@ -28,7 +28,7 @@ void App::start()
     ent2_counter.value = 100;
 }
 
-void App::update()
+void App::update(u64 ms)
 {
-    s_test_.update(ecs_);
+    s_test_.update(ecs_, ms);
 }
