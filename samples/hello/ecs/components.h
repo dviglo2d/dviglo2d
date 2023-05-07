@@ -11,7 +11,7 @@ using namespace std;
 
 struct CName
 {
-    string value;
+    StrUtf8 value;
 };
 
 struct CCounter
