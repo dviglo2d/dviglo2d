@@ -32,7 +32,7 @@ Application::Application(const vector<StrUtf8>& args)
             // Сразу же запоминаем следующий аргумент, если есть
             StrUtf8 value = i + 1 < args.size() ? args[i + 1] : StrUtf8();
 
-#ifdef DV_TESTING
+#ifdef DV_CTEST
             if (argument == "duration" && !value.empty())
             {
                 duration_ = stoull(value); // TODO: Тут может возникнуть исключение
@@ -78,7 +78,7 @@ i32 Application::run()
 
     while (!should_exit)
     {
-#if DV_TESTING
+#ifdef DV_CTEST
         // При CTest выходим через duration_ секунд после запуска приложения
         if (duration_ && SDL_GetTicks() > duration_ * 1000)
             should_exit = true;

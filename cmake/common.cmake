@@ -66,6 +66,7 @@ include(CMakeDependentOption)
 
 option(DV_SAMPLES "Примеры" TRUE)
 option(DV_SHARED "Динамическая версия (а не статическая)" FALSE)
+option(DV_CTEST "Поддержка CTest" FALSE)
 cmake_dependent_option(DV_STATIC_RUNTIME "Статическая линковка MSVC runtime" FALSE "MSVC" FALSE) # Всегда FALSE, если не VS
 cmake_dependent_option(DV_WIN32_CONSOLE "Использовать main(), а не WinMain()" FALSE "WIN32" FALSE) # Не на Windows всегда FALSE
 option(DV_ALL_WARNINGS "Все предупреждения компилятора" FALSE) # Влияет только на таргет dviglo
@@ -78,7 +79,7 @@ else()
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
 endif()
 
-if(DV_TESTING)
+if(DV_CTEST)
     enable_testing() # Должно быть в корневом CMakeLists.txt
 endif()
 

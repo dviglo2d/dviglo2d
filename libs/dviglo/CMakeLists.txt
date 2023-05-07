@@ -28,7 +28,7 @@ target_link_libraries(${TARGET_NAME} PUBLIC SDL3-static entt)
 
 # Опции, которые не требуют ничего, кроме создания дефайнов
 foreach(opt
-            DV_TESTING # enable_testing() вызывается в common.cmake
+            DV_CTEST # enable_testing() вызывается в common.cmake
             DV_WIN32_CONSOLE)
     if(${opt})
         target_compile_definitions(${TARGET_NAME} PUBLIC ${opt}=1)
