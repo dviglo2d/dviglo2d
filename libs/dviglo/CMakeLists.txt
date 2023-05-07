@@ -23,6 +23,11 @@ endif()
 # При компиляции библиотеки и при использовании библиотеки h-файлы отличаются
 target_compile_definitions(${TARGET_NAME} PRIVATE DV_IS_BUILDING=1)
 
+# Отключаем лишние предупрежедения
+if(MSVC)
+    target_compile_definitions(${TARGET_NAME} PRIVATE _CRT_SECURE_NO_WARNINGS=1)
+endif()
+
 # Подключаем библиотеки из папки third_party
 target_link_libraries(${TARGET_NAME} PUBLIC SDL3-static entt)
 
