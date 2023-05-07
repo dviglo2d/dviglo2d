@@ -76,7 +76,7 @@ inline u64 to_u64(const StrUtf8& str)
 {
     try
     {
-        return stoull(str);
+        return std::stoull(str);
     }
     catch (...)
     {
