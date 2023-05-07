@@ -28,4 +28,4 @@ dv_copy_shared_libs_to_bin_dir(${TARGET_NAME} "${dviglo_BINARY_DIR}/bin" copy_sh
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${source_files})
 
 # Добавляем приложение в список тестируемых
-add_test(NAME ${TARGET_NAME} COMMAND ${TARGET_NAME} -timeout 5)
+add_test(NAME ${TARGET_NAME} COMMAND ${TARGET_NAME} -duration 5)

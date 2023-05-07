@@ -1,4 +1,5 @@
 // Copyright (c) 2022-2023 the Dviglo project
+// Copyright (c) 2008-2023 the Urho3D project
 // License: MIT
 
 #include "application.h"
@@ -19,6 +20,27 @@ namespace dviglo
 Application::Application(const vector<StrUtf8>& args)
     : args_(args)
 {
+    // Первый аргумент - запускаемый файл, поэтому пропускаем
+    for (size_t i = 1; i < args.size(); ++i)
+    {
+        // Ищем аргумент, который начинается с '-'
+        if (args[i].length() > 1 && args[i][0] == '-')
+        {
+            // Убираем '-' в начале строки
+            StrUtf8 argument = args[i].substr(1);
+
+            // Сразу же запоминаем следующий аргумент, если есть
+            StrUtf8 value = i + 1 < args.size() ? args[i + 1] : StrUtf8();
+
+#ifdef DV_TESTING
+            if (argument == "duration" && !value.empty())
+            {
+                duration_ = stoull(value); // TODO: Тут может возникнуть исключение
+                ++i;
+            }
+#endif
+        }
+    }
 }
 
 Application::~Application()
@@ -57,8 +79,8 @@ i32 Application::run()
     while (!should_exit)
     {
 #if DV_TESTING
-        // При CTest выходим через 5 секунд после запуска приложения
-        if (SDL_GetTicks() > 5 * 1000)
+        // При CTest выходим через duration_ секунд после запуска приложения
+        if (duration_ && SDL_GetTicks() > duration_ * 1000)
             should_exit = true;
 #endif
 

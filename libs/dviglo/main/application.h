@@ -26,6 +26,14 @@ protected:
 
     std::string log_path_;
 
+#ifdef DV_TESTING
+    /// Через сколько секунд после запуска приложение автоматически закроется.
+    /// Используется во время CTest.
+    /// При значении 0 закрываться не будет.
+    /// Задаётся с помощью параметра -duration x
+    u64 duration_ = 0;
+#endif
+
     Application(const std::vector<StrUtf8>& args);
     ~Application();
 
