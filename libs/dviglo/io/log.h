@@ -9,6 +9,15 @@
 namespace dviglo
 {
 
+enum class LogLevel : u32
+{
+    debug = 0, // 0
+    info,      // 1
+    warning,   // 2
+    error,     // 3
+    none       // 4
+};
+
 class DV_API Log
 {
 private:
@@ -20,6 +29,28 @@ public:
 
     Log(StrViewUtf8 path);
     ~Log();
+
+    void write(LogLevel message_type, StrViewUtf8 message);
+
+    inline void write_debug(StrViewUtf8 message)
+    {
+        write(LogLevel::debug, message);
+    }
+
+    inline void write_info(StrViewUtf8 message)
+    {
+        write(LogLevel::info, message);
+    }
+
+    inline void write_warning(StrViewUtf8 message)
+    {
+        write(LogLevel::warning, message);
+    }
+
+    inline void write_error(StrViewUtf8 message)
+    {
+        write(LogLevel::error, message);
+    }
 };
 
 } // namespace dviglo

@@ -30,14 +30,36 @@ Log::Log(StrViewUtf8 path)
 
     log_ = this;
 
-    cout << '[' << time_to_str() << "] Конструктор лога: " << path << endl;
+    write_debug("Log constructed");
 }
 
 Log::~Log()
 {
     log_ = nullptr;
 
-    cout << '[' << time_to_str() << "] Деструктор лога" << endl;
+    write_debug("Log destructed");
+}
+
+static const StrUtf8& to_string(LogLevel level)
+{
+    static StrUtf8 strings[]{
+        "DEBUG",   // 0
+        "INFO",    // 1
+        "WARNING", // 2
+
+        // С восклицательными знаками, чтобы легче было заметить в консоли Linux среди кучи DEBUG
+        "!!ERROR"  // 3
+    };
+
+    return strings[(u32)level];
+}
+
+void Log::write(LogLevel message_type, StrViewUtf8 message)
+{
+    if (message_type == LogLevel::none)
+        return;
+
+    cout << '[' << time_to_str() << "] " << to_string(message_type) << ": " << message << "\n";
 }
 
 } // namespace dviglo
