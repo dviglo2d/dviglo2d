@@ -16,7 +16,7 @@ private:
     inline static Log* log_ = nullptr;
 
 public:
-    Log* get_instance() const { return log_; }
+    static Log* instance() { return log_; }
 
     Log(StrViewUtf8 path);
     ~Log();
