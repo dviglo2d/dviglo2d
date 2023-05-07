@@ -71,6 +71,19 @@ constexpr char to_upper(char ascii_c)
     return (ascii_c >= 'a' && ascii_c <= 'z') ? ascii_c - ('a' - 'A') : ascii_c;
 }
 
+/// Версия std::stoull(), которая не вызывает исключений
+inline u64 to_u64(const StrUtf8& str)
+{
+    try
+    {
+        return stoull(str);
+    }
+    catch (...)
+    {
+        return 0;
+    }
+}
+
 constexpr StrAscii replace_all(StrViewAscii str,
                                char old_ascii_c, char new_ascii_c,
                                bool case_sensitive = true)

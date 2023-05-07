@@ -35,7 +35,7 @@ Application::Application(const vector<StrUtf8>& args)
 #ifdef DV_CTEST
             if (argument == "duration" && !value.empty())
             {
-                duration_ = stoull(value); // TODO: Тут может возникнуть исключение
+                duration_ = to_u64(value);
                 ++i;
             }
 #endif
