@@ -7,8 +7,6 @@
 #include "../io/log.h"
 #include "../std_utils/scope_guard.h"
 
-#include <SDL.h>
-
 #include <memory>
 
 using namespace std;
@@ -51,6 +49,15 @@ Application::~Application()
     SDL_Quit();
 }
 
+void Application::on_key(const SDL_KeyboardEvent& event_data)
+{
+    if (event_data.type == SDL_EVENT_KEY_DOWN && event_data.repeat == false
+        && event_data.keysym.scancode == SDL_SCANCODE_ESCAPE)
+    {
+        should_exit_ = true;
+    }
+}
+
 i32 Application::run()
 {
     unique_ptr<Log> log = make_unique<Log>(log_path_);
@@ -72,16 +79,14 @@ i32 Application::run()
 
     start();
 
-    bool should_exit = false;
-
     u64 old_ticks = SDL_GetTicks();
 
-    while (!should_exit)
+    while (!should_exit_)
     {
 #ifdef DV_CTEST
         // При CTest выходим через duration_ секунд после запуска приложения
         if (duration_ && SDL_GetTicks() > duration_ * 1000)
-            should_exit = true;
+            should_exit_ = true;
 #endif
 
         SDL_PumpEvents();
@@ -92,7 +97,12 @@ i32 Application::run()
             switch (event.type)
             {
             case SDL_EVENT_QUIT:
-                should_exit = true;
+                should_exit_ = true;
+                break;
+
+            case SDL_EVENT_KEY_DOWN:
+            case SDL_EVENT_KEY_UP:
+                on_key(event.key);
                 break;
             }
         }

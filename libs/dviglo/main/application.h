@@ -6,9 +6,8 @@
 #include "../io/log.h"
 
 #include <entt/entt.hpp>
+#include <SDL.h>
 
-
-struct SDL_Window;
 
 namespace dviglo
 {
@@ -33,11 +32,16 @@ protected:
     u64 duration_ = 0;
 #endif
 
+    /// Пользователь желает прервать главный цикл
+    bool should_exit_ = false;
+
     Application(const std::vector<StrUtf8>& args);
     ~Application();
 
     virtual void start() = 0;
     virtual void update(u64 ms) = 0;
+
+    virtual void on_key(const SDL_KeyboardEvent& event_data);
 
 public:
     SDL_Window* window() const { return window_; }
