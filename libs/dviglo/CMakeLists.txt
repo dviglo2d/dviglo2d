@@ -29,7 +29,7 @@ if(MSVC)
 endif()
 
 # Подключаем библиотеки из папки third_party
-target_link_libraries(${TARGET_NAME} PUBLIC SDL3-static entt)
+target_link_libraries(${TARGET_NAME} PUBLIC SDL3-static stb entt)
 
 # Опции, которые не требуют ничего, кроме создания дефайнов
 foreach(opt
