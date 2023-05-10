@@ -39,6 +39,16 @@ void test_std_utils_str()
     }
 
     {
+        StrAscii str = "heLlo\r\n";
+        trim_end_chars(str, "\r\n");
+        assert(str == "heLlo");
+        trim_end_chars(str, "hLo");
+        assert(str == "heLl");
+        trim_end_chars(str, "Lleh");
+        assert(str.empty());
+    }
+
+    {
         const StrUtf8 str = "привет🍌";
         size_t offset = 0;
         // https://en.cppreference.com/w/cpp/language/character_literal

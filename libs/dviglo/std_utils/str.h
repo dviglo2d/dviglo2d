@@ -108,6 +108,25 @@ constexpr StrAscii replace_all(StrViewAscii str,
     return ret;
 }
 
+/// Укорачивает сроку, если в конце неё находятся любые символы из набора
+constexpr void trim_end_chars(StrAscii& str, StrViewAscii chars = " ")
+{
+    size_t new_length = str.length();
+
+    while (new_length > 0)
+    {
+        char c = str.c_str()[new_length - 1];
+
+        if (!contains(chars, c))
+            break;
+
+        --new_length;
+    }
+
+    if (new_length < str.length())
+        str.resize(new_length);
+}
+
 constexpr StrUtf8 join(const std::vector<StrUtf8>& values, const StrUtf8& separator)
 {
     StrUtf8 ret;
