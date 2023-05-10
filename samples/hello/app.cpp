@@ -3,6 +3,8 @@
 
 #include "app.h"
 
+#include <GL/glew.h>
+
 #include <iostream>
 
 
@@ -36,4 +38,10 @@ void App::start()
 void App::update(u64 ms)
 {
     s_test_.update(ecs_, ms);
+}
+
+void App::draw()
+{
+    glClearColor(1.0f, 0.3f, 0.3f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
 }

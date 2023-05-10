@@ -20,4 +20,5 @@ public:
 
     void start() override;
     void update(u64 ms) override;
+    void draw() override;
 };

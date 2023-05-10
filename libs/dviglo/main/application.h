@@ -16,6 +16,7 @@ class DV_API Application
 {
 private:
     SDL_Window* window_ = nullptr;
+    SDL_GLContext gl_context_ = nullptr;
 
     /// Аргументы командной строки
     const std::vector<StrUtf8>& args_;
@@ -40,6 +41,7 @@ protected:
 
     virtual void start() = 0;
     virtual void update(u64 ms) = 0;
+    virtual void draw() = 0;
 
     virtual void on_key(const SDL_KeyboardEvent& event_data);
 

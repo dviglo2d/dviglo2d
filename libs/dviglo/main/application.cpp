@@ -7,6 +7,8 @@
 #include "../io/log.h"
 #include "../std_utils/scope_guard.h"
 
+#include <GL/glew.h>
+
 #include <memory>
 
 using namespace std;
@@ -43,6 +45,9 @@ Application::Application(const vector<StrUtf8>& args)
 
 Application::~Application()
 {
+    if (gl_context_)
+        SDL_GL_DeleteContext(gl_context_);
+
     if (window_)
         SDL_DestroyWindow(window_);
 
@@ -68,13 +73,29 @@ i32 Application::run()
     if (SDL_InitSubSystem(SDL_INIT_VIDEO) < 0)
         return 1;
 
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+
+    SDL_WindowFlags flags = SDL_WINDOW_OPENGL;
+
     window_ = SDL_CreateWindowWithPosition(
         "Игра",
         SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 800, 600,
-        0
+        flags
     );
 
     if (!window_)
+        return 1;
+
+    gl_context_ = SDL_GL_CreateContext(window_);
+
+    if (!gl_context_)
+        return 1;
+
+    GLenum glew_result = glewInit();
+
+    if (glew_result != GLEW_OK)
         return 1;
 
     start();
@@ -112,6 +133,8 @@ i32 Application::run()
         old_ticks = new_ticks;
 
         update(ms);
+        draw();
+        SDL_GL_SwapWindow(window_);
 
         SDL_Delay(500);
     }
