@@ -4,6 +4,7 @@
 
 #pragma once
 
+
 #ifdef DV_SHARED // Динамическая версия движка
 
     #ifdef _WIN32 // Visual Studio или MinGW
