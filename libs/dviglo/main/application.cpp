@@ -87,17 +87,27 @@ i32 Application::run()
     );
 
     if (!window_)
+    {
+        DV_LOG->write_error(format("Application::run(): !window_ | {}", SDL_GetError()));
         return 1;
+    }
 
     gl_context_ = SDL_GL_CreateContext(window_);
 
     if (!gl_context_)
+    {
+        DV_LOG->write_error(format("Application::run(): !gl_context_ | {}", SDL_GetError()));
         return 1;
+    }
 
     GLenum glew_result = glewInit();
 
     if (glew_result != GLEW_OK)
+    {
+        DV_LOG->write_error(format("Application::run(): glew_result != GLEW_OK | {}",
+                            reinterpret_cast<const char*>(glewGetErrorString(glew_result))));
         return 1;
+    }
 
     DV_LOG->write_info(format("GL_VENDOR: {}", (const char*)glGetString(GL_VENDOR)));
     DV_LOG->write_info(format("GL_RENDERER: {}", (const char*)glGetString(GL_RENDERER)));
