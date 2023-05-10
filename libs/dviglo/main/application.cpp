@@ -7,11 +7,12 @@
 #include "../io/log.h"
 #include "../std_utils/scope_guard.h"
 
+#include <fmt/format.h>
 #include <GL/glew.h>
 
-#include <format>
 #include <memory>
 
+using namespace fmt;
 using namespace std;
 
 
