@@ -2,17 +2,17 @@
 # License: MIT
 
 # Название таргета
-set(TARGET_NAME entt)
+set(target_name entt)
 
 # Создаём список файлов
 file(GLOB_RECURSE source_files src/*.h src/*.hpp)
 
 # Создаём интерфейсную библиотеку. Интерфейсная библиотека не компилируется,
 # так как состоит только из включаемых файлов
-add_library(${TARGET_NAME} INTERFACE ${source_files})
+add_library(${target_name} INTERFACE ${source_files})
 
 # Делаем заголовочные файлы доступными таргетам, которые используют текущую библиотеку
-target_include_directories(${TARGET_NAME} INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_include_directories(${target_name} INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
 # Заставляем VS отображать дерево каталогов
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/src FILES ${source_files})
