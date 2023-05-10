@@ -53,4 +53,6 @@ public:
     }
 };
 
+#define DV_LOG (dviglo::Log::instance())
+
 } // namespace dviglo

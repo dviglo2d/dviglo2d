@@ -9,6 +9,7 @@
 
 #include <GL/glew.h>
 
+#include <format>
 #include <memory>
 
 using namespace std;
@@ -97,6 +98,10 @@ i32 Application::run()
 
     if (glew_result != GLEW_OK)
         return 1;
+
+    DV_LOG->write_info(format("GL_VENDOR: {}", (const char*)glGetString(GL_VENDOR)));
+    DV_LOG->write_info(format("GL_RENDERER: {}", (const char*)glGetString(GL_RENDERER)));
+    DV_LOG->write_info(format("GL_VERSION: {}", (const char*)glGetString(GL_VERSION)));
 
     start();
 
