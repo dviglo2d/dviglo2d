@@ -32,22 +32,22 @@ public:
 
     void write(LogLevel message_type, StrViewUtf8 message);
 
-    inline void write_debug(StrViewUtf8 message)
+    void write_debug(StrViewUtf8 message)
     {
         write(LogLevel::debug, message);
     }
 
-    inline void write_info(StrViewUtf8 message)
+    void write_info(StrViewUtf8 message)
     {
         write(LogLevel::info, message);
     }
 
-    inline void write_warning(StrViewUtf8 message)
+    void write_warning(StrViewUtf8 message)
     {
         write(LogLevel::warning, message);
     }
 
-    inline void write_error(StrViewUtf8 message)
+    void write_error(StrViewUtf8 message)
     {
         write(LogLevel::error, message);
     }
