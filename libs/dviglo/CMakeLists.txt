@@ -44,6 +44,10 @@ if(DV_ALL_WARNINGS)
     # Выводим больше предупреждений
     if(MSVC)
         target_compile_options(${target_name} PRIVATE /W4)
+
+        # Отключаем warning C4251, который возникает в dll-версии движка,
+        # когда std::string используется как тип для полей классов
+        target_compile_options(${target_name} PRIVATE /wd4251)
     else()
         target_compile_options(${target_name} PRIVATE -Wall -Wextra -Wpedantic)
     endif()
