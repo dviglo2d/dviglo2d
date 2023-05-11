@@ -8,11 +8,15 @@
 
 #include "path.h"
 
+#include <memory>
+
 #ifdef _WIN32
     #include <shlobj.h> // SHGetKnownFolderPath()
 #else // Linux
     #include <sys/stat.h> // mkdir(), stat()
 #endif
+
+using namespace std;
 
 
 namespace dviglo
@@ -95,6 +99,69 @@ StrUtf8 get_pref_path(StrViewUtf8 org, StrViewUtf8 app)
         return StrUtf8();
 
     return ret;
+}
+
+StrUtf8 get_base_path()
+{
+#ifdef _WIN32
+    DWORD buffer_size = 128;
+
+    while (true)
+    {
+        unique_ptr<wchar_t[]> buffer = make_unique<wchar_t[]>(buffer_size);
+        DWORD len = GetModuleFileNameW(nullptr, buffer.get(), buffer_size);
+
+        if (!len) // Возникла ошибка
+            return StrUtf8();
+
+        if (len == buffer_size)
+        {
+            // Буфер слишком маленький. Удваиваем его размер и пробуем ещё раз
+            buffer_size *= 2;
+            continue;
+        }
+
+        // Ищем последний `\\`, отбрасывая то, что после него
+        while (len > 0)
+        {
+            if (buffer[len - 1] == '\\')
+                break;
+
+            --len;
+        }
+
+        return to_internal(from_wstring(wstring_view(buffer.get(), len)));
+    }
+#else // Linux
+    size_t buffer_size = 128;
+
+    while (true)
+    {
+        unique_ptr<char[]> buffer = make_unique<char[]>(buffer_size);
+        ssize_t len = readlink("/proc/self/exe", buffer.get(), buffer_size);
+
+        if (len <= 0) // Возникла ошибка или функция вернула пустую строку
+            return StrUtf8();
+
+        if (len == buffer_size)
+        {
+            // Буфер слишком маленький. Удваиваем его размер и пробуем ещё раз
+            buffer_size *= 2;
+            continue;
+        }
+
+        // Ищем последний `/`, отбрасывая то, что после него
+        while (len > 0)
+        {
+            if (buffer[len - 1] == '/')
+                break;
+
+            --len;
+        }
+
+        return StrUtf8(buffer.get(), len);
+    }
+#endif // def _WIN32
 }
 
 } // namespace dviglo
