@@ -163,7 +163,7 @@ jobs:
 
         if (( $EXIT_CODE != 0 )) 
         then
-          echo "$(cat $APPDATA/dviglo/logs/CrowdNavigation.log)" # Показываем содержимое лога
+          echo "$(cat D:/a/dviglo2d/dviglo2d/build/Testing/Temporary/LastTest.log)" # Показываем содержимое лога
           exit $EXIT_CODE
         fi
 
@@ -262,6 +262,6 @@ jobs:
 
         if (( $EXIT_CODE != 0 )) 
         then
-          echo "$(cat ~/.local/share/dviglo/logs/CrowdNavigation.log)"
+          echo "$(cat /home/runner/work/dviglo2d/dviglo2d/engine_build/Testing/Temporary/LastTest.log)"
           exit $EXIT_CODE
         fi

@@ -28,8 +28,20 @@ if(MSVC)
     target_compile_definitions(${target_name} PRIVATE _CRT_SECURE_NO_WARNINGS=1)
 endif()
 
-# Подключаем библиотеки из папки third_party
-target_link_libraries(${target_name} PUBLIC SDL3-static glew stb fmt entt)
+# Сторонние библиотеки, которые подключаются к движку, к приложениям подключать нельзя
+
+# Подключаем glad к движку
+target_link_libraries(${target_name} PRIVATE glad)
+
+# Предоставляем приложениям доступ к h-файлам glad
+if(DV_SHARED)
+    target_compile_definitions(${target_name} INTERFACE GLAD_API_CALL_EXPORT)
+endif()
+get_target_property(glad_include_dirs glad INCLUDE_DIRECTORIES)
+target_include_directories(${target_name} INTERFACE ${glad_include_dirs})
+
+# Подключаем остальные библиотеки из папки third_party (TODO: Сделать PRIVATE)
+target_link_libraries(${target_name} PUBLIC SDL3-static stb fmt entt)
 
 # Опции, которые не требуют ничего, кроме создания дефайнов
 foreach(opt
@@ -53,7 +65,7 @@ if(DV_ALL_WARNINGS)
     endif()
 endif()
 
-# Делаем заголовочные файлы доступными таргетам, которые используют текущую библиотеку
+# Делаем h-файлы движка доступными приложениям
 target_include_directories(${target_name} INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/..)
 
 # VS определяет дефайн _DEBUG в отладочной версии. Определяем этот дефайн также в GCC и MinGW.

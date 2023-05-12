@@ -8,7 +8,7 @@
 #include "../std_utils/scope_guard.h"
 
 #include <fmt/format.h>
-#include <GL/glew.h>
+#include <glad/gl.h>
 
 #include <memory>
 
@@ -101,12 +101,11 @@ i32 Application::run()
         return 1;
     }
 
-    GLenum glew_result = glewInit();
+    i32 gl_version = gladLoadGL((GLADloadfunc)SDL_GL_GetProcAddress);
 
-    if (glew_result != GLEW_OK)
+    if (!gl_version)
     {
-        DV_LOG->write_error(format("Application::run(): glew_result != GLEW_OK | {}",
-                            reinterpret_cast<const char*>(glewGetErrorString(glew_result))));
+        DV_LOG->write_error("Application::run(): !gl_version");
         return 1;
     }
 
