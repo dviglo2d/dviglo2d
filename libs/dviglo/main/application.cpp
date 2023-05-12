@@ -101,6 +101,8 @@ i32 Application::run()
         return 1;
     }
 
+    // Версия может отличаться от 30002 (например имеет значение 40002 при запуске
+    // через Mesa на сервере ГитХаба)
     i32 gl_version = gladLoadGL((GLADloadfunc)SDL_GL_GetProcAddress);
 
     if (!gl_version)
