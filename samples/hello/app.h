@@ -5,16 +5,20 @@
 
 #include "ecs/systems/s_test.h"
 
+#include <dviglo/gl_utils/shader_program.h>
 #include <dviglo/main/application.h>
+
+using namespace std;
 
 
 class App : public Application
 {
     entt::registry ecs_;
     STest s_test_;
+    unique_ptr<ShaderProgram> basic_shader_;
 
 public:
-    App(const std::vector<StrUtf8>& args);
+    App(const vector<StrUtf8>& args);
 
     entt::registry& ecs() { return ecs_; }
 
