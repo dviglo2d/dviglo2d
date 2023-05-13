@@ -76,7 +76,7 @@ i32 Application::run()
         return 1;
 
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 
     SDL_WindowFlags flags = SDL_WINDOW_OPENGL;
@@ -101,7 +101,7 @@ i32 Application::run()
         return 1;
     }
 
-    // Версия может отличаться от 30002 (например имеет значение 40002 при запуске
+    // Версия может отличаться от 30003 (например имеет значение 40002 при запуске
     // через Mesa на сервере ГитХаба)
     i32 gl_version = gladLoadGL((GLADloadfunc)SDL_GL_GetProcAddress);
 
