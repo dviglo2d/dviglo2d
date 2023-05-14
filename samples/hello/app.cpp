@@ -60,7 +60,7 @@ void App::start()
     };
 
     quad2_vertices_ = make_unique<VertexBuffer>(4, quad2_vertices, sizeof(quad2_vertices));
-    quad2_indices_ = make_unique<IndexBuffer>(6, quad2_indices, sizeof(quad2_indices));
+    quad2_indices_ = make_unique<IndexBuffer>(6, GL_UNSIGNED_SHORT, quad2_indices, sizeof(quad2_indices));
 
     basic_shader_ = make_unique<ShaderProgram>(base_path + "data/shaders/basic.vert", base_path + "data/shaders/basic.frag");
 
@@ -101,5 +101,5 @@ void App::draw()
 
     quad2_vertices_->bind();
     quad2_indices_->bind();
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
+    glDrawElements(GL_TRIANGLES, quad2_indices_->num_indices(), quad2_indices_->type(), nullptr);
 }

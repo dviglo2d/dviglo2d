@@ -18,10 +18,11 @@ private:
     GLuint gpu_object_name_ = 0;
 
     GLsizei num_indices_;
+    GLenum type_;
 
 public:
     IndexBuffer();
-    IndexBuffer(GLsizei num_indices, const void* data, GLsizeiptr data_size);
+    IndexBuffer(GLsizei num_indices, GLenum type, const void* data, GLsizeiptr data_size);
 
     ~IndexBuffer()
     {
@@ -30,6 +31,7 @@ public:
     }
 
     GLsizei num_indices() const { return num_indices_; }
+    GLenum type() const { return type_; }
 
     void bind();
 };
