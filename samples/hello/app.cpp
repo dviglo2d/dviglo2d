@@ -6,8 +6,11 @@
 #include <dviglo/io/fs_base.h>
 
 #include <glad/gl.h>
+#include <glm/glm.hpp>
 
 #include <iostream>
+
+using namespace glm;
 
 
 App::App(const std::vector<StrUtf8>& args)
@@ -27,10 +30,10 @@ void App::start()
     glGenVertexArrays(1, &vao);
     glBindVertexArray(vao);
 
-    float triangle_vertices[] = {
-        -0.5f, -0.5f, 0.f,
-         0.5f, -0.5f, 0.f,
-         0.0f,  0.5f, 0.f
+    vec3 triangle_vertices[] = {
+        {-0.5f, -0.5f, 0.f},
+        { 0.5f, -0.5f, 0.f},
+        { 0.0f,  0.5f, 0.f},
     };
 
     triangle_ = make_unique<VertexBuffer>(3, triangle_vertices, sizeof(triangle_vertices));
