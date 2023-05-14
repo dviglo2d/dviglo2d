@@ -27,21 +27,27 @@ void App::start()
     glGenVertexArrays(1, &vao);
     glBindVertexArray(vao);
 
-    float vertices[] = {
-        -0.5f, -0.5f, 0.0f,
-         0.5f, -0.5f, 0.0f,
-         0.0f,  0.5f, 0.0f
+    float triangle_vertices[] = {
+        -0.5f, -0.5f, 0.f,
+         0.5f, -0.5f, 0.f,
+         0.0f,  0.5f, 0.f
     };
 
-    GLuint vbo;
-    glGenBuffers(1, &vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
+    triangle_ = make_unique<VertexBuffer>(3, triangle_vertices, sizeof(triangle_vertices));
+    
+    float quad_vertices[] = {
+        -0.9f, -0.9f, 0.f,
+        -0.4f, -0.9f, 0.f,
+        -0.4f, -0.4f, 0.f,
+
+        -0.4f, -0.4f, 0.f,
+        -0.9f, -0.4f, 0.f,
+        -0.9f, -0.9f, 0.f
+    };
+
+    quad_ = make_unique<VertexBuffer>(6, quad_vertices, sizeof(quad_vertices));
 
     basic_shader_ = make_unique<ShaderProgram>(base_path + "data/shaders/basic.vert", base_path + "data/shaders/basic.frag");
-    basic_shader_->use();
 
     entt::entity ent1 = ecs_.create();
 
@@ -69,5 +75,12 @@ void App::draw()
 {
     glClearColor(1.0f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
-    glDrawArrays(GL_TRIANGLES, 0, 3);
+
+    basic_shader_->use();
+
+    triangle_->bind();
+    glDrawArrays(GL_TRIANGLES, 0, triangle_->num_vertices());
+
+    quad_->bind();
+    glDrawArrays(GL_TRIANGLES, 0, quad_->num_vertices());
 }

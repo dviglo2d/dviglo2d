@@ -6,6 +6,7 @@
 #include "ecs/systems/s_test.h"
 
 #include <dviglo/gl_utils/shader_program.h>
+#include <dviglo/gl_utils/vertex_buffer.h>
 #include <dviglo/main/application.h>
 
 using namespace std;
@@ -15,6 +16,8 @@ class App : public Application
 {
     entt::registry ecs_;
     STest s_test_;
+    unique_ptr<VertexBuffer> triangle_;
+    unique_ptr<VertexBuffer> quad_;
     unique_ptr<ShaderProgram> basic_shader_;
 
 public:
