@@ -47,6 +47,21 @@ void App::start()
 
     quad_ = make_unique<VertexBuffer>(6, quad_vertices, sizeof(quad_vertices));
 
+    float quad2_vertices[] = {
+        0.4f, 0.4f, 0.f, // Лево низ
+        0.9f, 0.4f, 0.f, // Право низ
+        0.9f, 0.9f, 0.f, // Право верх
+        0.4f, 0.9f, 0.f, // Лево верх
+    };
+
+    u16 quad2_indices[] = {
+        0, 1, 2,
+        2, 3, 0,
+    };
+
+    quad2_vertices_ = make_unique<VertexBuffer>(4, quad2_vertices, sizeof(quad2_vertices));
+    quad2_indices_ = make_unique<IndexBuffer>(6, quad2_indices, sizeof(quad2_indices));
+
     basic_shader_ = make_unique<ShaderProgram>(base_path + "data/shaders/basic.vert", base_path + "data/shaders/basic.frag");
 
     entt::entity ent1 = ecs_.create();
@@ -83,4 +98,8 @@ void App::draw()
 
     quad_->bind();
     glDrawArrays(GL_TRIANGLES, 0, quad_->num_vertices());
+
+    quad2_vertices_->bind();
+    quad2_indices_->bind();
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
 }

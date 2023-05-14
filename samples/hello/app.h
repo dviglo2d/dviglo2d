@@ -5,6 +5,7 @@
 
 #include "ecs/systems/s_test.h"
 
+#include <dviglo/gl_utils/index_buffer.h>
 #include <dviglo/gl_utils/shader_program.h>
 #include <dviglo/gl_utils/vertex_buffer.h>
 #include <dviglo/main/application.h>
@@ -16,9 +17,11 @@ class App : public Application
 {
     entt::registry ecs_;
     STest s_test_;
+    unique_ptr<ShaderProgram> basic_shader_;
     unique_ptr<VertexBuffer> triangle_;
     unique_ptr<VertexBuffer> quad_;
-    unique_ptr<ShaderProgram> basic_shader_;
+    unique_ptr<VertexBuffer> quad2_vertices_;
+    unique_ptr<IndexBuffer> quad2_indices_;
 
 public:
     App(const vector<StrUtf8>& args);
