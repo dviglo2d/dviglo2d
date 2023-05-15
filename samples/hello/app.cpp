@@ -96,12 +96,15 @@ void App::draw()
 
     basic_shader_->use();
 
+    basic_shader_->set("u_color", vec4(1.f, 0.f, 0.f, 1.f));
     triangle_->bind();
     glDrawArrays(GL_TRIANGLES, 0, triangle_->num_vertices());
 
+    basic_shader_->set("u_color", vec4(0.f, 1.f, 0.f, 1.f));
     quad_->bind();
     glDrawArrays(GL_TRIANGLES, 0, quad_->num_vertices());
 
+    basic_shader_->set("u_color", vec4(0.f, 0.f, 10.f, 1.f));
     quad2_vertices_->bind();
     quad2_indices_->bind();
     glDrawElements(GL_TRIANGLES, quad2_indices_->num_indices(), quad2_indices_->type(), nullptr);

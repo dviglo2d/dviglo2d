@@ -6,6 +6,7 @@
 #include "../std_utils/str.h"
 
 #include <glad/gl.h>
+#include <glm/glm.hpp>
 
 
 namespace dviglo
@@ -41,6 +42,12 @@ public:
     void use() const
     {
         glUseProgram(gpu_object_name_);
+    }
+
+    void set(const StrAscii& name, const glm::vec4& value) const
+    {
+        GLint location = glGetUniformLocation(gpu_object_name_, name.c_str());
+        glUniform4fv(location, 1, &value[0]);
     }
 };
 
