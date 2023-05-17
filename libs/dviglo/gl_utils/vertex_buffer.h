@@ -4,6 +4,7 @@
 #pragma once
 
 #include "../common/config.h"
+#include "../std_utils/flags.h"
 
 #include <glad/gl.h>
 
@@ -11,25 +12,29 @@
 namespace dviglo
 {
 
+enum class VertexAttributes
+{
+    none     = 0,
+    position = 1 << 0,
+    color    = 1 << 1, // 0xAABBGGRR
+    uv       = 1 << 2,
+};
+DV_FLAGS(VertexAttributes);
+
+
 class DV_API VertexBuffer
 {
 private:
-    /// Идентификатор объекта OpenGL
-    GLuint gpu_object_name_ = 0;
-
-    /// Число вершин
+    GLuint vao_;
+    GLuint vbo_;
     GLsizei num_vertices_;
+    VertexAttributes vertex_attributes_;
 
 public:
     VertexBuffer();
+    VertexBuffer(GLsizei num_vertices, VertexAttributes vertex_attributes, const void* data);
 
-    VertexBuffer(GLsizei num_vertices, const void* data, GLsizeiptr data_size);
-
-    ~VertexBuffer()
-    {
-        if (gpu_object_name_)
-            glDeleteBuffers(1, &gpu_object_name_);
-    }
+    ~VertexBuffer();
 
     // Запрещаем копировать объект, так как если в одной из копий будет вызван деструктор,
     // все другие объекты будут хранить уничтоженный gpu_object_name_
@@ -42,6 +47,8 @@ public:
 
     GLsizei num_vertices() const { return num_vertices_; }
 
+    void set_data(GLsizei num_vertices, VertexAttributes vertex_attributes, const void* data);
+    void release();
     void bind();
 };
 

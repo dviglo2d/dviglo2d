@@ -21,51 +21,62 @@ App::App(const std::vector<StrUtf8>& args)
     log_path_ = "путь/к/логу";
 }
 
+struct Vertex
+{
+    vec2 pos;
+    u32 color;
+    vec2 uv;
+};
+
 void App::start()
 {
     StrUtf8 base_path = get_base_path();
     cout << "Папка программы: " << base_path << endl;
 
-    GLuint vao;
-    glGenVertexArrays(1, &vao);
-    glBindVertexArray(vao);
-
-    vec3 triangle_vertices[] = {
-        {-0.5f, -0.5f, 0.f},
-        { 0.5f, -0.5f, 0.f},
-        { 0.0f,  0.5f, 0.f},
+    vec2 triangle_vertices[] = {
+        {-0.5f, -0.5f},
+        { 0.5f, -0.5f},
+        { 0.0f,  0.5f},
     };
 
-    triangle_ = make_unique<VertexBuffer>(3, triangle_vertices, sizeof(triangle_vertices));
-    
+    triangle_ = make_unique<VertexBuffer>(3, VertexAttributes::position, triangle_vertices);
+
     float quad_vertices[] = {
-        -0.9f, -0.9f, 0.f,
-        -0.4f, -0.9f, 0.f,
-        -0.4f, -0.4f, 0.f,
-
-        -0.4f, -0.4f, 0.f,
-        -0.9f, -0.4f, 0.f,
-        -0.9f, -0.9f, 0.f
+        0.4f, 0.4f, // Лево низ
+        0.9f, 0.4f, // Право низ
+        0.9f, 0.9f, // Право верх
+        0.4f, 0.9f, // Лево верх
     };
 
-    quad_ = make_unique<VertexBuffer>(6, quad_vertices, sizeof(quad_vertices));
-
-    float quad2_vertices[] = {
-        0.4f, 0.4f, 0.f, // Лево низ
-        0.9f, 0.4f, 0.f, // Право низ
-        0.9f, 0.9f, 0.f, // Право верх
-        0.4f, 0.9f, 0.f, // Лево верх
-    };
-
-    u16 quad2_indices[] = {
+    u16 quad_indices[] = {
         0, 1, 2,
         2, 3, 0,
     };
 
-    quad2_vertices_ = make_unique<VertexBuffer>(4, quad2_vertices, sizeof(quad2_vertices));
-    quad2_indices_ = make_unique<IndexBuffer>(6, GL_UNSIGNED_SHORT, quad2_indices, sizeof(quad2_indices));
+    quad_vertices_ = make_unique<VertexBuffer>(4, VertexAttributes::position, quad_vertices);
+    quad_indices_ = make_unique<IndexBuffer>(6, GL_UNSIGNED_SHORT, quad_indices, sizeof(quad_indices));
 
     basic_shader_ = make_unique<ShaderProgram>(base_path + "data/shaders/basic.vert", base_path + "data/shaders/basic.frag");
+
+    Vertex textured_quad_vertices[] = {
+        {{-0.9f, 0.4f}, 0xFF0000FF, {0.f, 1.f}}, // Лево низ
+        {{-0.4f, 0.4f}, 0xFFFFFFFF, {1.f, 1.f}}, // Право низ
+        {{-0.4f, 0.9f}, 0xFFFF0000, {1.f, 0.f}}, // Право верх
+        {{-0.9f, 0.9f}, 0xFF00FF00, {0.f, 0.f}}, // Лево верх
+    };
+
+    u32 textured_quad_indices[] = {
+        0, 1, 2,
+        2, 3, 0,
+    };
+
+    textured_quad_vertices_ = make_unique<VertexBuffer>(4,
+        VertexAttributes::position | VertexAttributes::color | VertexAttributes::uv,
+        textured_quad_vertices);
+
+    textured_quad_indices_ = make_unique<IndexBuffer>(6, GL_UNSIGNED_INT, textured_quad_indices, sizeof(textured_quad_indices));
+    textured_shader_ = make_unique<ShaderProgram>(base_path + "data/shaders/textured.vert", base_path + "data/shaders/textured.frag");
+    texture_ = make_unique<Texture>(base_path + "data/textures/tile128.png");
 
     entt::entity ent1 = ecs_.create();
 
@@ -100,12 +111,15 @@ void App::draw()
     triangle_->bind();
     glDrawArrays(GL_TRIANGLES, 0, triangle_->num_vertices());
 
-    basic_shader_->set("u_color", vec4(0.f, 1.f, 0.f, 1.f));
-    quad_->bind();
-    glDrawArrays(GL_TRIANGLES, 0, quad_->num_vertices());
+    basic_shader_->set("u_color", vec4(0.f, 1.f, 1.f, 1.f));
+    quad_vertices_->bind();
+    quad_indices_->bind();
+    glDrawElements(GL_TRIANGLES, quad_indices_->num_indices(), quad_indices_->type(), nullptr);
 
-    basic_shader_->set("u_color", vec4(0.f, 0.f, 10.f, 1.f));
-    quad2_vertices_->bind();
-    quad2_indices_->bind();
-    glDrawElements(GL_TRIANGLES, quad2_indices_->num_indices(), quad2_indices_->type(), nullptr);
+    textured_shader_->use();
+    glActiveTexture(GL_TEXTURE0);
+    texture_->bind();
+    textured_quad_vertices_->bind();
+    textured_quad_indices_->bind();
+    glDrawElements(GL_TRIANGLES, textured_quad_indices_->num_indices(), textured_quad_indices_->type(), nullptr);
 }
