@@ -54,7 +54,7 @@ void App::start()
     };
 
     quad_vertices_ = make_unique<VertexBuffer>(4, VertexAttributes::position, BufferUsage::static_draw, quad_vertices);
-    quad_indices_ = make_unique<IndexBuffer>(6, GL_UNSIGNED_SHORT, BufferUsage::static_draw, quad_indices);
+    quad_indices_ = make_unique<IndexBuffer>(6, IndexType::u16, BufferUsage::static_draw, quad_indices);
 
     basic_shader_ = make_unique<ShaderProgram>(base_path + "data/shaders/basic.vert", base_path + "data/shaders/basic.frag");
 
@@ -74,7 +74,7 @@ void App::start()
         VertexAttributes::position | VertexAttributes::color | VertexAttributes::uv,
         BufferUsage::static_draw, textured_quad_vertices);
 
-    textured_quad_indices_ = make_unique<IndexBuffer>(6, GL_UNSIGNED_INT, BufferUsage::static_draw, textured_quad_indices);
+    textured_quad_indices_ = make_unique<IndexBuffer>(6, IndexType::u32, BufferUsage::static_draw, textured_quad_indices);
     textured_shader_ = make_unique<ShaderProgram>(base_path + "data/shaders/textured.vert", base_path + "data/shaders/textured.frag");
     texture_ = make_unique<Texture>(base_path + "data/textures/tile128.png");
 

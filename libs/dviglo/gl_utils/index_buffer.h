@@ -9,6 +9,13 @@
 namespace dviglo
 {
 
+enum class IndexType : GLenum
+{
+    u16 = GL_UNSIGNED_SHORT,
+    u32 = GL_UNSIGNED_INT,
+};
+
+
 class DV_API IndexBuffer
 {
 private:
@@ -20,7 +27,7 @@ private:
 
 public:
     IndexBuffer();
-    IndexBuffer(GLsizei num_indices, GLenum type, BufferUsage usage, const void* data);
+    IndexBuffer(GLsizei num_indices, IndexType type, BufferUsage usage, const void* data);
 
     ~IndexBuffer()
     {
