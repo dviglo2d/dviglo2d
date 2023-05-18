@@ -14,9 +14,9 @@ VertexBuffer::VertexBuffer()
     release();
 }
 
-VertexBuffer::VertexBuffer(GLsizei num_vertices, VertexAttributes vertex_attributes, const void* data)
+VertexBuffer::VertexBuffer(GLsizei num_vertices, VertexAttributes vertex_attributes, BufferUsage usage, const void* data)
 {
-    set_data(num_vertices, vertex_attributes, data);
+    set_data(num_vertices, vertex_attributes, usage, data);
 }
 
 VertexBuffer::~VertexBuffer()
@@ -24,7 +24,7 @@ VertexBuffer::~VertexBuffer()
     release();
 }
 
-void VertexBuffer::set_data(GLsizei num_vertices, VertexAttributes vertex_attributes, const void* data)
+void VertexBuffer::set_data(GLsizei num_vertices, VertexAttributes vertex_attributes, BufferUsage usage, const void* data)
 {
     release();
 
@@ -49,7 +49,7 @@ void VertexBuffer::set_data(GLsizei num_vertices, VertexAttributes vertex_attrib
 
     glGenBuffers(1, &vbo_);
     glBindBuffer(GL_ARRAY_BUFFER, vbo_);
-    glBufferData(GL_ARRAY_BUFFER, data_size, data, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, data_size, data, (GLenum)usage);
 
     GLuint attribute_index = 0;
     size_t attribute_offset = 0; // Смещение до атрибута вершины от начала вершины

@@ -3,9 +3,7 @@
 
 #pragma once
 
-#include "../common/config.h"
-
-#include <glad/gl.h>
+#include "gl_common.h"
 
 
 namespace dviglo
@@ -22,7 +20,7 @@ private:
 
 public:
     IndexBuffer();
-    IndexBuffer(GLsizei num_indices, GLenum type, const void* data);
+    IndexBuffer(GLsizei num_indices, GLenum type, BufferUsage usage, const void* data);
 
     ~IndexBuffer()
     {

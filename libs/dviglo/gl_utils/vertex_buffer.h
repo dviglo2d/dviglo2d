@@ -3,10 +3,9 @@
 
 #pragma once
 
-#include "../common/config.h"
-#include "../std_utils/flags.h"
+#include "gl_common.h"
 
-#include <glad/gl.h>
+#include "../std_utils/flags.h"
 
 
 namespace dviglo
@@ -32,7 +31,7 @@ private:
 
 public:
     VertexBuffer();
-    VertexBuffer(GLsizei num_vertices, VertexAttributes vertex_attributes, const void* data);
+    VertexBuffer(GLsizei num_vertices, VertexAttributes vertex_attributes, BufferUsage usage, const void* data);
 
     ~VertexBuffer();
 
@@ -47,7 +46,7 @@ public:
 
     GLsizei num_vertices() const { return num_vertices_; }
 
-    void set_data(GLsizei num_vertices, VertexAttributes vertex_attributes, const void* data);
+    void set_data(GLsizei num_vertices, VertexAttributes vertex_attributes, BufferUsage usage, const void* data);
     void release();
     void bind();
 };
