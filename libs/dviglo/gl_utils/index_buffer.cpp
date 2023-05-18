@@ -3,6 +3,8 @@
 
 #include "index_buffer.h"
 
+#include <cassert>
+
 
 namespace dviglo
 {
@@ -16,10 +18,11 @@ IndexBuffer::IndexBuffer()
 
 IndexBuffer::IndexBuffer(GLsizei num_indices, GLenum type, const void* data)
 {
+    assert(type == GL_UNSIGNED_SHORT || type == GL_UNSIGNED_INT);
+    GLsizeiptr index_size = (type == GL_UNSIGNED_SHORT) ? 16 : 32;
+
     glGenBuffers(1, &gpu_object_name_);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gpu_object_name_);
-
-    GLsizeiptr index_size = (type == GL_UNSIGNED_SHORT) ? 16 : 32; // GL_UNSIGNED_BYTE не поддерживается
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, num_indices * index_size, data, GL_STATIC_DRAW);
 
     num_indices_ = num_indices;
