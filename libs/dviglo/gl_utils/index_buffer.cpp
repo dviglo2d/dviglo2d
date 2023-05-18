@@ -14,11 +14,14 @@ IndexBuffer::IndexBuffer()
 {
 }
 
-IndexBuffer::IndexBuffer(GLsizei num_indices, GLenum type, const void* data, GLsizeiptr data_size)
+IndexBuffer::IndexBuffer(GLsizei num_indices, GLenum type, const void* data)
 {
     glGenBuffers(1, &gpu_object_name_);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gpu_object_name_);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, data_size, data, GL_STATIC_DRAW);
+
+    GLsizeiptr index_size = (type == GL_UNSIGNED_SHORT) ? 16 : 32; // GL_UNSIGNED_BYTE не поддерживается
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, num_indices * index_size, data, GL_STATIC_DRAW);
+
     num_indices_ = num_indices;
     type_ = type;
 }

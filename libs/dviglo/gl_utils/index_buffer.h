@@ -22,7 +22,7 @@ private:
 
 public:
     IndexBuffer();
-    IndexBuffer(GLsizei num_indices, GLenum type, const void* data, GLsizeiptr data_size);
+    IndexBuffer(GLsizei num_indices, GLenum type, const void* data);
 
     ~IndexBuffer()
     {
