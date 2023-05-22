@@ -105,6 +105,15 @@ i32 Application::run()
         return 1;
     }
 
+    // Отключаем VSync
+    i32 vsync_ret = SDL_GL_SetSwapInterval(0);
+
+    if (vsync_ret < 0)
+    {
+        DV_LOG->write_error(format("Application::run(): vsync_ret < 0 | {}", SDL_GetError()));
+        return 1;
+    }
+
     // Версия может отличаться от 30003 (например имеет значение 40002 при запуске
     // через Mesa на сервере ГитХаба)
     i32 gl_version = gladLoadGL((GLADloadfunc)SDL_GL_GetProcAddress);
@@ -153,11 +162,14 @@ i32 Application::run()
         u64 ms = new_ticks - old_ticks;
         old_ticks = new_ticks;
 
+        float fps = 1000.f / ms;
+        SDL_SetWindowTitle(window_, format("FPS: {}", fps).c_str());
+
         update(ms);
         draw();
         SDL_GL_SwapWindow(window_);
 
-        SDL_Delay(500);
+        //SDL_Delay(500);
     }
 
     return 0;
