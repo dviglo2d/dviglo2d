@@ -78,6 +78,7 @@ void App::start()
     textured_shader_ = make_unique<ShaderProgram>(base_path + "data/shaders/textured.vert", base_path + "data/shaders/textured.frag");
     texture_ = make_unique<Texture>(base_path + "data/textures/tile128.png");
 
+    /*
     entt::entity ent1 = ecs_.create();
 
     CName& ent1_name = ecs_.emplace<CName>(ent1);
@@ -93,6 +94,7 @@ void App::start()
 
     CCounter& ent2_counter = ecs_.emplace<CCounter>(ent2);
     ent2_counter.value = 100;
+    */
 }
 
 void App::update(u64 ms)
