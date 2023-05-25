@@ -108,11 +108,9 @@ i32 Application::run()
     // Отключаем VSync
     i32 vsync_ret = SDL_GL_SetSwapInterval(0);
 
+    // Вызывает ошибку при запуске через xvfb-run на сервере ГитХаба
     if (vsync_ret < 0)
-    {
         DV_LOG->write_error(format("Application::run(): vsync_ret < 0 | {}", SDL_GetError()));
-        return 1;
-    }
 
     // Версия может отличаться от 30003 (например имеет значение 40002 при запуске
     // через Mesa на сервере ГитХаба)
