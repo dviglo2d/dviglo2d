@@ -9,6 +9,22 @@
 namespace dviglo
 {
 
+constexpr GLsizei calc_vertex_size(VertexAttributes vertex_attributes)
+{
+    GLsizei ret = 0;
+
+    if (!!(vertex_attributes & VertexAttributes::position))
+        ret += 2 * sizeof(float);
+
+    if (!!(vertex_attributes & VertexAttributes::color))
+        ret += sizeof(u32);
+
+    if (!!(vertex_attributes & VertexAttributes::uv))
+        ret += 2 * sizeof(float);
+
+    return ret;
+}
+
 VertexBuffer::VertexBuffer()
 {
     release();
@@ -28,20 +44,7 @@ void VertexBuffer::recreate(GLsizei num_vertices, VertexAttributes vertex_attrib
 {
     release();
 
-    // Вычисляем размер одной вершины
-
-    GLsizei stride = 0;
-
-    if (!!(vertex_attributes & VertexAttributes::position))
-        stride += 2 * sizeof(float);
-
-    if (!!(vertex_attributes & VertexAttributes::color))
-        stride += sizeof(u32);
-
-    if (!!(vertex_attributes & VertexAttributes::uv))
-        stride += 2 * sizeof(float);
-
-    // Размер данных
+    GLsizei stride = calc_vertex_size(vertex_attributes);
     GLsizeiptr data_size = stride * num_vertices;
 
     glGenVertexArrays(1, &vao_);
@@ -84,7 +87,8 @@ void VertexBuffer::recreate(GLsizei num_vertices, VertexAttributes vertex_attrib
         attribute_offset += 2 * sizeof(float);
     }
 
-    num_vertices_ = num_vertices;
+    capacity_ = num_vertices;
+    num_vertices_ = data ? num_vertices : 0;
     vertex_attributes_ = vertex_attributes;
 }
 
@@ -103,7 +107,16 @@ void VertexBuffer::release()
     }
 
     num_vertices_ = 0;
+    capacity_ = 0;
     vertex_attributes_ = VertexAttributes::none;
+}
+
+void VertexBuffer::set_data(GLsizei num_vertices, const void* data)
+{
+    // TODO: Добавить проверки
+    glBindVertexArray(vao_);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, calc_vertex_size(vertex_attributes_) * num_vertices, data);
+    num_vertices_ = num_vertices;
 }
 
 void VertexBuffer::bind()

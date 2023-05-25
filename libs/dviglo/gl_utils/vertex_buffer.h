@@ -26,7 +26,9 @@ class DV_API VertexBuffer
 private:
     GLuint vao_;
     GLuint vbo_;
-    GLsizei num_vertices_;
+    GLsizei num_vertices_; ///< Число вершин
+    GLsizei capacity_; ///< Максимальное число вершин
+
     VertexAttributes vertex_attributes_;
 
 public:
@@ -47,9 +49,13 @@ public:
     VertexBuffer& operator=(VertexBuffer&&) = default;
 
     GLsizei num_vertices() const { return num_vertices_; }
+    GLsizei capacity() const { return capacity_; }
 
     /// Если data == nullptr, то выделяет память на GPU без копирования данных
     void recreate(GLsizei num_vertices, VertexAttributes vertex_attributes, BufferUsage usage, const void* data);
+
+    /// Копирует данные в предварительно выделенную на GPU память
+    void set_data(GLsizei num_vertices, const void* data);
 
     void release();
     void bind();
