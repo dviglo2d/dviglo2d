@@ -31,6 +31,8 @@ private:
 
 public:
     VertexBuffer();
+
+    /// Если data == nullptr, то выделяет память на GPU без копирования данных
     VertexBuffer(GLsizei num_vertices, VertexAttributes vertex_attributes, BufferUsage usage, const void* data);
 
     ~VertexBuffer();
