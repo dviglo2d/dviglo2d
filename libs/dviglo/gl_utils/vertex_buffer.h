@@ -46,7 +46,9 @@ public:
 
     GLsizei num_vertices() const { return num_vertices_; }
 
-    void set_data(GLsizei num_vertices, VertexAttributes vertex_attributes, BufferUsage usage, const void* data);
+    /// Если data == nullptr, то выделяет память на GPU без копирования данных
+    void recreate(GLsizei num_vertices, VertexAttributes vertex_attributes, BufferUsage usage, const void* data);
+
     void release();
     void bind();
 };

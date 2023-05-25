@@ -16,7 +16,7 @@ VertexBuffer::VertexBuffer()
 
 VertexBuffer::VertexBuffer(GLsizei num_vertices, VertexAttributes vertex_attributes, BufferUsage usage, const void* data)
 {
-    set_data(num_vertices, vertex_attributes, usage, data);
+    recreate(num_vertices, vertex_attributes, usage, data);
 }
 
 VertexBuffer::~VertexBuffer()
@@ -24,7 +24,7 @@ VertexBuffer::~VertexBuffer()
     release();
 }
 
-void VertexBuffer::set_data(GLsizei num_vertices, VertexAttributes vertex_attributes, BufferUsage usage, const void* data)
+void VertexBuffer::recreate(GLsizei num_vertices, VertexAttributes vertex_attributes, BufferUsage usage, const void* data)
 {
     release();
 
