@@ -160,7 +160,16 @@ i32 Application::run()
         u64 ms = new_ticks - old_ticks;
         old_ticks = new_ticks;
 
+        // Если частота кадров больше 1000, то точности SDL_GetTicks() не хватает
+        if (ms == 0)
+        {
+            // Ждём полмиллисекунды
+            SDL_DelayNS(500'000);
+            continue;
+        }
+
         float fps = 1000.f / ms;
+
         SDL_SetWindowTitle(window_, format("FPS: {}", fps).c_str());
 
         update(ms);
