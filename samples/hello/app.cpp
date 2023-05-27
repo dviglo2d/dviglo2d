@@ -128,13 +128,13 @@ void App::draw()
     textured_quad_indices_->bind();
     glDrawElements(GL_TRIANGLES, textured_quad_indices_->num_indices(), textured_quad_indices_->type(), nullptr);
 
-    sprite_batch_->triangle_.v0 = {{-0.5f, 0.f}, 0xFFFFFFFF};
-    sprite_batch_->triangle_.v1 = {{0.5f, 0.f}, 0xFF0000FF};
-    sprite_batch_->triangle_.v2 = {{0.5f, 0.5f}, 0xFF00FF00};
+    sprite_batch_->triangle_.v0 = {{0.f, 300.f}, 0xFFFFFFFF};
+    sprite_batch_->triangle_.v1 = {{800.f, 300.f}, 0xFF0000FF};
+    sprite_batch_->triangle_.v2 = {{800.f, 0.f}, 0xFF00FF00};
     sprite_batch_->add_triangle();
 
     sprite_batch_->set_shape_color(0xFFFF0000);
-    sprite_batch_->draw_triangle({-0.6f, -0.6f}, {0.f, -0.6f}, {0.f, 0.f});
+    sprite_batch_->draw_triangle({0.f, 600.f}, {400.f, 600.f}, {400.f, 0.f});
 
     sprite_batch_->flush();
 }

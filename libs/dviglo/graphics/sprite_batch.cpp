@@ -8,6 +8,7 @@
 
 #include <cstring> // memcpy
 
+using namespace glm;
 using namespace std;
 
 
@@ -40,11 +41,15 @@ SpriteBatch::SpriteBatch(ShaderProgram* t_shader_program)
     set_shape_color(0xFFFFFFFF);
 }
 
+ivec2 screen_size{800, 600};
+
 void SpriteBatch::flush()
 {
     if (t_num_vertices_ > 0)
     {
         t_shader_program_->use();
+        t_shader_program_->set("u_scale", vec2(2.f / screen_size.x, -2.f / screen_size.y));
+
         t_vertex_buffer_->set_data(t_num_vertices_, t_vertices_);
 
         // t_vertex_buffer_->bind() вызывается в t_vertex_buffer_->set_data()
