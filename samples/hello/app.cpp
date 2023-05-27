@@ -59,10 +59,10 @@ void App::start()
     basic_shader_ = make_unique<ShaderProgram>(base_path + "data/shaders/basic.vert", base_path + "data/shaders/basic.frag");
 
     Vertex textured_quad_vertices[] = {
-        {{-0.9f, 0.4f}, 0xFF0000FF, {0.f, 1.f}}, // Лево низ
-        {{-0.4f, 0.4f}, 0xFFFFFFFF, {1.f, 1.f}}, // Право низ
-        {{-0.4f, 0.9f}, 0xFFFF0000, {1.f, 0.f}}, // Право верх
-        {{-0.9f, 0.9f}, 0xFF00FF00, {0.f, 0.f}}, // Лево верх
+        {{1.f, 129.f}, 0xFF0000FF, {0.f, 1.f}}, // Лево низ
+        {{129.f, 129.f}, 0xFFFFFFFF, {1.f, 1.f}}, // Право низ
+        {{129.f, 1.f}, 0xFFFF0000, {1.f, 0.f}}, // Право верх
+        {{1.f, 1.f}, 0xFF00FF00, {0.f, 0.f}}, // Лево верх
     };
 
     u32 textured_quad_indices[] = {
@@ -105,6 +105,8 @@ void App::update(u64 ms)
     s_test_.update(ecs_, ms);
 }
 
+ivec2 screen_size{800, 600};
+
 void App::draw()
 {
     glClearColor(1.0f, 0.3f, 0.3f, 1.0f);
@@ -122,6 +124,7 @@ void App::draw()
     glDrawElements(GL_TRIANGLES, quad_indices_->num_indices(), quad_indices_->type(), nullptr);
 
     textured_shader_->use();
+    textured_shader_->set("u_scale", vec2(2.f / screen_size.x, -2.f / screen_size.y));
     glActiveTexture(GL_TEXTURE0);
     texture_->bind();
     textured_quad_vertices_->bind();
