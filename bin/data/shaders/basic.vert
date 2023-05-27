@@ -1,5 +1,6 @@
 #version 330 core
 
+// Атрибуты вершины
 layout (location = 0) in vec2 a_pos;
 
 void main()
