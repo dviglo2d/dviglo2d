@@ -6,6 +6,8 @@
 
 #include "../io/fs_base.h"
 
+#include <cstring> // memcpy
+
 using namespace std;
 
 
