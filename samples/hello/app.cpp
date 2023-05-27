@@ -75,7 +75,7 @@ void App::start()
         BufferUsage::static_draw, textured_quad_vertices);
 
     textured_quad_indices_ = make_unique<IndexBuffer>(6, IndexType::u32, BufferUsage::static_draw, textured_quad_indices);
-    textured_shader_ = make_unique<ShaderProgram>(base_path + "data/shaders/textured.vert", base_path + "data/shaders/textured.frag");
+    textured_shader_ = make_unique<ShaderProgram>(base_path + "data/shaders/vert_color_texture.vert", base_path + "data/shaders/vert_color_texture.frag");
     texture_ = make_unique<Texture>(base_path + "data/textures/tile128.png");
 
     vert_color_shader_prog_ = make_unique<ShaderProgram>(base_path + "data/shaders/vert_color.vert", base_path + "data/shaders/vert_color.frag");
