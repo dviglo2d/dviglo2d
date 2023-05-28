@@ -127,6 +127,7 @@ void App::draw()
     textured_shader_->set("u_scale", vec2(2.f / screen_size.x, -2.f / screen_size.y));
     glActiveTexture(GL_TEXTURE0);
     texture_->bind();
+    textured_shader_->set("u_texture", 0);
     textured_quad_vertices_->bind();
     textured_quad_indices_->bind();
     glDrawElements(GL_TRIANGLES, textured_quad_indices_->num_indices(), textured_quad_indices_->type(), nullptr);
@@ -138,6 +139,14 @@ void App::draw()
 
     sprite_batch_->set_shape_color(0xFFFF0000);
     sprite_batch_->draw_triangle({0.f, 600.f}, {400.f, 600.f}, {400.f, 0.f});
+
+    sprite_batch_->quad.texture = texture_.get();
+    sprite_batch_->quad.shader_program = textured_shader_.get();
+    sprite_batch_->quad.v0 = {{100.f, 300.f}, 0xFFFFFFFF, {0.f, 1.f}}; // Лево низ
+    sprite_batch_->quad.v1 = {{400.f, 300.f}, 0xFFFFFFFF, {1.f, 1.f}}; // Право низ
+    sprite_batch_->quad.v2 = {{400.f, 100.f}, 0xFFFFFFFF, {1.f, 0.f}}; // Право верх
+    sprite_batch_->quad.v3 = {{100.f, 100.f}, 0xFFFFFFFF, {0.f, 0.f}}; // Лево верх
+    sprite_batch_->add_quad();
 
     sprite_batch_->flush();
 }

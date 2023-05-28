@@ -26,13 +26,17 @@ constexpr GLsizei calc_vertex_size(VertexAttributes vertex_attributes)
 }
 
 VertexBuffer::VertexBuffer()
+    : vao_(0)
+    , vbo_(0)
+    , num_vertices_(0)
+    , capacity_(0)
+    , vertex_attributes_(VertexAttributes::none)
 {
-    release();
 }
 
 VertexBuffer::VertexBuffer(GLsizei num_vertices, VertexAttributes vertex_attributes, BufferUsage usage, const void* data)
 {
-    recreate(num_vertices, vertex_attributes, usage, data);
+    create(num_vertices, vertex_attributes, usage, data);
 }
 
 VertexBuffer::~VertexBuffer()
@@ -40,10 +44,8 @@ VertexBuffer::~VertexBuffer()
     release();
 }
 
-void VertexBuffer::recreate(GLsizei num_vertices, VertexAttributes vertex_attributes, BufferUsage usage, const void* data)
+void VertexBuffer::create(GLsizei num_vertices, VertexAttributes vertex_attributes, BufferUsage usage, const void* data)
 {
-    release();
-
     GLsizei stride = calc_vertex_size(vertex_attributes);
     GLsizeiptr data_size = stride * num_vertices;
 
@@ -90,6 +92,12 @@ void VertexBuffer::recreate(GLsizei num_vertices, VertexAttributes vertex_attrib
     capacity_ = num_vertices;
     num_vertices_ = data ? num_vertices : 0;
     vertex_attributes_ = vertex_attributes;
+}
+
+void VertexBuffer::recreate(GLsizei num_vertices, VertexAttributes vertex_attributes, BufferUsage usage, const void* data)
+{
+    release();
+    create(num_vertices, vertex_attributes, usage, data);
 }
 
 void VertexBuffer::release()

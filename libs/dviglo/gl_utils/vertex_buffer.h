@@ -28,8 +28,10 @@ private:
     GLuint vbo_;
     GLsizei num_vertices_; ///< Число вершин
     GLsizei capacity_; ///< Максимальное число вершин
-
     VertexAttributes vertex_attributes_;
+
+    /// Если data == nullptr, то выделяет память на GPU без копирования данных
+    void create(GLsizei num_vertices, VertexAttributes vertex_attributes, BufferUsage usage, const void* data);
 
 public:
     VertexBuffer();

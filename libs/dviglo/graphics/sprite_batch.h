@@ -4,7 +4,9 @@
 
 #pragma once
 
+#include "../gl_utils/index_buffer.h"
 #include "../gl_utils/shader_program.h"
+#include "../gl_utils/texture.h"
 #include "../gl_utils/vertex_buffer.h"
 
 #include <glm/glm.hpp>
@@ -31,9 +33,7 @@ private:
     struct TVertex
     {
         glm::vec2 position;
-
-        /// Цвет в формате 0xAABBGGRR
-        u32 color;
+        u32 color; ///< Цвет в формате 0xAABBGGRR
     };
 
     /// Текущая порция треугольников
@@ -64,9 +64,68 @@ public:
     /// Указывает цвет для следующих треугольников (в формате 0xAABBGGRR)
     void set_shape_color(u32 color);
 
+    // ============================ Пакетный рендеринг четырёхугольников ============================
+
+private:
+
+    /// Максимальное число четырёхугольников в порции
+    inline static constexpr i32 max_quads_in_portion_ = 500;
+
+    /// Четырёхугольник состоит из двух треугольников, а значит у него 6 вершин.
+    /// То есть каждый четырёхугольник занимает 6 элементов в индексном буфере
+    inline static constexpr i32 indices_per_quad_ = 6;
+
+    /// Две вершины четырёхугольника идентичны для обоих треугольников, поэтому
+    /// в вершинном буфере каждый четырёхугольник занимает 4 элемента
+    inline static constexpr u16 vertices_per_quad_ = 4;
+
+    /// Атрибуты вершин четырёхугольников
+    struct QVertex
+    {
+        glm::vec2 position;
+        u32 color; ///< Цвет в формате 0xAABBGGRR
+        glm::vec2 uv;
+    };
+
+    /// Текущая порция четырёхугольников
+    QVertex q_vertices_[max_quads_in_portion_ * vertices_per_quad_];
+
+    /// Число вершин в массиве q_vertices_
+    i32 q_num_vertices_ = 0;
+
+    /// Текущая текстура для четырёхугольников
+    Texture* q_current_texture_ = nullptr;
+
+    /// Текущая шейдерная программа для четырёхугольников
+    ShaderProgram* q_current_shader_program_;
+
+    /// Вершинный буфер для четырёхугольников
+    std::unique_ptr<VertexBuffer> q_vertex_buffer_;
+
+    /// Индексный буфер для четырёхугольников
+    std::unique_ptr<IndexBuffer> q_index_buffer_;
+
+public:
+
+    /// Данные для функции add_quad().
+    /// Заполняем заранее выделенную память, вместо передачи кучи аргументов в функцию
+    struct
+    {
+        Texture* texture;
+        ShaderProgram* shader_program;
+        QVertex v0, v1, v2, v3;
+    } quad;
+
+    /// Добавляет 4 вершины в массив q_vertices_.
+    /// Если массив полон или требуемые шейдеры или текстура отличаются от текущих, то автоматически
+    /// происходит вызов функции flush() (то есть начинается новая порция).
+    /// Перед вызовом этой функции необходимо заполнить структуру quad
+    void add_quad();
+
     // ============================ Общее ============================
 
 public:
+
     SpriteBatch(ShaderProgram* t_shader_program);
 
     /// Рендерит накопленную геометрию (то есть текущую порцию)
