@@ -20,19 +20,8 @@ class App : public Application
     entt::registry ecs_;
     STest s_test_;
 
-    unique_ptr<ShaderProgram> basic_shader_;
     unique_ptr<ShaderProgram> textured_shader_;
-
-    unique_ptr<VertexBuffer> triangle_;
-
-    unique_ptr<VertexBuffer> quad_vertices_;
-    unique_ptr<IndexBuffer> quad_indices_;
-
     unique_ptr<Texture> texture_;
-
-    unique_ptr<VertexBuffer> textured_quad_vertices_;
-    unique_ptr<IndexBuffer> textured_quad_indices_;
-
     unique_ptr<ShaderProgram> vert_color_shader_prog_;
     unique_ptr<SpriteBatch> sprite_batch_;
 
