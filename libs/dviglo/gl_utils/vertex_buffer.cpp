@@ -123,6 +123,7 @@ void VertexBuffer::set_data(GLsizei num_vertices, const void* data)
 {
     // TODO: Добавить проверки
     glBindVertexArray(vao_);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo_);
     glBufferSubData(GL_ARRAY_BUFFER, 0, calc_vertex_size(vertex_attributes_) * num_vertices, data);
     num_vertices_ = num_vertices;
 }
