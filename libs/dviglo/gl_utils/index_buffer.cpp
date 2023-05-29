@@ -21,7 +21,7 @@ IndexBuffer::IndexBuffer(GLsizei num_indices, IndexType type, BufferUsage usage,
     glGenBuffers(1, &gpu_object_name_);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gpu_object_name_);
 
-    GLsizeiptr index_size = (type == IndexType::u16) ? 16 : 32;
+    GLsizeiptr index_size = (type == IndexType::u16) ? 2 : 4;
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, num_indices * index_size, data, (GLenum)usage);
 
     num_indices_ = num_indices;
