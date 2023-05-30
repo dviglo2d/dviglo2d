@@ -5,6 +5,7 @@
 #include "sprite_batch.h"
 
 #include "../io/fs_base.h"
+#include "../math/math.h"
 
 #include <cstring> // memcpy
 
@@ -134,6 +135,92 @@ void SpriteBatch::draw_triangle(const glm::vec2& v0, const glm::vec2& v1, const 
     triangle_.v1.position = v1;
     triangle_.v2.position = v2;
     add_triangle();
+}
+
+// ======================= Используем пакетный рендеринг четырёхугольников =======================
+
+void SpriteBatch::draw_sprite()
+{
+    quad.shader_program = sprite.shader_program;
+    quad.texture = sprite.texture;
+
+    // Если спрайт не отмасштабирован и не повёрнут, то прорисовка очень проста
+    if (sprite.rotation == 0.f && sprite.scale == vec2(1.f, 1.f))
+    {
+        // Сдвигаем спрайт на -origin
+        Rect result_dest(sprite.destination.min - sprite.origin, sprite.destination.max - sprite.origin);
+
+        // Лицевая грань задаётся против часовой стрелки, ось Y направлена вниз
+        quad.v0.position = vec2(result_dest.min.x, result_dest.min.y); // Верхний левый угол спрайта
+        quad.v1.position = vec2(result_dest.min.x, result_dest.max.y); // Нижний левый угол
+        quad.v2.position = vec2(result_dest.max.x, result_dest.max.y); // Нижний правый угол
+        quad.v3.position = vec2(result_dest.max.x, result_dest.min.y); // Верхний правый угол
+    }
+    else
+    {
+        // Масштабировать и вращать необходимо относительно центра локальных координат:
+        // 1) При стандартном origin == vec2(0.f, 0.f), который соответствует верхнему левому углу спрайта,
+        //    локальные координаты будут Rect(ноль, размеры_спрайта),
+        //    то есть Rect(ноль, destination.max - destination.min)
+        // 2) При ненулевом origin нужно сдвинуть на -origin
+        Rect local(-sprite.origin, sprite.destination.max - sprite.destination.min - sprite.origin);
+
+        float sin, cos;
+        sin_cos(sprite.rotation, sin, cos);
+
+        // Нам нужна матрица, которая масштабирует и поворачивает вершину в локальных координатах, а затем
+        // смещает ее в требуемые мировые координаты.
+        // Но в матрице 3x3 последняя строка "0 0 1", умножать на которую бессмысленно.
+        // Поэтому вычисляем без матрицы для оптимизации
+        float m11 =  cos * sprite.scale.x; float m12 = sin * sprite.scale.y; float m13 = sprite.destination.min.x;
+        float m21 = -sin * sprite.scale.x; float m22 = cos * sprite.scale.y; float m23 = sprite.destination.min.y;
+        //          0                                  0                                 1
+
+        float min_x_m11 = local.min.x * m11;
+        float min_x_m21 = local.min.x * m21;
+        float max_x_m11 = local.max.x * m11;
+        float max_x_m21 = local.max.x * m21;
+        float min_y_m12 = local.min.y * m12;
+        float min_y_m22 = local.min.y * m22;
+        float max_y_m12 = local.max.y * m12;
+        float max_y_m22 = local.max.y * m22;
+
+        // transform * vec2(local.min.x, local.min.y)
+        quad.v0.position = vec2(min_x_m11 + min_y_m12 + m13,
+                                min_x_m21 + min_y_m22 + m23);
+
+        // transform * vec2(local.min.x, local.max.y)
+        quad.v1.position = vec2(min_x_m11 + max_y_m12 + m13,
+                                min_x_m21 + max_y_m22 + m23);
+
+        // transform * vec2(local.max.x, local.max.y)
+        quad.v2.position = vec2(max_x_m11 + max_y_m12 + m13,
+                                max_x_m21 + max_y_m22 + m23);
+
+        // transform * vec2(local.max.x, local.min.y)
+        quad.v3.position = vec2(max_x_m11 + min_y_m12 + m13,
+                                max_x_m21 + min_y_m22 + m23);
+    }
+
+    if (!!(sprite.flip_modes & FlipModes::horizontally))
+        swap(sprite.source_uv.min.x, sprite.source_uv.max.x);
+
+    if (!!(sprite.flip_modes & FlipModes::vertically))
+        swap(sprite.source_uv.min.y, sprite.source_uv.max.y);
+
+    quad.v0.color = sprite.color0;
+    quad.v0.uv = sprite.source_uv.min;
+
+    quad.v1.color = sprite.color1;
+    quad.v1.uv = vec2(sprite.source_uv.min.x, sprite.source_uv.max.y);
+
+    quad.v2.color = sprite.color2;
+    quad.v2.uv = sprite.source_uv.max;
+
+    quad.v3.color = sprite.color3;
+    quad.v3.uv = vec2(sprite.source_uv.min.x, sprite.source_uv.max.y);
+
+    add_quad();
 }
 
 } // namespace dviglo

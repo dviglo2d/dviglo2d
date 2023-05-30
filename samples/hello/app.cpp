@@ -57,8 +57,14 @@ void App::start()
     */
 }
 
+static float rotation = 0.f;
+
 void App::update(u64 ms)
 {
+    rotation += ms * 0.0001f;
+    while (rotation >= 360.f)
+        rotation -= 360.f;
+
     s_test_.update(ecs_, ms);
 }
 
@@ -84,6 +90,20 @@ void App::draw()
     sprite_batch_->quad.v2 = {{400.f, 100.f}, 0xFFFFFFFF, {1.f, 0.f}}; // Право верх
     sprite_batch_->quad.v3 = {{100.f, 100.f}, 0xFFFFFFFF, {0.f, 0.f}}; // Лево верх
     sprite_batch_->add_quad();
+
+    sprite_batch_->sprite.texture = texture_.get();
+    sprite_batch_->sprite.shader_program = textured_shader_.get();
+    sprite_batch_->sprite.destination = {{500.f, 100.f}, {600.f, 200.f}};
+    sprite_batch_->sprite.source_uv = {{0.f, 0.f}, {1.f, 1.f}};
+    sprite_batch_->sprite.flip_modes = FlipModes::none;
+    sprite_batch_->sprite.scale = {1.f, 1.f};
+    sprite_batch_->sprite.rotation = rotation;
+    sprite_batch_->sprite.origin = {50.f, 50.f};
+    sprite_batch_->sprite.color0 = 0xFFFFFFFF;
+    sprite_batch_->sprite.color1 = 0xFFFFFFFF;
+    sprite_batch_->sprite.color2 = 0xFFFFFFFF;
+    sprite_batch_->sprite.color3 = 0xFFFFFFFF;
+    sprite_batch_->draw_sprite();
 
     sprite_batch_->flush();
 }

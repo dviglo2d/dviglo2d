@@ -8,14 +8,24 @@
 #include "../gl_utils/shader_program.h"
 #include "../gl_utils/texture.h"
 #include "../gl_utils/vertex_buffer.h"
-
-#include <glm/glm.hpp>
+#include "../math/rect.h"
 
 #include <memory>
 
 
 namespace dviglo
 {
+
+/// Режимы зеркального отображения спрайтов и текста
+enum class FlipModes : u32
+{
+    none         = 0,
+    horizontally = 1 << 0,
+    vertically   = 1 << 1,
+    both = horizontally | vertically
+};
+DV_FLAGS(FlipModes);
+
 
 class DV_API SpriteBatch
 {
@@ -134,6 +144,29 @@ public:
     // ======================= Используем пакетный рендеринг треугольников =======================
 
     void draw_triangle(const glm::vec2& v0, const glm::vec2& v1, const glm::vec2& v2);
+
+    // ======================= Используем пакетный рендеринг четырёхугольников =======================
+
+    /// Данные для функции draw_sprite()
+    struct
+    {
+        Texture* texture;
+        ShaderProgram* shader_program;
+        Rect destination;
+        Rect source_uv; ///< Текстурные координаты в диапазоне [0, 1]
+        FlipModes flip_modes;
+        glm::vec2 scale;
+        float rotation;
+        glm::vec2 origin;
+        u32 color0; ///< Левый верхний угол
+        u32 color1; ///< Левый нижний угол
+        u32 color2; ///< Правый нижний угол
+        u32 color3; ///< Правый верхний угол
+    } sprite;
+
+    /// Перед вызовом этой функции нужно заполнить структуру sprite. Функция может изменить данные в структуре
+    void draw_sprite();
+
 };
 
 } // namespace dviglo
