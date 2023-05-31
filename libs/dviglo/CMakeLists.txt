@@ -41,7 +41,7 @@ get_target_property(glad_include_dirs glad INCLUDE_DIRECTORIES)
 target_include_directories(${target_name} INTERFACE ${glad_include_dirs})
 
 # Подключаем остальные библиотеки из папки third_party (TODO: Сделать PRIVATE)
-target_link_libraries(${target_name} PUBLIC SDL3-static stb glm fmt entt)
+target_link_libraries(${target_name} PUBLIC SDL3-static stb glm fmt entt pugixml)
 
 # Опции, которые не требуют ничего, кроме создания дефайнов
 foreach(opt
