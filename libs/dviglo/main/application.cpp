@@ -6,6 +6,7 @@
 
 #include "../io/log.h"
 #include "../std_utils/scope_guard.h"
+#include "../gl_utils/shader_cache.h"
 
 #include <fmt/format.h>
 #include <glad/gl.h>
@@ -68,6 +69,7 @@ void Application::on_key(const SDL_KeyboardEvent& event_data)
 i32 Application::run()
 {
     unique_ptr<Log> log = make_unique<Log>(log_path_);
+    unique_ptr<ShaderCache> shader_cache = make_unique<ShaderCache>();
 
     if (SDL_Init(0) < 0)
         return 1;

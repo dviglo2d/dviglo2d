@@ -20,9 +20,9 @@ class App : public Application
     entt::registry ecs_;
     STest s_test_;
 
-    unique_ptr<ShaderProgram> textured_shader_;
+    ShaderProgram* textured_shader_;
     unique_ptr<Texture> texture_;
-    unique_ptr<ShaderProgram> vert_color_shader_prog_;
+    ShaderProgram* vert_color_shader_prog_;
     unique_ptr<SpriteBatch> sprite_batch_;
 
 public:
