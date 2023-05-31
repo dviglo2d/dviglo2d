@@ -4,6 +4,7 @@
 
 #include "sprite_batch.h"
 
+#include "../gl_utils/shader_cache.h"
 #include "../io/fs_base.h"
 #include "../math/math.h"
 
@@ -59,12 +60,16 @@ void SpriteBatch::add_quad()
         flush();
 }
 
-SpriteBatch::SpriteBatch(ShaderProgram* t_shader_program)
+SpriteBatch::SpriteBatch()
 {
     t_vertex_buffer_ = make_unique<VertexBuffer>(max_triangles_in_portion_ * vertices_per_triangle_,
         VertexAttributes::position | VertexAttributes::color, BufferUsage::dynamic_draw, nullptr);
 
-    t_shader_program_ = t_shader_program;
+    StrUtf8 base_path = get_base_path();
+    t_shader_program_ = DV_SHADER_CACHE->get(base_path + "data/shaders/vert_color.vert", base_path + "data/shaders/vert_color.frag");
+    q_current_shader_program_ = q_default_shader_program_ = DV_SHADER_CACHE->get(base_path + "data/shaders/vert_color_texture.vert", base_path + "data/shaders/vert_color_texture.frag");
+    quad.shader_program = sprite.shader_program = q_default_shader_program_;
+
     set_shape_color(0xFFFFFFFF);
 
     q_vertex_buffer_ = make_unique<VertexBuffer>(max_quads_in_portion_ * vertices_per_quad_,

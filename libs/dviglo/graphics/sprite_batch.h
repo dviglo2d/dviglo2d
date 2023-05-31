@@ -106,6 +106,9 @@ private:
     /// Текущая текстура для четырёхугольников
     Texture* q_current_texture_ = nullptr;
 
+    /// Дефолтная шейдерная программа для четырёхугольников
+    ShaderProgram* q_default_shader_program_;
+
     /// Текущая шейдерная программа для четырёхугольников
     ShaderProgram* q_current_shader_program_;
 
@@ -136,7 +139,7 @@ public:
 
 public:
 
-    SpriteBatch(ShaderProgram* t_shader_program);
+    SpriteBatch();
 
     /// Рендерит накопленную геометрию (то есть текущую порцию)
     void flush();
@@ -166,7 +169,6 @@ public:
 
     /// Перед вызовом этой функции нужно заполнить структуру sprite. Функция может изменить данные в структуре
     void draw_sprite();
-
 };
 
 } // namespace dviglo

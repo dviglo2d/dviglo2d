@@ -34,10 +34,8 @@ void App::start()
     StrUtf8 base_path = get_base_path();
     cout << "Папка программы: " << base_path << endl;
 
-    textured_shader_ = DV_SHADER_CACHE->get(base_path + "data/shaders/vert_color_texture.vert", base_path + "data/shaders/vert_color_texture.frag");
     texture_ = make_unique<Texture>(base_path + "data/textures/tile128.png");
-    vert_color_shader_prog_ = DV_SHADER_CACHE->get(base_path + "data/shaders/vert_color.vert", base_path + "data/shaders/vert_color.frag");
-    sprite_batch_ = make_unique<SpriteBatch>(vert_color_shader_prog_);
+    sprite_batch_ = make_unique<SpriteBatch>();
 
     /*
     entt::entity ent1 = ecs_.create();
@@ -85,7 +83,6 @@ void App::draw()
     sprite_batch_->draw_triangle({0.f, 600.f}, {400.f, 600.f}, {400.f, 0.f});
 
     sprite_batch_->quad.texture = texture_.get();
-    sprite_batch_->quad.shader_program = textured_shader_;
     sprite_batch_->quad.v0 = {{100.f, 300.f}, 0xFFFFFFFF, {0.f, 1.f}}; // Лево низ
     sprite_batch_->quad.v1 = {{400.f, 300.f}, 0xFFFFFFFF, {1.f, 1.f}}; // Право низ
     sprite_batch_->quad.v2 = {{400.f, 100.f}, 0xFFFFFFFF, {1.f, 0.f}}; // Право верх
@@ -93,7 +90,6 @@ void App::draw()
     sprite_batch_->add_quad();
 
     sprite_batch_->sprite.texture = texture_.get();
-    sprite_batch_->sprite.shader_program = textured_shader_;
     sprite_batch_->sprite.destination = {{500.f, 100.f}, {600.f, 200.f}};
     sprite_batch_->sprite.source_uv = {{0.f, 0.f}, {1.f, 1.f}};
     sprite_batch_->sprite.flip_modes = FlipModes::none;
