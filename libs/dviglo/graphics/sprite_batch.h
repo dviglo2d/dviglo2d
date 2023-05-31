@@ -150,6 +150,8 @@ public:
 
     // ======================= Используем пакетный рендеринг четырёхугольников =======================
 
+private:
+
     /// Данные для функции draw_sprite()
     struct
     {
@@ -168,7 +170,17 @@ public:
     } sprite;
 
     /// Перед вызовом этой функции нужно заполнить структуру sprite. Функция может изменить данные в структуре
-    void draw_sprite();
+    void draw_sprite_internal();
+
+public:
+
+    /// color - цвет в формате 0xAABBGGRR
+    void draw_sprite(Texture* texture, const Rect& destination, const Rect* source = nullptr, u32 color = 0xFFFFFFFF,
+        float rotation = 0.f, const glm::vec2& origin = {0.f, 0.f}, const glm::vec2& scale = {1.f, 1.f}, FlipModes flip_modes = FlipModes::none);
+
+    /// color - цвет в формате 0xAABBGGRR
+    void draw_sprite(Texture* texture, const glm::vec2& position, const Rect* source = nullptr, u32 color = 0xFFFFFFFF,
+        float rotation = 0.f, const glm::vec2& origin = {0.f, 0.f}, const glm::vec2& scale = {1.f, 1.f}, FlipModes flip_modes = FlipModes::none);
 };
 
 } // namespace dviglo

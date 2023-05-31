@@ -14,12 +14,15 @@ namespace dviglo
 class DV_API Texture
 {
 private:
-    /// Идентификатор объекта OpenGL
-    GLuint gpu_object_name_;
+    GLuint gpu_object_name_; ///< Идентификатор объекта OpenGL
+    i32 width_;
+    i32 height_;
 
 public:
     Texture()
         : gpu_object_name_(0)
+        , width_(0)
+        , height_(0)
     {
     }
 
@@ -38,6 +41,9 @@ public:
     // Но разрешаем перемещение, чтобы было можно хранить объект в векторе
     Texture(Texture&&) = default;
     Texture& operator=(Texture&&) = default;
+
+    i32 width() const { return width_; }
+    i32 height() const { return height_; }
 
     void bind()
     {

@@ -144,7 +144,7 @@ void SpriteBatch::draw_triangle(const glm::vec2& v0, const glm::vec2& v1, const 
 
 // ======================= Используем пакетный рендеринг четырёхугольников =======================
 
-void SpriteBatch::draw_sprite()
+void SpriteBatch::draw_sprite_internal()
 {
     quad.shader_program = sprite.shader_program;
     quad.texture = sprite.texture;
@@ -226,6 +226,93 @@ void SpriteBatch::draw_sprite()
     quad.v3.uv = vec2(sprite.source_uv.min.x, sprite.source_uv.max.y);
 
     add_quad();
+}
+
+// Преобразует пиксельные координаты в диапазон [0, 1]
+static Rect SrcToUV(const Rect* source, Texture* texture)
+{
+    if (source == nullptr)
+    {
+        return Rect(vec2(0.f, 0.f), vec2(1.f, 1.f));
+    }
+    else
+    {
+        // Проверки не производятся, текстура должна быть корректной
+        float inv_width = 1.f / texture->width();
+        float inv_height = 1.f / texture->height();
+
+        return Rect
+        (
+            {source->min.x * inv_width, source->min.y * inv_height},
+            {source->max.x * inv_width, source->max.y * inv_height}
+        );
+    }
+}
+
+static Rect PosToDest(const vec2& position, Texture* texture, const Rect* src)
+{
+    if (src == nullptr)
+    {
+        // Проверки не производятся, текстура должна быть корректной
+        return Rect
+        (
+            {position.x, position.y},
+            {position.x + texture->width(), position.y + texture->height()}
+        );
+    }
+    else
+    {
+        return Rect
+        (
+            {position.x, position.y},
+            {position.x + (src->max.x - src->min.x), // Сперва вычисляем размер, так как там вероятно более близкие
+            position.y + (src->max.y - src->min.y)} // значения и меньше ошибка вычислений
+        );
+    }
+}
+
+void SpriteBatch::draw_sprite(Texture* texture, const Rect& destination, const Rect* source, u32 color,
+    float rotation, const vec2& origin, const vec2& scale, FlipModes flip_modes)
+{
+    if (!texture)
+        return;
+
+    sprite.texture = texture;
+    sprite.shader_program = q_default_shader_program_;
+    sprite.destination = destination;
+    sprite.source_uv = SrcToUV(source, texture);
+    sprite.flip_modes = flip_modes;
+    sprite.scale = scale;
+    sprite.rotation = rotation;
+    sprite.origin = origin;
+    sprite.color0 = color;
+    sprite.color1 = color;
+    sprite.color2 = color;
+    sprite.color3 = color;
+
+    draw_sprite_internal();
+}
+
+void SpriteBatch::draw_sprite(Texture* texture, const vec2& position, const Rect* source, u32 color,
+    float rotation, const vec2& origin, const vec2& scale, FlipModes flip_modes)
+{
+    if (!texture)
+        return;
+
+    sprite.texture = texture;
+    sprite.shader_program = q_default_shader_program_;
+    sprite.destination = PosToDest(position, texture, source);
+    sprite.source_uv = SrcToUV(source, texture);
+    sprite.flip_modes = flip_modes;
+    sprite.scale = scale;
+    sprite.rotation = rotation;
+    sprite.origin = origin;
+    sprite.color0 = color;
+    sprite.color1 = color;
+    sprite.color2 = color;
+    sprite.color3 = color;
+
+    draw_sprite_internal();
 }
 
 } // namespace dviglo

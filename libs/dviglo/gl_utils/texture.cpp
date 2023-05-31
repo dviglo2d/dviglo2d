@@ -24,6 +24,9 @@ Texture::Texture(const StrUtf8& file_path)
     else
         format = GL_RGBA;
 
+    width_ = image->width();
+    height_ = image->height();
+
     glGenTextures(1, &gpu_object_name_);
     glBindTexture(GL_TEXTURE_2D, gpu_object_name_);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image->width(), image->height(), 0, format, GL_UNSIGNED_BYTE, image->data());
