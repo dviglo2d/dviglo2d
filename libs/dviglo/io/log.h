@@ -22,10 +22,10 @@ class DV_API Log
 {
 private:
     /// Инициализируется в конструкторе
-    inline static Log* log_ = nullptr;
+    inline static Log* instance_ = nullptr;
 
 public:
-    static Log* instance() { return log_; }
+    static Log* instance() { return instance_; }
 
     Log(StrViewUtf8 path);
     ~Log();

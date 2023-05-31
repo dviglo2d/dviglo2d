@@ -26,16 +26,16 @@ static StrUtf8 time_to_str()
 
 Log::Log(StrViewUtf8 path)
 {
-    assert(!log_);
+    assert(!instance_);
 
-    log_ = this;
+    instance_ = this;
 
     write_debug("Log constructed");
 }
 
 Log::~Log()
 {
-    log_ = nullptr;
+    instance_ = nullptr;
 
     write_debug("Log destructed");
 }
