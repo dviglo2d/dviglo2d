@@ -3,6 +3,8 @@
 
 #include "shader_cache.h"
 
+#include "../io/log.h"
+
 
 namespace dviglo
 {
@@ -27,12 +29,18 @@ ShaderCache::ShaderCache()
 {
     assert(!instance_);
     instance_ = this;
+    DV_LOG->write_debug("ShaderCache constructed");
 }
 
 ShaderCache::~ShaderCache()
 {
+    instance_ = nullptr;
+
     for (auto& it : storage_)
         delete it.second;
+
+    storage_.clear();
+    DV_LOG->write_debug("ShaderCache destructed");
 }
 
 } // namespace dviglo
