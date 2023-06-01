@@ -36,6 +36,7 @@ void App::start()
 
     texture_ = make_unique<Texture>(base_path + "data/textures/tile128.png");
     sprite_batch_ = make_unique<SpriteBatch>();
+    font_ = make_unique<SpriteFont>(base_path + "data/fonts/ubuntu-r_20_simple.fnt");
 
     /*
     entt::entity ent1 = ecs_.create();
@@ -74,6 +75,10 @@ void App::draw()
     glClearColor(1.0f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glBlendEquation(GL_FUNC_ADD);
+
     sprite_batch_->triangle_.v0 = {{0.f, 300.f}, 0xFFFFFFFF};
     sprite_batch_->triangle_.v1 = {{800.f, 300.f}, 0xFF0000FF};
     sprite_batch_->triangle_.v2 = {{800.f, 0.f}, 0xFF00FF00};
@@ -84,6 +89,9 @@ void App::draw()
 
     sprite_batch_->draw_sprite(texture_.get(), {100.f, 100.f});
     sprite_batch_->draw_sprite(texture_.get(), {500.f, 100.f}, nullptr, 0xFFFFFFFF, rotation);
+
+    sprite_batch_->draw_string("123 W", font_.get(), vec2{101.f, 101.f}, 0xFF000000);
+    sprite_batch_->draw_string("123 W", font_.get(), vec2{100.f, 100.f}, 0xFFFFFFFF);
 
     sprite_batch_->flush();
 }

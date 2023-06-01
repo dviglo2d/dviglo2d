@@ -7,6 +7,8 @@
 
 #include <glad/gl.h>
 
+#include <utility> // std::exchange()
+
 
 namespace dviglo
 {
@@ -39,8 +41,25 @@ public:
     Texture& operator=(const Texture&) = delete;
 
     // Но разрешаем перемещение, чтобы было можно хранить объект в векторе
-    Texture(Texture&&) = default;
-    Texture& operator=(Texture&&) = default;
+
+    Texture(Texture&& other) noexcept
+        : gpu_object_name_(std::exchange(other.gpu_object_name_, 0))
+        , width_(std::exchange(other.width_, 0))
+        , height_(std::exchange(other.height_, 0))
+    {
+    }
+
+    Texture& operator=(Texture&& other) noexcept
+    {
+        if (this != &other)
+        {
+            gpu_object_name_ = std::exchange(other.gpu_object_name_, 0);
+            width_ = std::exchange(other.width_, 0);
+            height_ = std::exchange(other.height_, 0);
+        }
+
+        return *this;
+    }
 
     i32 width() const { return width_; }
     i32 height() const { return height_; }

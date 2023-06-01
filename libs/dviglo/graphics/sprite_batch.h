@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include "sprite_font.h"
+
 #include "../gl_utils/index_buffer.h"
 #include "../gl_utils/shader_program.h"
 #include "../gl_utils/texture.h"
@@ -181,6 +183,10 @@ public:
     /// color - цвет в формате 0xAABBGGRR
     void draw_sprite(Texture* texture, const glm::vec2& position, const Rect* source = nullptr, u32 color = 0xFFFFFFFF,
         float rotation = 0.f, const glm::vec2& origin = {0.f, 0.f}, const glm::vec2& scale = {1.f, 1.f}, FlipModes flip_modes = FlipModes::none);
+
+    /// color - цвет в формате 0xAABBGGRR
+    void draw_string(const StrUtf8& text, SpriteFont* font, const glm::vec2& position, u32 color = 0xFFFFFFFF,
+        float rotation = 0.0f, const glm::vec2& origin = {0.f, 0.f}, const glm::vec2& scale = {1.f, 1.f}, FlipModes flip_modes = FlipModes::none);
 };
 
 } // namespace dviglo

@@ -223,7 +223,7 @@ void SpriteBatch::draw_sprite_internal()
     quad.v2.uv = sprite.source_uv.max;
 
     quad.v3.color = sprite.color3;
-    quad.v3.uv = vec2(sprite.source_uv.min.x, sprite.source_uv.max.y);
+    quad.v3.uv = vec2(sprite.source_uv.max.x, sprite.source_uv.min.y);
 
     add_quad();
 }
@@ -313,6 +313,70 @@ void SpriteBatch::draw_sprite(Texture* texture, const vec2& position, const Rect
     sprite.color3 = color;
 
     draw_sprite_internal();
+}
+
+void SpriteBatch::draw_string(const StrUtf8& text, SpriteFont* font, const vec2& position, u32 color,
+    float rotation, const vec2& origin, const vec2& scale, FlipModes flip_modes)
+{
+    if (text.length() == 0)
+        return;
+
+    vector<c32> unicode_text;
+    size_t offset = 0;
+    while (offset < text.length())
+    {
+        c32 code_point = next_code_point(text, offset);
+        unicode_text.push_back(code_point);
+    }
+
+    sprite.shader_program = q_default_shader_program_;
+    sprite.flip_modes = flip_modes;
+    sprite.scale = scale;
+    sprite.rotation = rotation;
+    sprite.color0 = color;
+    sprite.color1 = color;
+    sprite.color2 = color;
+    sprite.color3 = color;
+    sprite.texture = &font->texture(0);
+
+    // По идее все текстуры одинакового размера
+    float pixel_width = 1.f / sprite.texture->width();
+    float pixel_height = 1.f / sprite.texture->height();
+
+    vec2 char_pos = position;
+    vec2 char_orig = origin;
+
+    i32 i = 0;
+    i32 step = 1;
+
+    if (!!(flip_modes & FlipModes::horizontally))
+    {
+        i = unicode_text.size() - 1;
+        step = -1;
+    }
+
+    for (; i >= 0 && i < unicode_text.size(); i += step)
+    {
+        const Glyph& glyph = font->glyph(unicode_text[i]);
+
+        float gx = (float)glyph.x;
+        float gy = (float)glyph.y;
+        float gw = (float)glyph.width;
+        float gh = (float)glyph.height;
+        float gox = (float)glyph.offset_x;
+        float goy = (float)glyph.offset_y;
+
+        sprite.texture = &font->texture(glyph.page);
+        sprite.destination = Rect({char_pos.x, char_pos.y}, {char_pos.x + gw, char_pos.y + gh});
+        sprite.source_uv = Rect({gx * pixel_width, gy * pixel_height}, {(gx + gw) * pixel_width, (gy + gh) * pixel_height});
+
+        // Модифицируем origin, а не позицию, чтобы было правильное вращение
+        sprite.origin = !!(flip_modes & FlipModes::vertically) ? char_orig - vec2(gox, font->line_height() - goy - gh) : char_orig - vec2(gox, goy);
+
+        draw_sprite_internal();
+
+        char_orig.x -= (float)glyph.advance_x;
+    }
 }
 
 } // namespace dviglo

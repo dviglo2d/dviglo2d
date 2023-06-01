@@ -10,6 +10,7 @@
 #include <dviglo/gl_utils/texture.h>
 #include <dviglo/gl_utils/vertex_buffer.h>
 #include <dviglo/graphics/sprite_batch.h>
+#include <dviglo/graphics/sprite_font.h>
 #include <dviglo/main/application.h>
 
 using namespace std;
@@ -24,6 +25,7 @@ class App : public Application
     unique_ptr<Texture> texture_;
     ShaderProgram* vert_color_shader_prog_;
     unique_ptr<SpriteBatch> sprite_batch_;
+    unique_ptr<SpriteFont> font_;
 
 public:
     App(const vector<StrUtf8>& args);
