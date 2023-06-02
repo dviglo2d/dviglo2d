@@ -3,6 +3,8 @@
 
 #include "../std_utils/str.h"
 
+#include <utility> // std::exchange()
+
 
 namespace dviglo
 {
