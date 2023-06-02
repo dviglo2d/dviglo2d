@@ -7,6 +7,8 @@
 
 #include "../std_utils/flags.h"
 
+#include <utility> // std::exchange()
+
 
 namespace dviglo
 {
@@ -47,8 +49,29 @@ public:
     VertexBuffer& operator=(const VertexBuffer&) = delete;
 
     // Но разрешаем перемещение, чтобы было можно хранить объект в векторе
-    VertexBuffer(VertexBuffer&&) = default;
-    VertexBuffer& operator=(VertexBuffer&&) = default;
+
+    VertexBuffer(VertexBuffer&& other) noexcept
+        : vao_(std::exchange(other.vao_, 0))
+        , vbo_(std::exchange(other.vbo_, 0))
+        , num_vertices_(std::exchange(other.num_vertices_, 0))
+        , capacity_(std::exchange(other.capacity_, 0))
+        , vertex_attributes_(std::exchange(other.vertex_attributes_, VertexAttributes::none))
+    {
+    }
+
+    VertexBuffer& operator=(VertexBuffer&& other) noexcept
+    {
+        if (this != &other)
+        {
+            vao_ = std::exchange(other.vao_, 0);
+            vbo_ = std::exchange(other.vbo_, 0);
+            num_vertices_ = std::exchange(other.num_vertices_, 0);
+            capacity_ = std::exchange(other.capacity_, 0);
+            vertex_attributes_ = std::exchange(other.vertex_attributes_, VertexAttributes::none);
+        }
+
+        return *this;
+    }
 
     GLsizei num_vertices() const { return num_vertices_; }
     GLsizei capacity() const { return capacity_; }

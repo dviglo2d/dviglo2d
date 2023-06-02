@@ -5,6 +5,8 @@
 
 #include "gl_common.h"
 
+#include <utility> // std::exchange()
+
 
 namespace dviglo
 {
@@ -19,9 +21,7 @@ enum class IndexType : GLenum
 class DV_API IndexBuffer
 {
 private:
-    /// Идентификатор объекта OpenGL
-    GLuint gpu_object_name_ = 0;
-
+    GLuint gpu_object_name_ = 0; ///< Идентификатор объекта OpenGL
     GLsizei num_indices_;
     GLenum type_;
 
@@ -33,6 +33,32 @@ public:
     {
         if (gpu_object_name_)
             glDeleteBuffers(1, &gpu_object_name_);
+    }
+
+    // Запрещаем копировать объект, так как если в одной из копий будет вызван деструктор,
+    // все другие объекты будут хранить уничтоженный gpu_object_name_
+    IndexBuffer(const IndexBuffer&) = delete;
+    IndexBuffer& operator=(const IndexBuffer&) = delete;
+
+    // Но разрешаем перемещение, чтобы было можно хранить объект в векторе
+
+    IndexBuffer(IndexBuffer&& other) noexcept
+        : gpu_object_name_(std::exchange(other.gpu_object_name_, 0))
+        , num_indices_(std::exchange(other.num_indices_, 0))
+        , type_(std::exchange(other.type_, 0))
+    {
+    }
+
+    IndexBuffer& operator=(IndexBuffer&& other) noexcept
+    {
+        if (this != &other)
+        {
+            gpu_object_name_ = std::exchange(other.gpu_object_name_, 0);
+            num_indices_ = std::exchange(other.num_indices_, 0);
+            type_ = std::exchange(other.type_, 0);
+        }
+
+        return *this;
     }
 
     GLsizei num_indices() const { return num_indices_; }

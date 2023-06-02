@@ -8,6 +8,8 @@
 #include <glad/gl.h>
 #include <glm/glm.hpp>
 
+#include <utility> // std::exchange()
+
 
 namespace dviglo
 {
@@ -36,8 +38,19 @@ public:
     ShaderProgram& operator=(const ShaderProgram&) = delete;
 
     // Но разрешаем перемещение, чтобы было можно хранить объект в векторе
-    ShaderProgram(ShaderProgram&&) = default;
-    ShaderProgram& operator=(ShaderProgram&&) = default;
+
+    ShaderProgram(ShaderProgram&& other) noexcept
+        : gpu_object_name_(std::exchange(other.gpu_object_name_, 0))
+    {
+    }
+
+    ShaderProgram& operator=(ShaderProgram&& other) noexcept
+    {
+        if (this != &other)
+            gpu_object_name_ = std::exchange(other.gpu_object_name_, 0);
+
+        return *this;
+    }
 
     void use() const
     {
