@@ -25,8 +25,27 @@ public:
     Image& operator=(const Image&) = delete;
 
     // Но разрешаем перемещение, чтобы было можно хранить объект в векторе
-    Image(Image&&) = default;
-    Image& operator=(Image&&) = default;
+
+    Image(Image&& other) noexcept
+        : width_(std::exchange(other.width_, 0))
+        , height_(std::exchange(other.height_, 0))
+        , num_components_(std::exchange(other.num_components_, 0))
+        , data_(std::exchange(other.data_, nullptr))
+    {
+    }
+
+    Image& operator=(Image&& other) noexcept
+    {
+        if (this != &other)
+        {
+            width_ = std::exchange(other.width_, 0);
+            height_ = std::exchange(other.height_, 0);
+            num_components_ = std::exchange(other.num_components_, 0);
+            data_ = std::exchange(other.data_, nullptr);
+        }
+
+        return *this;
+    }
 
     i32 width() const { return width_; }
     i32 height() const { return height_; }
