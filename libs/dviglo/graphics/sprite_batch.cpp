@@ -337,7 +337,7 @@ void SpriteBatch::draw_string(const StrUtf8& text, SpriteFont* font, const vec2&
     sprite.color1 = color;
     sprite.color2 = color;
     sprite.color3 = color;
-    sprite.texture = &font->texture(0);
+    sprite.texture = font->texture(0);
 
     // По идее все текстуры одинакового размера
     float pixel_width = 1.f / sprite.texture->width();
@@ -351,7 +351,7 @@ void SpriteBatch::draw_string(const StrUtf8& text, SpriteFont* font, const vec2&
 
     if (!!(flip_modes & FlipModes::horizontally))
     {
-        i = unicode_text.size() - 1;
+        i = (i32)unicode_text.size() - 1;
         step = -1;
     }
 
@@ -366,7 +366,7 @@ void SpriteBatch::draw_string(const StrUtf8& text, SpriteFont* font, const vec2&
         float gox = (float)glyph.offset_x;
         float goy = (float)glyph.offset_y;
 
-        sprite.texture = &font->texture(glyph.page);
+        sprite.texture = font->texture(glyph.page);
         sprite.destination = Rect({char_pos.x, char_pos.y}, {char_pos.x + gw, char_pos.y + gh});
         sprite.source_uv = Rect({gx * pixel_width, gy * pixel_height}, {(gx + gw) * pixel_width, (gy + gh) * pixel_height});
 

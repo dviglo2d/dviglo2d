@@ -4,6 +4,7 @@
 #include "app.h"
 
 #include <dviglo/gl_utils/shader_cache.h>
+#include <dviglo/gl_utils/texture_cache.h>
 #include <dviglo/io/fs_base.h>
 
 #include <glad/gl.h>
@@ -36,7 +37,7 @@ void App::start()
     StrUtf8 base_path = get_base_path();
     cout << "Папка программы: " << base_path << endl;
 
-    texture_ = make_unique<Texture>(base_path + "data/textures/tile128.png");
+    texture_ = DV_TEXTURE_CACHE->get(base_path + "data/textures/tile128.png");
     sprite_batch_ = make_unique<SpriteBatch>();
     font_ = make_unique<SpriteFont>(base_path + "data/fonts/ubuntu-r_20_simple.fnt");
 
@@ -94,8 +95,8 @@ void App::draw()
     sprite_batch_->set_shape_color(0xFFFF0000);
     sprite_batch_->draw_triangle({0.f, 600.f}, {400.f, 600.f}, {400.f, 0.f});
 
-    sprite_batch_->draw_sprite(texture_.get(), {100.f, 100.f});
-    sprite_batch_->draw_sprite(texture_.get(), {500.f, 100.f}, nullptr, 0xFFFFFFFF, rotation);
+    sprite_batch_->draw_sprite(texture_, {100.f, 100.f});
+    sprite_batch_->draw_sprite(texture_, {500.f, 100.f}, nullptr, 0xFFFFFFFF, rotation);
 
     sprite_batch_->draw_string(fps_text, font_.get(), vec2{4.f, 1.f}, 0xFF000000);
     sprite_batch_->draw_string(fps_text, font_.get(), vec2{3.f, 0.f}, 0xFFFFFFFF);

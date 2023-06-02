@@ -31,16 +31,14 @@ private:
     StrUtf8 face_; // Название исходного шрифта (из которого был сгенерирован растровый шрифт)
     i32 size_ = 0; // Размер исходного шрифта
     i32 line_height_ = 0; // Высота растрового шрифта
-    std::vector<Texture> textures_; // Текстурные атласы с символами
+    std::vector<Texture*> textures_; // Текстурные атласы с символами
     std::unordered_map<c32, Glyph> glyphs_; // кодовая позиция -> изображение
 
 public:
-    // Это требуется только для dll версии движка при компиляции VS.
-    // Какой-то из методов vector<Texture> пытается копировать некопируемый вектор
     SpriteFont(const SpriteFont&) = delete;
     SpriteFont& operator=(const SpriteFont&) = delete;
 
-    Texture& texture(size_t index)
+    Texture* texture(size_t index)
     {
         return textures_[index];
     }

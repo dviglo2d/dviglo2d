@@ -4,9 +4,10 @@
 
 #include "application.h"
 
+#include "../gl_utils/shader_cache.h"
+#include "../gl_utils/texture_cache.h"
 #include "../io/log.h"
 #include "../std_utils/scope_guard.h"
-#include "../gl_utils/shader_cache.h"
 
 #include <fmt/format.h>
 #include <glad/gl.h>
@@ -70,6 +71,7 @@ i32 Application::run()
 {
     unique_ptr<Log> log = make_unique<Log>(log_path_);
     unique_ptr<ShaderCache> shader_cache = make_unique<ShaderCache>();
+    unique_ptr<TextureCache> texture_cache = make_unique<TextureCache>();
 
     if (SDL_Init(0) < 0)
         return 1;

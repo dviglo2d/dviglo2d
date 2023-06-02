@@ -22,7 +22,7 @@ class App : public Application
     STest s_test_;
 
     ShaderProgram* textured_shader_;
-    unique_ptr<Texture> texture_;
+    Texture* texture_;
     ShaderProgram* vert_color_shader_prog_;
     unique_ptr<SpriteBatch> sprite_batch_;
     unique_ptr<SpriteFont> font_;

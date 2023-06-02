@@ -3,7 +3,7 @@
 
 #include "sprite_font.h"
 
-#include "../gl_utils/texture.h"
+#include "../gl_utils/texture_cache.h"
 #include "../io/log.h"
 #include "../io/path.h"
 
@@ -64,8 +64,7 @@ SpriteFont::SpriteFont(const StrUtf8& file_path)
 
         string image_file_name = page_node.attribute("file").as_string();
         string image_file_path = directory_path + image_file_name;
-        Texture texture(image_file_path);
-        textures_.push_back(move(texture));
+        textures_.push_back(DV_TEXTURE_CACHE->get(image_file_path));
 
         page_node = page_node.next_sibling();
     }
