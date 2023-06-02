@@ -8,10 +8,12 @@
 
 #include <glad/gl.h>
 #include <glm/glm.hpp>
+#include <fmt/format.h>
 
 #include <iostream>
 
 using namespace glm;
+using namespace fmt;
 
 
 App::App(const std::vector<StrUtf8>& args)
@@ -59,11 +61,16 @@ void App::start()
 
 static float rotation = 0.f;
 
+static StrUtf8 fps_text;
+
 void App::update(u64 ms)
 {
     rotation += ms * 0.0001f;
     while (rotation >= 360.f)
         rotation -= 360.f;
+
+    float fps = 1000.f / ms;
+    fps_text = format("FPS: {}", fps);
 
     s_test_.update(ecs_, ms);
 }
@@ -90,8 +97,8 @@ void App::draw()
     sprite_batch_->draw_sprite(texture_.get(), {100.f, 100.f});
     sprite_batch_->draw_sprite(texture_.get(), {500.f, 100.f}, nullptr, 0xFFFFFFFF, rotation);
 
-    sprite_batch_->draw_string("123 W", font_.get(), vec2{101.f, 101.f}, 0xFF000000);
-    sprite_batch_->draw_string("123 W", font_.get(), vec2{100.f, 100.f}, 0xFFFFFFFF);
+    sprite_batch_->draw_string(fps_text, font_.get(), vec2{4.f, 1.f}, 0xFF000000);
+    sprite_batch_->draw_string(fps_text, font_.get(), vec2{3.f, 0.f}, 0xFFFFFFFF);
 
     sprite_batch_->flush();
 }

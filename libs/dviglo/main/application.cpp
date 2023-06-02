@@ -170,10 +170,6 @@ i32 Application::run()
             continue;
         }
 
-        float fps = 1000.f / ms;
-
-        SDL_SetWindowTitle(window_, format("FPS: {}", fps).c_str());
-
         update(ms);
         draw();
         SDL_GL_SwapWindow(window_);
