@@ -1,5 +1,4 @@
 libs/third_party/* linguist-vendored
-*.h linguist-language=C++
 
 # Автоматически нормализуем концы строк, если у пользователя не настроен параметр autocrlf
 # https://docs.github.com/en/get-started/getting-started-with-git/configuring-git-to-handle-line-endings
