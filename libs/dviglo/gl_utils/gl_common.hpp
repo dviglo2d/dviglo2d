@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "../common/config.h"
+#include "../common/config.hpp"
 
 #include <glad/gl.h>
 

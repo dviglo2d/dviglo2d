@@ -1,9 +1,9 @@
 // Copyright (c) 2022-2023 the Dviglo project
 // License: MIT
 
-#include "app.h"
+#include "app.hpp"
 
-#include <dviglo/main/main.h>
+#include <dviglo/main/main.hpp>
 
 
 i32 app_main(const vector<StrUtf8>& args)

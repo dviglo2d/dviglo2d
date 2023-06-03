@@ -1,7 +1,7 @@
 // Copyright (c) 2022-2023 the Dviglo project
 // License: MIT
 
-#include "texture.h"
+#include "texture.hpp"
 
 #include <unordered_map>
 

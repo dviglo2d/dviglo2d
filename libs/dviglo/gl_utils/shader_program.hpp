@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "../std_utils/str.h"
+#include "../std_utils/str.hpp"
 
 #include <glad/gl.h>
 #include <glm/glm.hpp>

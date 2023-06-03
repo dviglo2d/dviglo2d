@@ -1,7 +1,7 @@
 // Copyright (c) 2022-2023 the Dviglo project
 // License: MIT
 
-#include "main.h"
+#include "main.hpp"
 
 using namespace std;
 

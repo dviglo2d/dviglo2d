@@ -6,13 +6,13 @@
 
 #ifdef _WIN32
 
-    #include "../common/win_wrapped.h"
+    #include "../common/win_wrapped.hpp"
 
     #include <clocale> // std::setlocale
 
 #endif // def _WIN32
 
-#include "../std_utils/str.h"
+#include "../std_utils/str.hpp"
 
 
 namespace dviglo

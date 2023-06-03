@@ -1,7 +1,7 @@
 // Copyright (c) 2022-2023 the Dviglo project
 // License: MIT
 
-#include "s_test.h"
+#include "s_test.hpp"
 
 #include <iostream>
 

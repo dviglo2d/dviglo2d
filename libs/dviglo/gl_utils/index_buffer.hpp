@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "gl_common.h"
+#include "gl_common.hpp"
 
 #include <utility> // std::exchange()
 

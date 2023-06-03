@@ -5,7 +5,7 @@
 set(TARGET_NAME hello)
 
 # Создаём список файлов
-file(GLOB_RECURSE source_files *.cpp *.h)
+file(GLOB_RECURSE source_files *.cpp *.hpp)
 
 # Создаём приложение
 add_executable(${TARGET_NAME} ${source_files} ${common_source_files})

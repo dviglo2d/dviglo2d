@@ -1,10 +1,10 @@
 // Copyright (c) 2022-2023 the Dviglo project
 // License: MIT
 
-#include "shader_program.h"
+#include "shader_program.hpp"
 
-#include "../io/file.h"
-#include "../io/log.h"
+#include "../io/file.hpp"
+#include "../io/log.hpp"
 
 
 namespace dviglo

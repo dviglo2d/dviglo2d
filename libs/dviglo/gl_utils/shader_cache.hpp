@@ -1,9 +1,9 @@
 // Copyright (c) 2022-2023 the Dviglo project
 // License: MIT
 
-#include "shader_program.h"
+#include "shader_program.hpp"
 
-#include "../std_utils/str.h"
+#include "../std_utils/str.hpp"
 
 #include <unordered_map>
 

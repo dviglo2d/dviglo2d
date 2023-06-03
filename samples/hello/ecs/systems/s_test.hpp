@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "../components.h"
+#include "../components.hpp"
 
 #include <entt/entt.hpp>
 

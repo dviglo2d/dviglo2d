@@ -4,9 +4,9 @@
 
 // Функции, которые можно использовать до инициализации любых подсистем
 
-#include "fs_base.h"
+#include "fs_base.hpp"
 
-#include "path.h"
+#include "path.hpp"
 
 #include <memory>
 

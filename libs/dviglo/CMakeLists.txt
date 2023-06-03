@@ -9,7 +9,7 @@ set(target_name dviglo)
 set(CMAKE_DEBUG_POSTFIX _d)
 
 # Создаём список файлов
-file(GLOB_RECURSE source_files *.cpp *.h)
+file(GLOB_RECURSE source_files *.cpp *.hpp)
 
 if(DV_SHARED)
     # Создаём динамическую библиотеку

@@ -3,8 +3,8 @@
 
 #pragma once
 
-#include "../gl_utils/texture.h"
-#include "../std_utils/str.h"
+#include "../gl_utils/texture.hpp"
+#include "../std_utils/str.hpp"
 
 #include <limits>
 #include <unordered_map>

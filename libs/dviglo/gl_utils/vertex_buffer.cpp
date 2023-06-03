@@ -1,9 +1,9 @@
 // Copyright (c) 2022-2023 the Dviglo project
 // License: MIT
 
-#include "vertex_buffer.h"
+#include "vertex_buffer.hpp"
 
-#include "../common/primitive_types.h"
+#include "../common/primitive_types.hpp"
 
 
 namespace dviglo

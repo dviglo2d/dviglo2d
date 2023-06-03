@@ -1,11 +1,11 @@
 // Copyright (c) 2022-2023 the Dviglo project
 // License: MIT
 
-#include "app.h"
+#include "app.hpp"
 
-#include <dviglo/gl_utils/shader_cache.h>
-#include <dviglo/gl_utils/texture_cache.h>
-#include <dviglo/io/fs_base.h>
+#include <dviglo/gl_utils/shader_cache.hpp>
+#include <dviglo/gl_utils/texture_cache.hpp>
+#include <dviglo/io/fs_base.hpp>
 
 #include <glad/gl.h>
 #include <glm/glm.hpp>

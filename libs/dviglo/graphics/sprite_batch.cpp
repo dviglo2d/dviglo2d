@@ -2,11 +2,11 @@
 // Copyright (c) 2008-2023 the Urho3D project
 // License: MIT
 
-#include "sprite_batch.h"
+#include "sprite_batch.hpp"
 
-#include "../gl_utils/shader_cache.h"
-#include "../io/fs_base.h"
-#include "../math/math.h"
+#include "../gl_utils/shader_cache.hpp"
+#include "../io/fs_base.hpp"
+#include "../math/math.hpp"
 
 #include <cstring> // memcpy
 

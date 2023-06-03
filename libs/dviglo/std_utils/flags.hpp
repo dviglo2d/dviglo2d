@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "../common/primitive_types.h"
+#include "../common/primitive_types.hpp"
 
 #include <type_traits> // std::underlying_type_t
 

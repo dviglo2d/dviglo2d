@@ -4,13 +4,13 @@
 
 #pragma once
 
-#include "sprite_font.h"
+#include "sprite_font.hpp"
 
-#include "../gl_utils/index_buffer.h"
-#include "../gl_utils/shader_program.h"
-#include "../gl_utils/texture.h"
-#include "../gl_utils/vertex_buffer.h"
-#include "../math/rect.h"
+#include "../gl_utils/index_buffer.hpp"
+#include "../gl_utils/shader_program.hpp"
+#include "../gl_utils/texture.hpp"
+#include "../gl_utils/vertex_buffer.hpp"
+#include "../math/rect.hpp"
 
 #include <memory>
 

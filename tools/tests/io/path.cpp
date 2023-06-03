@@ -1,9 +1,9 @@
 // Copyright (c) 2022-2023 the Dviglo project
 // License: MIT
 
-#include "../force_assert.h"
+#include "../force_assert.hpp"
 
-#include <dviglo/io/path.h>
+#include <dviglo/io/path.hpp>
 
 using namespace dviglo;
 using namespace std;

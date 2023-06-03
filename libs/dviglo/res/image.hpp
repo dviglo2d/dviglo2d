@@ -1,7 +1,7 @@
 // Copyright (c) 2022-2023 the Dviglo project
 // License: MIT
 
-#include "../std_utils/str.h"
+#include "../std_utils/str.hpp"
 
 #include <utility> // std::exchange()
 

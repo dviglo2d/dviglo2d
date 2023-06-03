@@ -2,12 +2,12 @@
 // Copyright (c) 2008-2023 the Urho3D project
 // License: MIT
 
-#include "application.h"
+#include "application.hpp"
 
-#include "../gl_utils/shader_cache.h"
-#include "../gl_utils/texture_cache.h"
-#include "../io/log.h"
-#include "../std_utils/scope_guard.h"
+#include "../gl_utils/shader_cache.hpp"
+#include "../gl_utils/texture_cache.hpp"
+#include "../io/log.hpp"
+#include "../std_utils/scope_guard.hpp"
 
 #include <fmt/format.h>
 #include <glad/gl.h>

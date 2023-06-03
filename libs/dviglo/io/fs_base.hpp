@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "../std_utils/str.h"
+#include "../std_utils/str.hpp"
 
 
 namespace dviglo

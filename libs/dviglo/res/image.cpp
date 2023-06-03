@@ -1,7 +1,7 @@
 // Copyright (c) 2022-2023 the Dviglo project
 // License: MIT
 
-#include "image.h"
+#include "image.hpp"
 
 #define STB_IMAGE_IMPLEMENTATION
 #define STBI_WINDOWS_UTF8

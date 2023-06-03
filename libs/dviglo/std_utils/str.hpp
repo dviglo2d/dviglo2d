@@ -6,8 +6,8 @@
 
 #pragma once
 
-#include "../common/config.h"
-#include "../common/primitive_types.h"
+#include "../common/config.hpp"
+#include "../common/primitive_types.hpp"
 
 #include <algorithm>
 #include <string>

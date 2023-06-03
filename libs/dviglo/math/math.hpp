@@ -2,7 +2,7 @@
 // Copyright (c) 2008-2023 the Urho3D project
 // License: MIT
 
-#include "../common/config.h"
+#include "../common/config.hpp"
 
 
 namespace dviglo

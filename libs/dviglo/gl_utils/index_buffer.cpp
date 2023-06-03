@@ -1,7 +1,7 @@
 // Copyright (c) 2022-2023 the Dviglo project
 // License: MIT
 
-#include "index_buffer.h"
+#include "index_buffer.hpp"
 
 #include <cassert>
 

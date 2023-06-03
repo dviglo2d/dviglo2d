@@ -3,9 +3,9 @@
 
 #pragma once
 
-#include "gl_common.h"
+#include "gl_common.hpp"
 
-#include "../std_utils/flags.h"
+#include "../std_utils/flags.hpp"
 
 #include <utility> // std::exchange()
 

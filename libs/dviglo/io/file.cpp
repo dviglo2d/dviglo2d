@@ -1,11 +1,11 @@
 // Copyright (c) 2022-2023 the Dviglo project
 // License: MIT
 
-#include "file.h"
+#include "file.hpp"
 
-#include "file_base.h"
+#include "file_base.hpp"
 
-#include "../io/log.h"
+#include "../io/log.hpp"
 
 #include <fmt/format.h>
 

@@ -5,7 +5,7 @@
 set(target_name tests)
 
 # Создаём список файлов
-file(GLOB_RECURSE source_files *.cpp *.h)
+file(GLOB_RECURSE source_files *.cpp *.hpp)
 
 # Создаём консольное приложение
 add_executable(${target_name} ${source_files})

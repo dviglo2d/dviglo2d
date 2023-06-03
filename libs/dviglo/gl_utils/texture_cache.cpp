@@ -1,9 +1,9 @@
 // Copyright (c) 2022-2023 the Dviglo project
 // License: MIT
 
-#include "texture_cache.h"
+#include "texture_cache.hpp"
 
-#include "../io/log.h"
+#include "../io/log.hpp"
 
 #include <cassert>
 

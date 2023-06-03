@@ -3,15 +3,15 @@
 
 #pragma once
 
-#include "ecs/systems/s_test.h"
+#include "ecs/systems/s_test.hpp"
 
-#include <dviglo/gl_utils/index_buffer.h>
-#include <dviglo/gl_utils/shader_program.h>
-#include <dviglo/gl_utils/texture.h>
-#include <dviglo/gl_utils/vertex_buffer.h>
-#include <dviglo/graphics/sprite_batch.h>
-#include <dviglo/graphics/sprite_font.h>
-#include <dviglo/main/application.h>
+#include <dviglo/gl_utils/index_buffer.hpp>
+#include <dviglo/gl_utils/shader_program.hpp>
+#include <dviglo/gl_utils/texture.hpp>
+#include <dviglo/gl_utils/vertex_buffer.hpp>
+#include <dviglo/graphics/sprite_batch.hpp>
+#include <dviglo/graphics/sprite_font.hpp>
+#include <dviglo/main/application.hpp>
 
 using namespace std;
 

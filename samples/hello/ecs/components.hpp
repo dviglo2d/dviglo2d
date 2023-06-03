@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include <dviglo/std_utils/str.h>
+#include <dviglo/std_utils/str.hpp>
 
 using namespace dviglo;
 using namespace std;

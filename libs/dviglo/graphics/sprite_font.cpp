@@ -1,11 +1,11 @@
 // Copyright (c) 2022-2023 the Dviglo project
 // License: MIT
 
-#include "sprite_font.h"
+#include "sprite_font.hpp"
 
-#include "../gl_utils/texture_cache.h"
-#include "../io/log.h"
-#include "../io/path.h"
+#include "../gl_utils/texture_cache.hpp"
+#include "../io/log.hpp"
+#include "../io/path.hpp"
 
 #include <fmt/format.h>
 #include <pugixml.hpp>
