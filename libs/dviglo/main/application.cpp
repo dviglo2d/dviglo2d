@@ -3,6 +3,7 @@
 // License: MIT
 
 #include "application.hpp"
+#include "engine_params.hpp"
 
 #include "../gl_utils/shader_cache.hpp"
 #include "../gl_utils/texture_cache.hpp"
@@ -92,8 +93,8 @@ i32 Application::run()
     setup();
 
     window_ = SDL_CreateWindowWithPosition(
-        "Игра",
-        SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width_, height_,
+        engine_params::window_title.c_str(),
+        SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, engine_params::window_size.x, engine_params::window_size.y,
         flags
     );
 

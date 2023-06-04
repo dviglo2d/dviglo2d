@@ -6,6 +6,7 @@
 #include <dviglo/gl_utils/shader_cache.hpp>
 #include <dviglo/gl_utils/texture_cache.hpp>
 #include <dviglo/io/fs_base.hpp>
+#include <dviglo/main/engine_params.hpp>
 
 #include <glad/gl.h>
 #include <glm/glm.hpp>
@@ -34,8 +35,7 @@ struct Vertex
 
 void App::setup()
 {
-    width_ = 800;
-    height_ = 800;
+    engine_params::window_size = ivec2(800, 800);
 }
 
 void App::start()
