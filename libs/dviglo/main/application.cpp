@@ -89,9 +89,11 @@ i32 Application::run()
 
     SDL_WindowFlags flags = SDL_WINDOW_OPENGL;
 
+    setup();
+
     window_ = SDL_CreateWindowWithPosition(
         "Игра",
-        SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 800, 600,
+        SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width_, height_,
         flags
     );
 

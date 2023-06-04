@@ -32,6 +32,12 @@ struct Vertex
     vec2 uv;
 };
 
+void App::setup()
+{
+    width_ = 800;
+    height_ = 800;
+}
+
 void App::start()
 {
     StrUtf8 base_path = get_base_path();

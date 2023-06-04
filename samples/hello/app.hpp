@@ -32,6 +32,7 @@ public:
 
     entt::registry& ecs() { return ecs_; }
 
+    void setup() override;
     void start() override;
     void update(u64 ms) override;
     void draw() override;

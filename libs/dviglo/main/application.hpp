@@ -25,6 +25,8 @@ protected:
     // Параметры движка, используемые при инициализации
 
     StrUtf8 log_path_;
+    i32 width_ = 800;
+    i32 height_ = 600;
 
 #ifdef DV_CTEST
     /// Через сколько секунд после запуска приложение автоматически закроется.
@@ -39,6 +41,7 @@ protected:
     Application(const std::vector<StrUtf8>& args);
     ~Application();
 
+    virtual void setup() = 0;
     virtual void start() = 0;
     virtual void update(u64 ms) = 0;
     virtual void draw() = 0;
