@@ -3,7 +3,8 @@
 // License: MIT
 
 #include "application.hpp"
-#include "engine_params.hpp"
+
+#include "os_window.hpp"
 
 #include "../gl_utils/shader_cache.hpp"
 #include "../gl_utils/texture_cache.hpp"
@@ -50,12 +51,6 @@ Application::Application(const vector<StrUtf8>& args)
 
 Application::~Application()
 {
-    if (gl_context_)
-        SDL_GL_DeleteContext(gl_context_);
-
-    if (window_)
-        SDL_DestroyWindow(window_);
-
     SDL_Quit();
 }
 
@@ -77,61 +72,9 @@ i32 Application::run()
     if (SDL_Init(0) < 0)
         return 1;
 
-    if (SDL_InitSubSystem(SDL_INIT_VIDEO) < 0)
-        return 1;
-
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-    SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
-    SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
-    SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
-    SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
-
-    SDL_WindowFlags flags = SDL_WINDOW_OPENGL;
-
     setup();
 
-    window_ = SDL_CreateWindowWithPosition(
-        engine_params::window_title.c_str(),
-        SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, engine_params::window_size.x, engine_params::window_size.y,
-        flags
-    );
-
-    if (!window_)
-    {
-        DV_LOG->write_error(format("Application::run(): !window_ | {}", SDL_GetError()));
-        return 1;
-    }
-
-    gl_context_ = SDL_GL_CreateContext(window_);
-
-    if (!gl_context_)
-    {
-        DV_LOG->write_error(format("Application::run(): !gl_context_ | {}", SDL_GetError()));
-        return 1;
-    }
-
-    // Отключаем VSync
-    i32 vsync_ret = SDL_GL_SetSwapInterval(0);
-
-    // Вызывает ошибку при запуске через xvfb-run на сервере ГитХаба
-    if (vsync_ret < 0)
-        DV_LOG->write_error(format("Application::run(): vsync_ret < 0 | {}", SDL_GetError()));
-
-    // Версия может отличаться от 30003 (например имеет значение 40002 при запуске
-    // через Mesa на сервере ГитХаба)
-    i32 gl_version = gladLoadGL((GLADloadfunc)SDL_GL_GetProcAddress);
-
-    if (!gl_version)
-    {
-        DV_LOG->write_error("Application::run(): !gl_version");
-        return 1;
-    }
-
-    DV_LOG->write_info(format("GL_VENDOR: {}", reinterpret_cast<const char*>(glGetString(GL_VENDOR))));
-    DV_LOG->write_info(format("GL_RENDERER: {}", reinterpret_cast<const char*>(glGetString(GL_RENDERER))));
-    DV_LOG->write_info(format("GL_VERSION: {}", reinterpret_cast<const char*>(glGetString(GL_VERSION))));
+    unique_ptr<OsWindow> os_window = make_unique<OsWindow>();
 
     start();
 
@@ -177,7 +120,7 @@ i32 Application::run()
 
         update(ms);
         draw();
-        SDL_GL_SwapWindow(window_);
+        SDL_GL_SwapWindow(DV_OS_WINDOW->window());
 
         //SDL_Delay(500);
     }
