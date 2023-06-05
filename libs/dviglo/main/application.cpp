@@ -84,7 +84,7 @@ i32 Application::run()
     {
 #ifdef DV_CTEST
         // При CTest выходим через duration_ секунд после запуска приложения
-        if (duration_ && SDL_GetTicks() > duration_ * 1000)
+        if (duration_ && SDL_GetTicks() > duration_ * SDL_MS_PER_SECOND)
             should_exit_ = true;
 #endif
 
@@ -114,7 +114,7 @@ i32 Application::run()
         if (ns == 0)
         {
             // Ждём полмиллисекунды
-            SDL_DelayNS(500'000);
+            SDL_DelayNS(SDL_NS_PER_MS / 2);
             continue;
         }
 

@@ -77,7 +77,7 @@ void App::update(u64 ns)
     while (rotation >= 360.f)
         rotation -= 360.f;
 
-    u64 fps = 1000'000'000 / ns;
+    u64 fps = SDL_NS_PER_SECOND / ns;
     fps_text = format("FPS: {}", fps);
 
     s_test_.update(ecs_, ns);
