@@ -34,6 +34,6 @@ public:
 
     void setup() override;
     void start() override;
-    void update(u64 ms) override;
+    void update(u64 ns) override;
     void draw() override;
 };

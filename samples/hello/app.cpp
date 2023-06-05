@@ -71,16 +71,16 @@ static float rotation = 0.f;
 
 static StrUtf8 fps_text;
 
-void App::update(u64 ms)
+void App::update(u64 ns)
 {
-    rotation += ms * 0.0001f;
+    rotation += ns * 0.000'000'000'1f;
     while (rotation >= 360.f)
         rotation -= 360.f;
 
-    float fps = 1000.f / ms;
+    u64 fps = 1000'000'000 / ns;
     fps_text = format("FPS: {}", fps);
 
-    s_test_.update(ecs_, ms);
+    s_test_.update(ecs_, ns);
 }
 
 void App::draw()

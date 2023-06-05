@@ -11,5 +11,5 @@
 class STest
 {
 public:
-    void update(entt::registry& ecs, u64 ms);
+    void update(entt::registry& ecs, u64 ns);
 };

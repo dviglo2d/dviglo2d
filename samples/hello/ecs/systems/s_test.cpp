@@ -6,7 +6,7 @@
 #include <iostream>
 
 
-void STest::update(entt::registry& ecs, u64 ms)
+void STest::update(entt::registry& ecs, u64 ns)
 {
     auto view = ecs.view<CName, CCounter>();
 
@@ -15,6 +15,6 @@ void STest::update(entt::registry& ecs, u64 ms)
         ++counter.value;
 
         cout << "Имя сущности: " << name.value << " | Счётчик: " << counter.value
-             << " | Интервал времени: " << ms << " мс" << endl;
+             << " | Интервал времени: " << ns << " нс" << endl;
     }
 }

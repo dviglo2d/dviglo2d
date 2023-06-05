@@ -78,7 +78,7 @@ i32 Application::run()
 
     start();
 
-    u64 old_ticks = SDL_GetTicks();
+    u64 old_ticks = SDL_GetTicksNS();
 
     while (!should_exit_)
     {
@@ -106,19 +106,19 @@ i32 Application::run()
             }
         }
 
-        u64 new_ticks = SDL_GetTicks();
-        u64 ms = new_ticks - old_ticks;
+        u64 new_ticks = SDL_GetTicksNS();
+        u64 ns = new_ticks - old_ticks;
         old_ticks = new_ticks;
 
-        // Если частота кадров больше 1000, то точности SDL_GetTicks() не хватает
-        if (ms == 0)
+        // Если точности SDL_GetTicksNS() не хватает
+        if (ns == 0)
         {
             // Ждём полмиллисекунды
             SDL_DelayNS(500'000);
             continue;
         }
 
-        update(ms);
+        update(ns);
         draw();
         SDL_GL_SwapWindow(DV_OS_WINDOW->window());
 
