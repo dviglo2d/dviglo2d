@@ -6,6 +6,7 @@
 
 #include "../gl_utils/shader_cache.hpp"
 #include "../io/fs_base.hpp"
+#include "../main/os_window.hpp"
 #include "../math/math.hpp"
 
 #include <cstring> // memcpy
@@ -96,10 +97,10 @@ SpriteBatch::SpriteBatch()
                                                BufferUsage::static_draw, indices.get());
 }
 
-ivec2 screen_size{800, 600};
-
 void SpriteBatch::flush()
 {
+    ivec2 screen_size = DV_OS_WINDOW->size_in_pixels();
+
     if (t_num_vertices_ > 0)
     {
         t_shader_program_->use();
