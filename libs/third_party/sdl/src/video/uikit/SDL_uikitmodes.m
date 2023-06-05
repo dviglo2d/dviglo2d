@@ -141,9 +141,9 @@ static int UIKit_AddSingleDisplayMode(SDL_VideoDisplay *display, int w, int h,
         return -1;
     }
 
-    mode.pixel_w = w;
-    mode.pixel_h = h;
-    mode.display_scale = uiscreen.nativeScale;
+    mode.w = w;
+    mode.h = h;
+    mode.pixel_density = uiscreen.nativeScale;
     mode.refresh_rate = UIKit_GetDisplayModeRefreshRate(uiscreen);
     mode.format = SDL_PIXELFORMAT_ABGR8888;
 
@@ -209,9 +209,9 @@ int UIKit_AddDisplay(UIScreen *uiscreen, SDL_bool send_event)
     }
 
     SDL_zero(mode);
-    mode.pixel_w = (int)size.width;
-    mode.pixel_h = (int)size.height;
-    mode.display_scale = uiscreen.nativeScale;
+    mode.w = (int)size.width;
+    mode.h = (int)size.height;
+    mode.pixel_density = uiscreen.nativeScale;
     mode.format = SDL_PIXELFORMAT_ABGR8888;
     mode.refresh_rate = UIKit_GetDisplayModeRefreshRate(uiscreen);
 
@@ -257,8 +257,7 @@ void UIKit_DelDisplay(UIScreen *uiscreen)
     }
 }
 
-SDL_bool
-UIKit_IsDisplayLandscape(UIScreen *uiscreen)
+SDL_bool UIKit_IsDisplayLandscape(UIScreen *uiscreen)
 {
 #if !TARGET_OS_TV
     if (uiscreen == [UIScreen mainScreen]) {
@@ -271,7 +270,7 @@ UIKit_IsDisplayLandscape(UIScreen *uiscreen)
     }
 }
 
-int UIKit_InitModes(_THIS)
+int UIKit_InitModes(SDL_VideoDevice *_this)
 {
     @autoreleasepool {
         for (UIScreen *uiscreen in [UIScreen screens]) {
@@ -289,7 +288,7 @@ int UIKit_InitModes(_THIS)
     return 0;
 }
 
-int UIKit_GetDisplayModes(_THIS, SDL_VideoDisplay *display)
+int UIKit_GetDisplayModes(SDL_VideoDevice *_this, SDL_VideoDisplay *display)
 {
     @autoreleasepool {
         SDL_UIKitDisplayData *data = (__bridge SDL_UIKitDisplayData *)display->driverdata;
@@ -323,7 +322,7 @@ int UIKit_GetDisplayModes(_THIS, SDL_VideoDisplay *display)
     return 0;
 }
 
-int UIKit_SetDisplayMode(_THIS, SDL_VideoDisplay *display, SDL_DisplayMode *mode)
+int UIKit_SetDisplayMode(SDL_VideoDevice *_this, SDL_VideoDisplay *display, SDL_DisplayMode *mode)
 {
     @autoreleasepool {
         SDL_UIKitDisplayData *data = (__bridge SDL_UIKitDisplayData *)display->driverdata;
@@ -337,11 +336,11 @@ int UIKit_SetDisplayMode(_THIS, SDL_VideoDisplay *display, SDL_DisplayMode *mode
             /* [UIApplication setStatusBarOrientation:] no longer works reliably
              * in recent iOS versions, so we can't rotate the screen when setting
              * the display mode. */
-            if (mode->pixel_w > mode->pixel_h) {
+            if (mode->w > mode->h) {
                 if (!UIKit_IsDisplayLandscape(data.uiscreen)) {
                     return SDL_SetError("Screen orientation does not match display mode size");
                 }
-            } else if (mode->pixel_w < mode->pixel_h) {
+            } else if (mode->w < mode->h) {
                 if (UIKit_IsDisplayLandscape(data.uiscreen)) {
                     return SDL_SetError("Screen orientation does not match display mode size");
                 }
@@ -352,7 +351,7 @@ int UIKit_SetDisplayMode(_THIS, SDL_VideoDisplay *display, SDL_DisplayMode *mode
     return 0;
 }
 
-int UIKit_GetDisplayUsableBounds(_THIS, SDL_VideoDisplay *display, SDL_Rect *rect)
+int UIKit_GetDisplayUsableBounds(SDL_VideoDevice *_this, SDL_VideoDisplay *display, SDL_Rect *rect)
 {
     @autoreleasepool {
         SDL_UIKitDisplayData *data = (__bridge SDL_UIKitDisplayData *)display->driverdata;
@@ -373,7 +372,7 @@ int UIKit_GetDisplayUsableBounds(_THIS, SDL_VideoDisplay *display, SDL_Rect *rec
     return 0;
 }
 
-void UIKit_QuitModes(_THIS)
+void UIKit_QuitModes(SDL_VideoDevice *_this)
 {
     [SDL_DisplayWatch stop];
 
@@ -398,7 +397,7 @@ void UIKit_QuitModes(_THIS)
 }
 
 #if !TARGET_OS_TV
-void SDL_OnApplicationDidChangeStatusBarOrientation()
+void SDL_OnApplicationDidChangeStatusBarOrientation(void)
 {
     BOOL isLandscape = UIInterfaceOrientationIsLandscape([UIApplication sharedApplication].statusBarOrientation);
     SDL_VideoDisplay *display = SDL_GetVideoDisplay(SDL_GetPrimaryDisplay());
@@ -412,25 +411,19 @@ void SDL_OnApplicationDidChangeStatusBarOrientation()
          * orientation so that updating a window's fullscreen state to
          * fullscreen desktop keeps the window dimensions in the
          * correct orientation. */
-        if (isLandscape != (mode->pixel_w > mode->pixel_h)) {
-            int height = mode->pixel_w;
-            mode->pixel_w = mode->pixel_h;
-            mode->pixel_h = height;
-            height = mode->screen_w;
-            mode->screen_w = mode->screen_h;
-            mode->screen_h = height;
+        if (isLandscape != (mode->w > mode->h)) {
+            int height = mode->w;
+            mode->w = mode->h;
+            mode->h = height;
         }
 
         /* Same deal with the fullscreen modes */
         for (i = 0; i < display->num_fullscreen_modes; ++i) {
             mode = &display->fullscreen_modes[i];
-            if (isLandscape != (mode->pixel_w > mode->pixel_h)) {
-                int height = mode->pixel_w;
-                mode->pixel_w = mode->pixel_h;
-                mode->pixel_h = height;
-                height = mode->screen_w;
-                mode->screen_w = mode->screen_h;
-                mode->screen_h = height;
+            if (isLandscape != (mode->w > mode->h)) {
+                int height = mode->w;
+                mode->w = mode->h;
+                mode->h = height;
             }
         }
 

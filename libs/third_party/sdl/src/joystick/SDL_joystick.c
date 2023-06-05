@@ -108,7 +108,7 @@ static SDL_JoystickDriver *SDL_joystick_drivers[] = {
 #ifndef SDL_THREAD_SAFETY_ANALYSIS
 static
 #endif
-SDL_mutex *SDL_joystick_lock = NULL; /* This needs to support recursive locks */
+SDL_Mutex *SDL_joystick_lock = NULL; /* This needs to support recursive locks */
 static int SDL_joysticks_locked;
 static SDL_bool SDL_joysticks_initialized;
 static SDL_bool SDL_joysticks_quitting = SDL_FALSE;
@@ -1831,11 +1831,12 @@ char *SDL_CreateJoystickName(Uint16 vendor, Uint16 product, const char *vendor_n
     } replacements[] = {
         { "ASTRO Gaming", "ASTRO" },
         { "Bensussen Deutsch & Associates,Inc.(BDA)", "BDA" },
+        { "Guangzhou Chicken Run Network Technology Co., Ltd.", "GameSir" },
+        { "HORI CO.,LTD", "HORI" },
+        { "HORI CO.,LTD.", "HORI" },
+        { "Mad Catz Inc.", "Mad Catz" },
         { "NVIDIA Corporation ", "" },
         { "Performance Designed Products", "PDP" },
-        { "HORI CO.,LTD.", "HORI" },
-        { "HORI CO.,LTD", "HORI" },
-        { "Mad Catz Inc.", "Mad Catz" },
         { "QANBA USA, LLC", "Qanba" },
         { "QANBA USA,LLC", "Qanba" },
         { "Unknown ", "" },
@@ -1946,7 +1947,7 @@ char *SDL_CreateJoystickName(Uint16 vendor, Uint16 product, const char *vendor_n
     for (i = 1; i < (len - 1); ++i) {
         int matchlen = PrefixMatch(name, &name[i]);
         while (matchlen > 0) {
-            if (name[matchlen] == ' ') {
+            if (name[matchlen] == ' ' || name[matchlen] == '-') {
                 SDL_memmove(name, name + matchlen + 1, len - matchlen);
                 break;
             }
@@ -2187,6 +2188,7 @@ SDL_bool SDL_IsJoystickXboxSeriesX(Uint16 vendor_id, Uint16 product_id)
     if (vendor_id == USB_VENDOR_POWERA_ALT) {
         if ((product_id >= 0x2001 && product_id <= 0x201a) ||
             product_id == USB_PRODUCT_XBOX_SERIES_X_POWERA_FUSION_PRO2 ||
+            product_id == USB_PRODUCT_XBOX_SERIES_X_POWERA_MOGA_XP_ULTRA ||
             product_id == USB_PRODUCT_XBOX_SERIES_X_POWERA_SPECTRA) {
             return SDL_TRUE;
         }
@@ -2216,6 +2218,11 @@ SDL_bool SDL_IsJoystickXboxSeriesX(Uint16 vendor_id, Uint16 product_id)
     }
     if (vendor_id == USB_VENDOR_8BITDO) {
         if (product_id == USB_PRODUCT_8BITDO_XBOX_CONTROLLER) {
+            return SDL_TRUE;
+        }
+    }
+    if (vendor_id == USB_VENDOR_GAMESIR) {
+        if (product_id == USB_PRODUCT_GAMESIR_G7) {
             return SDL_TRUE;
         }
     }

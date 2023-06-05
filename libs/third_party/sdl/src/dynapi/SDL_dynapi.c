@@ -123,6 +123,16 @@ static void SDL_InitDynamicAPI(void);
         va_end(ap);                                                                                                                       \
         return retval;                                                                                                                    \
     }                                                                                                                                     \
+    _static int SDLCALL SDL_swprintf##name(SDL_OUT_Z_CAP(maxlen) wchar_t *buf, size_t maxlen, SDL_PRINTF_FORMAT_STRING const wchar_t *fmt, ...) \
+    {                                                                                                                                     \
+        int retval;                                                                                                                       \
+        va_list ap;                                                                                                                       \
+        initcall;                                                                                                                         \
+        va_start(ap, fmt);                                                                                                                \
+        retval = jump_table.SDL_vswprintf(buf, maxlen, fmt, ap);                                                                          \
+        va_end(ap);                                                                                                                       \
+        return retval;                                                                                                                    \
+    }                                                                                                                                     \
     _static int SDLCALL SDL_asprintf##name(char **strp, SDL_PRINTF_FORMAT_STRING const char *fmt, ...)                                    \
     {                                                                                                                                     \
         int retval;                                                                                                                       \
@@ -356,8 +366,7 @@ static Sint32 initialize_jumptable(Uint32 apiver, void *table, Uint32 tablesize)
 typedef Sint32(SDLCALL *SDL_DYNAPI_ENTRYFN)(Uint32 apiver, void *table, Uint32 tablesize);
 extern DECLSPEC Sint32 SDLCALL SDL_DYNAPI_entry(Uint32, void *, Uint32);
 
-Sint32
-SDL_DYNAPI_entry(Uint32 apiver, void *table, Uint32 tablesize)
+Sint32 SDL_DYNAPI_entry(Uint32 apiver, void *table, Uint32 tablesize)
 {
     return initialize_jumptable(apiver, table, tablesize);
 }
@@ -434,14 +443,28 @@ extern SDL_NORETURN void SDL_ExitProcess(int exitcode);
 
 static void SDL_InitDynamicAPILocked(void)
 {
-    const char *libname = SDL_getenv_REAL(SDL_DYNAMIC_API_ENVVAR);
+    char *libname = SDL_getenv_REAL(SDL_DYNAMIC_API_ENVVAR);
     SDL_DYNAPI_ENTRYFN entry = NULL; /* funcs from here by default. */
     SDL_bool use_internal = SDL_TRUE;
 
     if (libname) {
-        entry = (SDL_DYNAPI_ENTRYFN)get_sdlapi_entry(libname, "SDL_DYNAPI_entry");
+        while (*libname && !entry) {
+            char *ptr = libname;
+            while (SDL_TRUE) {
+                const char ch = *ptr;
+                if ((ch == ',') || (ch == '\0')) {
+                    *ptr = '\0';
+                    entry = (SDL_DYNAPI_ENTRYFN)get_sdlapi_entry(libname, "SDL_DYNAPI_entry");
+                    *ptr = ch;
+                    libname = (ch == '\0') ? ptr : (ptr + 1);
+                    break;
+                } else {
+                    ptr++;
+                }
+            }
+        }
         if (!entry) {
-            dynapi_warn("Couldn't load overriding SDL library. Please fix or remove the " SDL_DYNAMIC_API_ENVVAR " environment variable. Using the default SDL.");
+            dynapi_warn("Couldn't load an overriding SDL library. Please fix or remove the " SDL_DYNAMIC_API_ENVVAR " environment variable. Using the default SDL.");
             /* Just fill in the function pointers from this library, later. */
         }
     }

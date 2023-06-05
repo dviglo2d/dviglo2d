@@ -393,7 +393,7 @@ static SDL_bool ReadProprietaryReply(SDL_DriverSwitch_Context *ctx, ESwitchPropr
     return SDL_FALSE;
 }
 
-static void ConstructSubcommand(SDL_DriverSwitch_Context *ctx, ESwitchSubcommandIDs ucCommandID, Uint8 *pBuf, Uint8 ucLen, SwitchSubcommandOutputPacket_t *outPacket)
+static void ConstructSubcommand(SDL_DriverSwitch_Context *ctx, ESwitchSubcommandIDs ucCommandID, const Uint8 *pBuf, Uint8 ucLen, SwitchSubcommandOutputPacket_t *outPacket)
 {
     SDL_memset(outPacket, 0, sizeof(*outPacket));
 
@@ -432,7 +432,7 @@ static SDL_bool WritePacket(SDL_DriverSwitch_Context *ctx, void *pBuf, Uint8 ucL
     }
 }
 
-static SDL_bool WriteSubcommand(SDL_DriverSwitch_Context *ctx, ESwitchSubcommandIDs ucCommandID, Uint8 *pBuf, Uint8 ucLen, SwitchSubcommandInputPacket_t **ppReply)
+static SDL_bool WriteSubcommand(SDL_DriverSwitch_Context *ctx, ESwitchSubcommandIDs ucCommandID, const Uint8 *pBuf, Uint8 ucLen, SwitchSubcommandInputPacket_t **ppReply)
 {
     SwitchSubcommandInputPacket_t *reply = NULL;
     int nTries;
@@ -648,7 +648,7 @@ static SDL_bool SetVibrationEnabled(SDL_DriverSwitch_Context *ctx, Uint8 enabled
 }
 static SDL_bool SetInputMode(SDL_DriverSwitch_Context *ctx, Uint8 input_mode)
 {
-    return WriteSubcommand(ctx, k_eSwitchSubcommandIDs_SetInputReportMode, &input_mode, 1, NULL);
+    return WriteSubcommand(ctx, k_eSwitchSubcommandIDs_SetInputReportMode, &input_mode, sizeof(input_mode), NULL);
 }
 
 static SDL_bool SetHomeLED(SDL_DriverSwitch_Context *ctx, Uint8 brightness)
@@ -1560,6 +1560,39 @@ static int HIDAPI_DriverSwitch_SetJoystickLED(SDL_HIDAPI_Device *device, SDL_Joy
 
 static int HIDAPI_DriverSwitch_SendJoystickEffect(SDL_HIDAPI_Device *device, SDL_Joystick *joystick, const void *data, int size)
 {
+    SDL_DriverSwitch_Context *ctx = (SDL_DriverSwitch_Context *)device->context;
+
+    if (size == sizeof(SwitchCommonOutputPacket_t)) {
+        const SwitchCommonOutputPacket_t *packet = (SwitchCommonOutputPacket_t *)data;
+
+        if (packet->ucPacketType != k_eSwitchOutputReportIDs_Rumble) {
+            return SDL_SetError("Unknown Nintendo Switch Pro effect type");
+        }
+
+        SDL_copyp(&ctx->m_RumblePacket.rumbleData[0], &packet->rumbleData[0]);
+        SDL_copyp(&ctx->m_RumblePacket.rumbleData[1], &packet->rumbleData[1]);
+        if (!WriteRumble(ctx)) {
+            return -1;
+        }
+
+        /* This overwrites any internal rumble */
+        ctx->m_bRumblePending = SDL_FALSE;
+        ctx->m_bRumbleZeroPending = SDL_FALSE;
+        return 0;
+    } else if (size >= 2 && size <= 256) {
+        const Uint8 *payload = (const Uint8 *)data;
+        ESwitchSubcommandIDs cmd = (ESwitchSubcommandIDs)payload[0];
+
+        if (cmd == k_eSwitchSubcommandIDs_SetInputReportMode && !device->is_bluetooth) {
+            /* Going into simple mode over USB disables input reports, so don't do that */
+            return 0;
+        }
+
+        if (!WriteSubcommand(ctx, cmd, &payload[1], (Uint8)(size - 1), NULL)) {
+            return -1;
+        }
+        return 0;
+    }
     return SDL_Unsupported();
 }
 
@@ -1763,8 +1796,7 @@ static void HandleSimpleControllerState(SDL_Joystick *joystick, SDL_DriverSwitch
     ctx->m_lastSimpleState = *packet;
 }
 
-static void
-SendSensorUpdate(Uint64 timestamp, SDL_Joystick *joystick, SDL_DriverSwitch_Context *ctx, SDL_SensorType type, Uint64 sensor_timestamp, const Sint16 *values)
+static void SendSensorUpdate(Uint64 timestamp, SDL_Joystick *joystick, SDL_DriverSwitch_Context *ctx, SDL_SensorType type, Uint64 sensor_timestamp, const Sint16 *values)
 {
     float data[3];
 
