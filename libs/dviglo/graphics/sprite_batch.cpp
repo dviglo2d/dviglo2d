@@ -156,11 +156,11 @@ void SpriteBatch::draw_sprite_internal()
         // Сдвигаем спрайт на -origin
         Rect result_dest(sprite.destination.min - sprite.origin, sprite.destination.max - sprite.origin);
 
-        // Лицевая грань задаётся против часовой стрелки, ось Y направлена вниз
+        // Лицевая грань задаётся по часовой стрелке, ось Y направлена вниз
         quad.v0.position = vec2(result_dest.min.x, result_dest.min.y); // Верхний левый угол спрайта
-        quad.v1.position = vec2(result_dest.min.x, result_dest.max.y); // Нижний левый угол
+        quad.v1.position = vec2(result_dest.max.x, result_dest.min.y); // Верхний правый угол
         quad.v2.position = vec2(result_dest.max.x, result_dest.max.y); // Нижний правый угол
-        quad.v3.position = vec2(result_dest.max.x, result_dest.min.y); // Верхний правый угол
+        quad.v3.position = vec2(result_dest.min.x, result_dest.max.y); // Нижний левый угол
     }
     else
     {
@@ -178,8 +178,8 @@ void SpriteBatch::draw_sprite_internal()
         // смещает ее в требуемые мировые координаты.
         // Но в матрице 3x3 последняя строка "0 0 1", умножать на которую бессмысленно.
         // Поэтому вычисляем без матрицы для оптимизации
-        float m11 =  cos * sprite.scale.x; float m12 = sin * sprite.scale.y; float m13 = sprite.destination.min.x;
-        float m21 = -sin * sprite.scale.x; float m22 = cos * sprite.scale.y; float m23 = sprite.destination.min.y;
+        float m11 = cos * sprite.scale.x; float m12 = -sin * sprite.scale.y; float m13 = sprite.destination.min.x;
+        float m21 = sin * sprite.scale.x; float m22 =  cos * sprite.scale.y; float m23 = sprite.destination.min.y;
         //          0                                  0                                 1
 
         float min_x_m11 = local.min.x * m11;
@@ -195,17 +195,17 @@ void SpriteBatch::draw_sprite_internal()
         quad.v0.position = vec2(min_x_m11 + min_y_m12 + m13,
                                 min_x_m21 + min_y_m22 + m23);
 
-        // transform * vec2(local.min.x, local.max.y)
-        quad.v1.position = vec2(min_x_m11 + max_y_m12 + m13,
-                                min_x_m21 + max_y_m22 + m23);
+        // transform * vec2(local.max.x, local.min.y)
+        quad.v1.position = vec2(max_x_m11 + min_y_m12 + m13,
+                                max_x_m21 + min_y_m22 + m23);
 
         // transform * vec2(local.max.x, local.max.y)
         quad.v2.position = vec2(max_x_m11 + max_y_m12 + m13,
                                 max_x_m21 + max_y_m22 + m23);
 
-        // transform * vec2(local.max.x, local.min.y)
-        quad.v3.position = vec2(max_x_m11 + min_y_m12 + m13,
-                                max_x_m21 + min_y_m22 + m23);
+        // transform * vec2(local.min.x, local.max.y)
+        quad.v3.position = vec2(min_x_m11 + max_y_m12 + m13,
+                                min_x_m21 + max_y_m22 + m23);
     }
 
     if (!!(sprite.flip_modes & FlipModes::horizontally))
@@ -218,13 +218,13 @@ void SpriteBatch::draw_sprite_internal()
     quad.v0.uv = sprite.source_uv.min;
 
     quad.v1.color = sprite.color1;
-    quad.v1.uv = vec2(sprite.source_uv.min.x, sprite.source_uv.max.y);
+    quad.v1.uv = vec2(sprite.source_uv.max.x, sprite.source_uv.min.y);
 
     quad.v2.color = sprite.color2;
     quad.v2.uv = sprite.source_uv.max;
 
     quad.v3.color = sprite.color3;
-    quad.v3.uv = vec2(sprite.source_uv.max.x, sprite.source_uv.min.y);
+    quad.v3.uv = vec2(sprite.source_uv.min.x, sprite.source_uv.max.y);
 
     add_quad();
 }
