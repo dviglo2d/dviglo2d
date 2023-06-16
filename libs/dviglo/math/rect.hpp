@@ -24,4 +24,21 @@ struct Rect
     }
 };
 
+struct IntRect
+{
+    glm::ivec2 min;
+    glm::ivec2 max;
+
+    // Clang версии < 16 не поддерживает P0960R3. Позже оба конструктора можно будет удалить
+    // https://en.cppreference.com/w/cpp/compiler_support/20
+
+    IntRect() = default;
+
+    IntRect(glm::ivec2 min, glm::ivec2 max)
+        : min(min)
+        , max(max)
+    {
+    }
+};
+
 } // namespace dviglo
