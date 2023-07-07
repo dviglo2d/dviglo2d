@@ -1734,7 +1734,7 @@ void Wayland_RaiseWindow(SDL_VideoDevice *_this, SDL_Window *window)
      */
     if (input) {
         seat = input->seat;
-        serial = Wayland_GetLastImplicitGrabSerial(input);
+        serial = input->last_implicit_grab_serial;
     }
 
     Wayland_activate_window(_this->driverdata,
@@ -1808,7 +1808,7 @@ static void SDLCALL QtExtendedSurface_OnHintChanged(void *userdata, const char *
             char *tmp = SDL_strdup(newValue);
             char *saveptr = NULL;
 
-            char *flag = SDL_strtokr(tmp, " ", &saveptr);
+            char *flag = SDL_strtok_r(tmp, " ", &saveptr);
             while (flag) {
                 if (SDL_strcmp(flag, "OverridesSystemGestures") == 0) {
                     flags |= QT_EXTENDED_SURFACE_WINDOWFLAG_OVERRIDESSYSTEMGESTURES;
@@ -1819,7 +1819,7 @@ static void SDLCALL QtExtendedSurface_OnHintChanged(void *userdata, const char *
                     flags |= 4 /* QT_EXTENDED_SURFACE_WINDOWFLAG_BYPASSWINDOWMANAGER */;
                 }
 
-                flag = SDL_strtokr(NULL, " ", &saveptr);
+                flag = SDL_strtok_r(NULL, " ", &saveptr);
             }
 
             SDL_free(tmp);
@@ -2088,13 +2088,6 @@ int Wayland_CreateWindow(SDL_VideoDevice *_this, SDL_Window *window)
 
     c = _this->driverdata;
     window->driverdata = data;
-
-    if (!(window->flags & SDL_WINDOW_VULKAN)) {
-        if (!(window->flags & SDL_WINDOW_OPENGL)) {
-            SDL_GL_LoadLibrary(NULL);
-            window->flags |= SDL_WINDOW_OPENGL;
-        }
-    }
 
     if (window->x == SDL_WINDOWPOS_UNDEFINED) {
         window->x = 0;

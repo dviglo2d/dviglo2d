@@ -20,15 +20,23 @@
 */
 #include "SDL_internal.h"
 
-#ifndef SDL_waylandclipboard_h_
-#define SDL_waylandclipboard_h_
+#ifndef SDL_clipboard_c_h_
+#define SDL_clipboard_c_h_
 
-extern const char **Wayland_GetTextMimeTypes(SDL_VideoDevice *_this, size_t *num_mime_types);
-extern int Wayland_SetClipboardData(SDL_VideoDevice *_this);
-extern void *Wayland_GetClipboardData(SDL_VideoDevice *_this, const char *mime_type, size_t *length);
-extern SDL_bool Wayland_HasClipboardData(SDL_VideoDevice *_this, const char *mime_type);
-extern int Wayland_SetPrimarySelectionText(SDL_VideoDevice *_this, const char *text);
-extern char *Wayland_GetPrimarySelectionText(SDL_VideoDevice *_this);
-extern SDL_bool Wayland_HasPrimarySelectionText(SDL_VideoDevice *_this);
+#include "SDL_sysvideo.h"
 
-#endif /* SDL_waylandclipboard_h_ */
+
+/* Return true if the mime type is valid clipboard text */
+extern SDL_bool SDL_IsTextMimeType(const char *mime_type);
+
+/* Cancel the clipboard data callback, called internally for cleanup */
+extern void SDL_CancelClipboardData(Uint32 sequence);
+
+/* Call the clipboard callback for application data */
+extern void *SDL_GetInternalClipboardData(SDL_VideoDevice *_this, const char *mime_type, size_t *size);
+extern SDL_bool SDL_HasInternalClipboardData(SDL_VideoDevice *_this, const char *mime_type);
+
+/* General purpose clipboard text callback */
+const void *SDL_ClipboardTextCallback(void *userdata, const char *mime_type, size_t *size);
+
+#endif /* SDL_clipboard_c_h_ */

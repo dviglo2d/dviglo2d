@@ -984,7 +984,7 @@ struct hid_device_info  HID_API_EXPORT *hid_enumerate(unsigned short vendor_id, 
 		if (get_hid_report_descriptor_from_sysfs(sysfs_path, &report_desc) >= 0) {
 			get_next_hid_usage(report_desc.value, report_desc.size, &pos, &page, &usage);
 		}
-		if (HIDAPI_IGNORE_DEVICE(dev_vid, dev_pid, page, usage)) {
+		if (HIDAPI_IGNORE_DEVICE(bus_type, dev_vid, dev_pid, page, usage)) {
 			continue;
 		}
 #endif
@@ -1096,7 +1096,17 @@ hid_device * HID_API_EXPORT hid_open_path(const char *path)
 		return NULL;
 	}
 
-	dev->device_handle = open(path, O_RDWR | O_CLOEXEC);
+    const int MAX_ATTEMPTS = 10;
+    int attempt;
+    for (attempt = 1; attempt <= MAX_ATTEMPTS; ++attempt) {
+        dev->device_handle = open(path, O_RDWR | O_CLOEXEC);
+        if (dev->device_handle < 0 && errno == EACCES) {
+            /* udev might be setting up permissions, wait a bit and try again */
+            usleep(1 * 1000);
+            continue;
+        }
+        break;
+    }
 
 	if (dev->device_handle >= 0) {
 		int res, desc_size = 0;

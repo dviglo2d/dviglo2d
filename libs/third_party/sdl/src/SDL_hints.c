@@ -65,14 +65,18 @@ SDL_bool SDL_SetHintWithPriority(const char *name, const char *value, SDL_HintPr
             }
             if (hint->value != value &&
                 (value == NULL || !hint->value || SDL_strcmp(hint->value, value) != 0)) {
+                char *old_value = hint->value;
+
+                hint->value = value ? SDL_strdup(value) : NULL;
                 for (entry = hint->callbacks; entry;) {
                     /* Save the next entry in case this one is deleted */
                     SDL_HintWatch *next = entry->next;
-                    entry->callback(entry->userdata, name, hint->value, value);
+                    entry->callback(entry->userdata, name, old_value, value);
                     entry = next;
                 }
-                SDL_free(hint->value);
-                hint->value = value ? SDL_strdup(value) : NULL;
+                if (old_value) {
+                    SDL_free(old_value);
+                }
             }
             hint->priority = priority;
             return SDL_TRUE;
@@ -169,6 +173,23 @@ const char *SDL_GetHint(const char *name)
         }
     }
     return env;
+}
+
+int SDL_GetStringInteger(const char *value, int default_value)
+{
+    if (value == NULL || !*value) {
+        return default_value;
+    }
+    if (*value == '0' || SDL_strcasecmp(value, "false") == 0) {
+        return 0;
+    }
+    if (*value == '1' || SDL_strcasecmp(value, "true") == 0) {
+        return 1;
+    }
+    if (*value == '-' || SDL_isdigit(*value)) {
+        return SDL_atoi(value);
+    }
+    return default_value;
 }
 
 SDL_bool SDL_GetStringBoolean(const char *value, SDL_bool default_value)

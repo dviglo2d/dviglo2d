@@ -82,30 +82,6 @@ extern "C" {
 #define SDL_HINT_ALLOW_TOPMOST "SDL_ALLOW_TOPMOST"
 
 /**
- * \brief Android APK expansion main file version. Should be a string number like "1", "2" etc.
- *
- * Must be set together with SDL_HINT_ANDROID_APK_EXPANSION_PATCH_FILE_VERSION.
- *
- * If both hints were set then SDL_RWFromFile() will look into expansion files
- * after a given relative path was not found in the internal storage and assets.
- *
- * By default this hint is not set and the APK expansion files are not searched.
- */
-#define SDL_HINT_ANDROID_APK_EXPANSION_MAIN_FILE_VERSION "SDL_ANDROID_APK_EXPANSION_MAIN_FILE_VERSION"
-
-/**
- * \brief Android APK expansion patch file version. Should be a string number like "1", "2" etc.
- *
- * Must be set together with SDL_HINT_ANDROID_APK_EXPANSION_MAIN_FILE_VERSION.
- *
- * If both hints were set then SDL_RWFromFile() will look into expansion files
- * after a given relative path was not found in the internal storage and assets.
- *
- * By default this hint is not set and the APK expansion files are not searched.
- */
-#define SDL_HINT_ANDROID_APK_EXPANSION_PATCH_FILE_VERSION "SDL_ANDROID_APK_EXPANSION_PATCH_FILE_VERSION"
-
-/**
  * \brief A variable to control whether the event loop will block itself when the app is paused.
  *
  * The variable can be set to the following values:
@@ -179,7 +155,7 @@ extern "C" {
  *            (A-Z, a-z, 0-9) plus underscore (‘_’) and hyphen (‘-’) and must not start
  *            with a digit. Note that hyphens, while technically allowed, should not be
  *            used if possible, as they are not supported by all components that use the ID,
- *            such as D-Bus. For maximum compatability, replace hyphens with an underscore.
+ *            such as D-Bus. For maximum compatibility, replace hyphens with an underscore.
  *
  *          - The empty string is not a valid element (ie: your application ID may not
  *            start or end with a period and it is not valid to have two periods in a row).
@@ -329,25 +305,6 @@ extern "C" {
 #define SDL_HINT_AUDIO_DEVICE_STREAM_ROLE "SDL_AUDIO_DEVICE_STREAM_ROLE"
 
 /**
- *  \brief  A variable controlling speed/quality tradeoff of audio resampling.
- *
- *  SDL may be able to use different approaches to audio resampling, which
- *  produce different levels of quality, using more CPU.
- *
- *  If this hint isn't specified to a valid setting SDL will use the default.
- *
- *  This hint is currently only checked at audio subsystem initialization.
- *
- *  This variable can be set to the following values:
- *
- *    "0" or "default" - SDL chooses default (probably "medium").
- *    "1" or "fast"    - Use fast, lower-quality resampling, if available
- *    "2" or "medium"  - Use medium quality resampling, if available
- *    "3" or "best"    - Use high quality resampling, if available
- */
-#define SDL_HINT_AUDIO_RESAMPLING_MODE   "SDL_AUDIO_RESAMPLING_MODE"
-
-/**
  *  \brief  A variable controlling whether SDL updates joystick state when getting input events
  *
  *  This variable can be set to the following values:
@@ -452,17 +409,6 @@ extern "C" {
  *  The default value is "1". This hint must be set before text input is activated.
  */
 #define SDL_HINT_ENABLE_SCREEN_KEYBOARD "SDL_ENABLE_SCREEN_KEYBOARD"
-
-/**
- *  \brief  A variable that controls whether Steam Controllers should be exposed using the SDL joystick and game controller APIs
- *
- *  The variable can be set to the following values:
- *    "0"       - Do not scan for Steam Controllers
- *    "1"       - Scan for Steam Controllers (the default)
- *
- *  The default value is "1".  This hint must be set before initializing the joystick subsystem.
- */
-#define SDL_HINT_ENABLE_STEAM_CONTROLLERS "SDL_ENABLE_STEAM_CONTROLLERS"
 
 /**
  *  \brief  A variable controlling verbosity of the logging of SDL events pushed onto the internal queue.
@@ -615,6 +561,25 @@ extern "C" {
  *  The default value is "1".  This hint may be set at any time.
  */
 #define SDL_HINT_GAMECONTROLLER_USE_BUTTON_LABELS "SDL_GAMECONTROLLER_USE_BUTTON_LABELS"
+
+/**
+ *  \brief  Controls whether the device's built-in accelerometer and gyro should be used as sensors for gamepads.
+ *
+ *  The variable can be set to the following values:
+ *    "0"       - Sensor fusion is disabled
+ *    "1"       - Sensor fusion is enabled for all controllers that lack sensors
+ *
+ *  Or the variable can be a comma separated list of USB VID/PID pairs
+ *  in hexadecimal form, e.g.
+ *
+ *      0xAAAA/0xBBBB,0xCCCC/0xDDDD
+ *
+ *  The variable can also take the form of @file, in which case the named
+ *  file will be loaded and interpreted as the value of the variable.
+ *
+ *  This hint is checked when a gamepad is opened.
+ */
+#define SDL_HINT_GAMECONTROLLER_SENSOR_FUSION "SDL_GAMECONTROLLER_SENSOR_FUSION"
 
 /**
  *  \brief  A variable controlling whether grabbing input grabs the keyboard
@@ -1716,7 +1681,7 @@ extern "C" {
  * By default SDL will manage OpenGL contexts in certain situations. For example, on Android the
  * context will be automatically saved and restored when pausing the application. Additionally, some
  * platforms will assume usage of OpenGL if Vulkan isn't used. Setting this to "1" will prevent this
- * behavior, which is desireable when the application manages the graphics context, such as
+ * behavior, which is desirable when the application manages the graphics context, such as
  * an externally managed OpenGL context or attaching a Vulkan surface to the window.
  */
 #define SDL_HINT_VIDEO_EXTERNAL_CONTEXT    "SDL_VIDEO_EXTERNAL_CONTEXT"
@@ -1920,6 +1885,13 @@ extern "C" {
 #define SDL_HINT_VIDEO_X11_WINDOW_VISUALID      "SDL_VIDEO_X11_WINDOW_VISUALID"
 
 /**
+ *  \brief  A variable forcing the scaling factor for X11 windows
+ *
+ *  This variable can be set to a floating point value in the range 1.0-10.0f
+ */
+#define SDL_HINT_VIDEO_X11_SCALING_FACTOR      "SDL_VIDEO_X11_SCALING_FACTOR"
+
+/**
  *  \brief  A variable controlling whether the X11 XRandR extension should be used.
  *
  *  This variable can be set to the following values:
@@ -2046,7 +2018,7 @@ extern "C" {
 /**
  * \brief Force SDL to use Critical Sections for mutexes on Windows.
  *        On Windows 7 and newer, Slim Reader/Writer Locks are available.
- *        They offer better performance, allocate no kernel ressources and
+ *        They offer better performance, allocate no kernel resources and
  *        use less memory. SDL will fall back to Critical Sections on older
  *        OS versions or if forced to by this hint.
  *
@@ -2343,7 +2315,7 @@ extern "C" {
  *  This functionality has existed since SDL 2.0.0 (indeed, before that)
  *  but before 2.0.22 this was an environment variable only. In 2.0.22,
  *  it was upgraded to a full SDL hint, so you can set the environment
- *  variable as usual or programatically set the hint with SDL_SetHint,
+ *  variable as usual or programmatically set the hint with SDL_SetHint,
  *  which won't propagate to child processes.
  *
  *  The default value is unset, in which case SDL will try to figure out
@@ -2366,7 +2338,7 @@ extern "C" {
  *  This functionality has existed since SDL 2.0.0 (indeed, before that)
  *  but before 2.0.22 this was an environment variable only. In 2.0.22,
  *  it was upgraded to a full SDL hint, so you can set the environment
- *  variable as usual or programatically set the hint with SDL_SetHint,
+ *  variable as usual or programmatically set the hint with SDL_SetHint,
  *  which won't propagate to child processes.
  *
  *  The default value is unset, in which case SDL will try to figure out

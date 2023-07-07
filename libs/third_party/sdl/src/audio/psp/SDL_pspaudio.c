@@ -25,7 +25,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <malloc.h> /* memalign() */
 
 #include "../SDL_audio_c.h"
 #include "../SDL_audiodev_c.h"
@@ -58,7 +57,7 @@ static int PSPAUDIO_OpenDevice(SDL_AudioDevice *_this, const char *devname)
     _this->spec.format = SDL_AUDIO_S16LSB;
 
     /*  PSP has some limitations with the Audio. It fully supports 44.1KHz (Mono & Stereo),
-        however with frequencies differents than 44.1KHz, it just supports Stereo,
+        however with frequencies different than 44.1KHz, it just supports Stereo,
         so a resampler must be done for these scenarios */
     if (isBasicAudioConfig(&_this->spec)) {
         /* The sample count must be a multiple of 64. */
@@ -92,7 +91,7 @@ static int PSPAUDIO_OpenDevice(SDL_AudioDevice *_this, const char *devname)
     }
 
     if (_this->hidden->channel < 0) {
-        free(_this->hidden->rawbuf);
+        SDL_aligned_free(_this->hidden->rawbuf);
         _this->hidden->rawbuf = NULL;
         return SDL_SetError("Couldn't reserve hardware channel");
     }
@@ -104,7 +103,7 @@ static int PSPAUDIO_OpenDevice(SDL_AudioDevice *_this, const char *devname)
        be a multiple of 64 bytes.  Our sample count is already a multiple of
        64, so spec->size should be a multiple of 64 as well. */
     mixlen = _this->spec.size * NUM_BUFFERS;
-    _this->hidden->rawbuf = (Uint8 *)memalign(64, mixlen);
+    _this->hidden->rawbuf = (Uint8 *)SDL_aligned_alloc(64, mixlen);
     if (_this->hidden->rawbuf == NULL) {
         return SDL_SetError("Couldn't allocate mixing buffer");
     }
@@ -154,7 +153,7 @@ static void PSPAUDIO_CloseDevice(SDL_AudioDevice *_this)
     }
 
     if (_this->hidden->rawbuf != NULL) {
-        free(_this->hidden->rawbuf);
+        SDL_aligned_free(_this->hidden->rawbuf);
         _this->hidden->rawbuf = NULL;
     }
 }

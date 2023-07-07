@@ -26,7 +26,7 @@
 #define SDL_ALSA_NON_BLOCKING 0
 #endif
 
-/* without the thread, you will detect devices on startup, but will not get futher hotplug events. But that might be okay. */
+/* without the thread, you will detect devices on startup, but will not get further hotplug events. But that might be okay. */
 #ifndef SDL_ALSA_HOTPLUG_THREAD
 #define SDL_ALSA_HOTPLUG_THREAD 1
 #endif
@@ -622,7 +622,7 @@ static int ALSA_OpenDevice(SDL_AudioDevice *_this, const char *devname)
                 _this->hidden->swizzle_func = no_swizzle;
             }
         }
-        free(chmap);
+        free(chmap); /* This should NOT be SDL_free() */
     }
 #endif /* SND_CHMAP_API_VERSION */
 
@@ -743,7 +743,7 @@ static void add_device(const int iscapture, const char *name, void *hint, ALSA_D
     handle = SDL_strdup(name);
     if (handle == NULL) {
         if (hint) {
-            free(desc);
+            free(desc); /* This should NOT be SDL_free() */
         }
         SDL_free(dev);
         return;
@@ -755,7 +755,7 @@ static void add_device(const int iscapture, const char *name, void *hint, ALSA_D
      */
     SDL_AddAudioDevice(iscapture, desc, NULL, handle);
     if (hint) {
-        free(desc);
+        free(desc); /* This should NOT be SDL_free() */
     }
     dev->name = handle;
     dev->iscapture = iscapture;
@@ -814,7 +814,7 @@ static void ALSA_HotplugIteration(void)
                 }
             }
 
-            free(name);
+            free(name); /* This should NOT be SDL_free() */
         }
 
         /* look through the list of device names to find matches */
@@ -839,10 +839,10 @@ static void ALSA_HotplugIteration(void)
                 SDL_bool have_output = SDL_FALSE;
                 SDL_bool have_input = SDL_FALSE;
 
-                free(ioid);
+                free(ioid); /* This should NOT be SDL_free() */
 
                 if (!isoutput && !isinput) {
-                    free(name);
+                    free(name); /* This should NOT be SDL_free() */
                     continue;
                 }
 
@@ -876,7 +876,7 @@ static void ALSA_HotplugIteration(void)
                 }
             }
 
-            free(name);
+            free(name); /* This should NOT be SDL_free() */
         }
 
         ALSA_snd_device_name_free_hint(hints);

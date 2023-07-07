@@ -109,9 +109,9 @@ const char *SDL_GetPixelFormatName(Uint32 format)
         CASE(SDL_PIXELFORMAT_BGR565)
         CASE(SDL_PIXELFORMAT_RGB24)
         CASE(SDL_PIXELFORMAT_BGR24)
-        CASE(SDL_PIXELFORMAT_RGB888)
+        CASE(SDL_PIXELFORMAT_XRGB8888)
         CASE(SDL_PIXELFORMAT_RGBX8888)
-        CASE(SDL_PIXELFORMAT_BGR888)
+        CASE(SDL_PIXELFORMAT_XBGR8888)
         CASE(SDL_PIXELFORMAT_BGRX8888)
         CASE(SDL_PIXELFORMAT_ARGB8888)
         CASE(SDL_PIXELFORMAT_RGBA8888)
@@ -444,13 +444,13 @@ Uint32 SDL_GetPixelFormatEnumForMasks(int bpp, Uint32 Rmask, Uint32 Gmask, Uint3
         break;
     case 32:
         if (Rmask == 0) {
-            return SDL_PIXELFORMAT_RGB888;
+            return SDL_PIXELFORMAT_XRGB8888;
         }
         if (Rmask == 0x00FF0000 &&
             Gmask == 0x0000FF00 &&
             Bmask == 0x000000FF &&
             Amask == 0x00000000) {
-            return SDL_PIXELFORMAT_RGB888;
+            return SDL_PIXELFORMAT_XRGB8888;
         }
         if (Rmask == 0xFF000000 &&
             Gmask == 0x00FF0000 &&
@@ -462,7 +462,7 @@ Uint32 SDL_GetPixelFormatEnumForMasks(int bpp, Uint32 Rmask, Uint32 Gmask, Uint3
             Gmask == 0x0000FF00 &&
             Bmask == 0x00FF0000 &&
             Amask == 0x00000000) {
-            return SDL_PIXELFORMAT_BGR888;
+            return SDL_PIXELFORMAT_XBGR8888;
         }
         if (Rmask == 0x0000FF00 &&
             Gmask == 0x00FF0000 &&
@@ -857,6 +857,10 @@ void SDL_DetectPalette(SDL_Palette *pal, SDL_bool *is_opaque, SDL_bool *has_alph
 /* Find the opaque pixel value corresponding to an RGB triple */
 Uint32 SDL_MapRGB(const SDL_PixelFormat *format, Uint8 r, Uint8 g, Uint8 b)
 {
+    if (!format) {
+        SDL_InvalidParamError("format");
+        return 0;
+    }
     if (format->palette == NULL) {
         return (r >> format->Rloss) << format->Rshift | (g >> format->Gloss) << format->Gshift | (b >> format->Bloss) << format->Bshift | format->Amask;
     } else {
@@ -868,6 +872,10 @@ Uint32 SDL_MapRGB(const SDL_PixelFormat *format, Uint8 r, Uint8 g, Uint8 b)
 Uint32 SDL_MapRGBA(const SDL_PixelFormat *format, Uint8 r, Uint8 g, Uint8 b,
             Uint8 a)
 {
+    if (!format) {
+        SDL_InvalidParamError("format");
+        return 0;
+    }
     if (format->palette == NULL) {
         return (r >> format->Rloss) << format->Rshift | (g >> format->Gloss) << format->Gshift | (b >> format->Bloss) << format->Bshift | ((Uint32)(a >> format->Aloss) << format->Ashift & format->Amask);
     } else {

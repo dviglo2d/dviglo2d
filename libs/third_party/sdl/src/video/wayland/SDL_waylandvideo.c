@@ -215,16 +215,13 @@ static SDL_VideoDevice *Wayland_CreateDevice(void)
         device->system_theme = SDL_SystemTheme_Get();
 #endif
 
+    device->GetTextMimeTypes = Wayland_GetTextMimeTypes;
     device->SetClipboardData = Wayland_SetClipboardData;
     device->GetClipboardData = Wayland_GetClipboardData;
     device->HasClipboardData = Wayland_HasClipboardData;
-    device->SetClipboardText = Wayland_SetClipboardText;
-    device->GetClipboardText = Wayland_GetClipboardText;
-    device->HasClipboardText = Wayland_HasClipboardText;
     device->SetPrimarySelectionText = Wayland_SetPrimarySelectionText;
     device->GetPrimarySelectionText = Wayland_GetPrimarySelectionText;
     device->HasPrimarySelectionText = Wayland_HasPrimarySelectionText;
-    device->GetClipboardUserdata = Wayland_GetClipboardUserdata;
     device->StartTextInput = Wayland_StartTextInput;
     device->StopTextInput = Wayland_StopTextInput;
     device->SetTextInputRect = Wayland_SetTextInputRect;
@@ -511,7 +508,7 @@ static void display_handle_done(void *data,
 
     /* The native display resolution */
     SDL_zero(native_mode);
-    native_mode.format = SDL_PIXELFORMAT_RGB888;
+    native_mode.format = SDL_PIXELFORMAT_XRGB8888;
 
     /* Transform the pixel values, if necessary. */
     if (driverdata->transform & WL_OUTPUT_TRANSFORM_90) {
@@ -552,7 +549,7 @@ static void display_handle_done(void *data,
 
     /* The scaled desktop mode */
     SDL_zero(desktop_mode);
-    desktop_mode.format = SDL_PIXELFORMAT_RGB888;
+    desktop_mode.format = SDL_PIXELFORMAT_XRGB8888;
 
     desktop_mode.w = driverdata->screen_width;
     desktop_mode.h = driverdata->screen_height;
@@ -594,7 +591,12 @@ static void display_handle_done(void *data,
     if (driverdata->display == 0) {
         /* First time getting display info, create the VideoDisplay */
         SDL_bool send_event = driverdata->videodata->initializing ? SDL_FALSE : SDL_TRUE;
-        driverdata->placeholder.orientation = driverdata->orientation;
+        if (driverdata->physical_width >= driverdata->physical_height) {
+            driverdata->placeholder.natural_orientation = SDL_ORIENTATION_LANDSCAPE;
+        } else {
+            driverdata->placeholder.natural_orientation = SDL_ORIENTATION_PORTRAIT;
+        }
+        driverdata->placeholder.current_orientation = driverdata->orientation;
         driverdata->placeholder.driverdata = driverdata;
         driverdata->display = SDL_AddVideoDisplay(&driverdata->placeholder, send_event);
         SDL_free(driverdata->placeholder.name);

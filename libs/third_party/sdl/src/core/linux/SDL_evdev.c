@@ -59,6 +59,16 @@
 #define REL_HWHEEL_HI_RES 0x0c
 #endif
 
+/* The field to look up in struct input_event for integer seconds */
+#ifndef input_event_sec
+#define input_event_sec time.tv_sec
+#endif
+
+/* The field to look up in struct input_event for fractional seconds */
+#ifndef input_event_usec
+#define input_event_usec time.tv_usec
+#endif
+
 typedef struct SDL_evdevlist_item
 {
     char *path;
@@ -182,7 +192,7 @@ int SDL_EVDEV_Init(void)
                    ROM. */
                 char *rest = (char *)devices;
                 char *spec;
-                while ((spec = SDL_strtokr(rest, ",", &rest))) {
+                while ((spec = SDL_strtok_r(rest, ",", &rest))) {
                     char *endofcls = 0;
                     long cls = SDL_strtol(spec, &endofcls, 0);
                     if (endofcls) {
@@ -245,7 +255,7 @@ static void SDL_EVDEV_udev_callback(SDL_UDEV_deviceevent udev_event, int udev_cl
 
     switch (udev_event) {
     case SDL_UDEV_DEVICEADDED:
-        if (!(udev_class & (SDL_UDEV_DEVICE_MOUSE | SDL_UDEV_DEVICE_KEYBOARD | SDL_UDEV_DEVICE_TOUCHSCREEN | SDL_UDEV_DEVICE_TOUCHPAD))) {
+        if (!(udev_class & (SDL_UDEV_DEVICE_MOUSE | SDL_UDEV_DEVICE_HAS_KEYS | SDL_UDEV_DEVICE_TOUCHSCREEN | SDL_UDEV_DEVICE_TOUCHPAD))) {
             return;
         }
 
@@ -879,9 +889,9 @@ Uint64 SDL_EVDEV_GetEventTimestamp(struct input_event *event)
 
     /* The kernel internally has nanosecond timestamps, but converts it
        to microseconds when delivering the events */
-    timestamp = event->time.tv_sec;
+    timestamp = event->input_event_sec;
     timestamp *= SDL_NS_PER_SECOND;
-    timestamp += SDL_US_TO_NS(event->time.tv_usec);
+    timestamp += SDL_US_TO_NS(event->input_event_usec);
 
     if (!timestamp_offset) {
         timestamp_offset = (now - timestamp);

@@ -151,6 +151,7 @@ typedef enum
     SDL_EVENT_JOYSTICK_ADDED,         /**< A new joystick has been inserted into the system */
     SDL_EVENT_JOYSTICK_REMOVED,       /**< An opened joystick has been removed */
     SDL_EVENT_JOYSTICK_BATTERY_UPDATED,      /**< Joystick battery level change */
+    SDL_EVENT_JOYSTICK_UPDATE_COMPLETE,      /**< Joystick update is complete (disabled by default) */
 
     /* Gamepad events */
     SDL_EVENT_GAMEPAD_AXIS_MOTION  = 0x650, /**< Gamepad axis motion */
@@ -163,6 +164,7 @@ typedef enum
     SDL_EVENT_GAMEPAD_TOUCHPAD_MOTION,      /**< Gamepad touchpad finger was moved */
     SDL_EVENT_GAMEPAD_TOUCHPAD_UP,          /**< Gamepad touchpad finger was lifted */
     SDL_EVENT_GAMEPAD_SENSOR_UPDATE,        /**< Gamepad sensor was updated */
+    SDL_EVENT_GAMEPAD_UPDATE_COMPLETE,      /**< Gamepad update is complete (disabled by default) */
 
     /* Touch events */
     SDL_EVENT_FINGER_DOWN      = 0x700,
@@ -173,7 +175,6 @@ typedef enum
 
     /* Clipboard events */
     SDL_EVENT_CLIPBOARD_UPDATE = 0x900, /**< The clipboard or primary selection changed */
-    SDL_EVENT_CLIPBOARD_CANCELLED,      /**< The clipboard or primary selection cancelled */
 
     /* Drag and drop events */
     SDL_EVENT_DROP_FILE        = 0x1000, /**< The system requests a file open */
@@ -398,7 +399,7 @@ typedef struct SDL_JoyButtonEvent
  */
 typedef struct SDL_JoyDeviceEvent
 {
-    Uint32 type;        /**< ::SDL_EVENT_JOYSTICK_ADDED or ::SDL_EVENT_JOYSTICK_REMOVED */
+    Uint32 type;        /**< ::SDL_EVENT_JOYSTICK_ADDED or ::SDL_EVENT_JOYSTICK_REMOVED or ::SDL_EVENT_JOYSTICK_UPDATE_COMPLETE */
     Uint64 timestamp;   /**< In nanoseconds, populated using SDL_GetTicksNS() */
     SDL_JoystickID which;       /**< The joystick instance id */
 } SDL_JoyDeviceEvent;
@@ -451,7 +452,7 @@ typedef struct SDL_GamepadButtonEvent
  */
 typedef struct SDL_GamepadDeviceEvent
 {
-    Uint32 type;        /**< ::SDL_EVENT_GAMEPAD_ADDED, ::SDL_EVENT_GAMEPAD_REMOVED, or ::SDL_EVENT_GAMEPAD_REMAPPED */
+    Uint32 type;        /**< ::SDL_EVENT_GAMEPAD_ADDED, ::SDL_EVENT_GAMEPAD_REMOVED, or ::SDL_EVENT_GAMEPAD_REMAPPED or ::SDL_EVENT_GAMEPAD_UPDATE_COMPLETE */
     Uint64 timestamp;   /**< In nanoseconds, populated using SDL_GetTicksNS() */
     SDL_JoystickID which;       /**< The joystick instance id */
 } SDL_GamepadDeviceEvent;
@@ -533,16 +534,12 @@ typedef struct SDL_DropEvent
 } SDL_DropEvent;
 
 /**
- * \brief An event triggered when the applications active clipboard content is cancelled by new clipboard content
- * \note Primary use for this event is to free any userdata you may have provided when setting the clipboard data.
- *
- * \sa SDL_SetClipboardData
+ * \brief An event triggered when the clipboard contents have changed (event.clipboard.*)
  */
-typedef struct SDL_ClipboardCancelled
+typedef struct SDL_ClipboardEvent
 {
-    Uint32 type;        /**< ::SDL_EVENT_CLIPBOARD_CANCELLED or ::SDL_EVENT_CLIPBOARD_UPDATE */
+    Uint32 type;        /**< ::SDL_EVENT_CLIPBOARD_UPDATE */
     Uint64 timestamp;   /**< In nanoseconds, populated using SDL_GetTicksNS() */
-    void *userdata;     /**< User data if any has been set. NULL for ::SDL_EVENT_CLIPBOARD_UPDATE */
 } SDL_ClipboardEvent;
 
 /**
