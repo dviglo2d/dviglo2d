@@ -11,14 +11,8 @@ set(CMAKE_DEBUG_POSTFIX _d)
 # Создаём список файлов
 file(GLOB_RECURSE source_files *.cpp *.hpp)
 
-if(DV_SHARED)
-    # Создаём динамическую библиотеку
-    add_library(${target_name} SHARED ${source_files} ${generated_src_files})
-    target_compile_definitions(${target_name} PUBLIC DV_SHARED=1)
-else()
-    # Создаём статическую библиотеку
-    add_library(${target_name} STATIC ${source_files} ${generated_src_files})
-endif()
+# Создаём статическую библиотеку
+add_library(${target_name} STATIC ${source_files} ${generated_src_files})
 
 # При компиляции библиотеки и при использовании библиотеки h-файлы отличаются
 target_compile_definitions(${target_name} PRIVATE DV_IS_BUILDING=1)
@@ -28,20 +22,10 @@ if(MSVC)
     target_compile_definitions(${target_name} PRIVATE _CRT_SECURE_NO_WARNINGS=1)
 endif()
 
-# Сторонние библиотеки, которые подключаются к движку, к приложениям подключать нельзя
-
-# Подключаем glad к движку
-target_link_libraries(${target_name} PRIVATE glad)
-
-# Предоставляем приложениям доступ к h-файлам glad
-if(DV_SHARED)
-    target_compile_definitions(${target_name} INTERFACE GLAD_API_CALL_EXPORT)
-endif()
-get_target_property(glad_include_dirs glad INCLUDE_DIRECTORIES)
-target_include_directories(${target_name} INTERFACE ${glad_include_dirs})
-
-# Подключаем остальные библиотеки из папки third_party (TODO: Сделать PRIVATE)
-target_link_libraries(${target_name} PUBLIC SDL3-static stb glm fmt entt pugixml)
+# Подключаем библиотеки из папки third_party.
+# Так как движок компилируется только в виде статической библиотеки,
+# то приложения тоже могут использовать сторонние библиотеки без проблем
+target_link_libraries(${target_name} PUBLIC SDL3-static glad stb glm fmt entt pugixml)
 
 # Опции, которые не требуют ничего, кроме создания дефайнов
 foreach(opt
@@ -56,10 +40,6 @@ if(DV_ALL_WARNINGS)
     # Выводим больше предупреждений
     if(MSVC)
         target_compile_options(${target_name} PRIVATE /W4)
-
-        # Отключаем warning C4251, который возникает в dll-версии движка,
-        # когда std::string используется как тип для полей классов
-        target_compile_options(${target_name} PRIVATE /wd4251)
     else()
         target_compile_options(${target_name} PRIVATE -Wall -Wextra -Wpedantic)
     endif()

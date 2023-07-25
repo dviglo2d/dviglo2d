@@ -21,20 +21,11 @@ jobs:
       fail-fast: false
       matrix:
         COMPILER: [vs, mingw]
-        DV_SHARED:
-        - {
-            ID: static,
-            VALUE: 0,
-          }
-        - {
-            ID: shared,
-            VALUE: 1,
-          }
         BUILD_TYPE: [debug, release]
 
     # Отображаемое имя job
     # https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idname
-    name: 🔲-${{ matrix.COMPILER }}-${{ matrix.DV_SHARED.ID }}-${{ matrix.BUILD_TYPE }}
+    name: 🔲-${{ matrix.COMPILER }}-${{ matrix.BUILD_TYPE }}
 
     steps:
       # Используем MSYS2 вместо устаревшего MinGW
@@ -77,8 +68,8 @@ jobs:
       uses: actions/cache@v3
       with:
         path: build
-        key: windows-${{ matrix.COMPILER }}-${{ matrix.DV_SHARED.ID }}-${{ matrix.BUILD_TYPE }}-${{ github.sha }}
-        restore-keys: windows-${{ matrix.COMPILER }}-${{ matrix.DV_SHARED.ID }}-${{ matrix.BUILD_TYPE }}
+        key: windows-${{ matrix.COMPILER }}-${{ matrix.BUILD_TYPE }}-${{ github.sha }}
+        restore-keys: windows-${{ matrix.COMPILER }}-${{ matrix.BUILD_TYPE }}
 
       # https://docs.github.com/en/actions/learn-github-actions/expressions
       # https://docs.github.com/en/actions/learn-github-actions/contexts#github-context
@@ -106,7 +97,6 @@ jobs:
           ARGS+=(-D CMAKE_BUILD_TYPE=${{ matrix.BUILD_TYPE }})
         fi
 
-        ARGS+=(-D DV_SHARED=${{ matrix.DV_SHARED.VALUE }})
         ARGS+=(-D DV_CTEST=1)
 
         cmake "${ARGS[@]}"
@@ -186,15 +176,6 @@ jobs:
             C: clang,
             CXX: clang++,
           }
-        DV_SHARED:
-        - {
-            ID: static,
-            VALUE: 0,
-          }
-        - {
-            ID: shared,
-            VALUE: 1,
-          }
         BUILD_TYPE:
         - {
             ID: dbg,
@@ -205,7 +186,7 @@ jobs:
             VALUE: Release,
           }
 
-    name: 🐧-${{ matrix.COMPILER.ID }}-${{ matrix.DV_SHARED.ID }}-${{ matrix.BUILD_TYPE.ID }}
+    name: 🐧-${{ matrix.COMPILER.ID }}-${{ matrix.BUILD_TYPE.ID }}
 
     steps:
     - name: Скачиваем репозиторий
@@ -228,8 +209,8 @@ jobs:
       uses: actions/cache@v3
       with:
         path: engine_build
-        key: linux-${{ matrix.COMPILER.ID }}-${{ matrix.DV_SHARED.ID }}-${{ matrix.BUILD_TYPE.ID }}-${{ github.sha }}
-        restore-keys: linux-${{ matrix.COMPILER.ID }}-${{ matrix.DV_SHARED.ID }}-${{ matrix.BUILD_TYPE.ID }}
+        key: linux-${{ matrix.COMPILER.ID }}-${{ matrix.BUILD_TYPE.ID }}-${{ github.sha }}
+        restore-keys: linux-${{ matrix.COMPILER.ID }}-${{ matrix.BUILD_TYPE.ID }}
 
       # https://docs.github.com/en/actions/learn-github-actions/expressions
       # https://docs.github.com/en/actions/learn-github-actions/contexts#github-context
@@ -249,7 +230,7 @@ jobs:
 
         cmake engine_repo -B engine_build -G "Unix Makefiles" \
           -D CMAKE_C_COMPILER=${{ matrix.COMPILER.C }} -D CMAKE_CXX_COMPILER=${{ matrix.COMPILER.CXX }} \
-          -D CMAKE_BUILD_TYPE=${{ matrix.BUILD_TYPE.VALUE }} -D DV_SHARED=${{ matrix.DV_SHARED.VALUE }} \
+          -D CMAKE_BUILD_TYPE=${{ matrix.BUILD_TYPE.VALUE }} \
           -D DV_CTEST=1 
 
         cmake --build engine_build

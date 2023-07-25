@@ -9,7 +9,7 @@
 namespace dviglo
 {
 
-class DV_API Image
+class Image
 {
 private:
     i32 width_;

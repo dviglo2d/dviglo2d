@@ -19,7 +19,7 @@ namespace dviglo
 {
 
 #ifdef _WIN32
-DV_API std::vector<StrUtf8> get_win_command_line_args();
+std::vector<StrUtf8> get_win_command_line_args();
 #endif
 
 } // namespace dviglo

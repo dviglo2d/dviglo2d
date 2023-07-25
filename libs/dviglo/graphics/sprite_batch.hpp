@@ -29,7 +29,7 @@ enum class FlipModes : u32
 DV_FLAGS(FlipModes);
 
 
-class DV_API SpriteBatch
+class SpriteBatch
 {
     // ============================ Пакетный рендеринг треугольников ============================
 

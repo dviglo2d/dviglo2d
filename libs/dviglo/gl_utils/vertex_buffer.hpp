@@ -23,7 +23,7 @@ enum class VertexAttributes
 DV_FLAGS(VertexAttributes);
 
 
-class DV_API VertexBuffer
+class VertexBuffer
 {
 private:
     GLuint vao_;

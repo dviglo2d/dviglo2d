@@ -4,12 +4,10 @@
 
 #pragma once
 
-#include "../common/config.hpp"
-
 
 namespace dviglo
 {
 
-DV_API void sin_cos(float angle, float& sin, float& cos);
+void sin_cos(float angle, float& sin, float& cos);
 
 } // namespace dviglo

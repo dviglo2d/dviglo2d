@@ -13,7 +13,7 @@
 namespace dviglo
 {
 
-class DV_API Texture
+class Texture
 {
 private:
     GLuint gpu_object_name_; ///< Идентификатор объекта OpenGL

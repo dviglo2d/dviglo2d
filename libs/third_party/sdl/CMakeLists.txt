@@ -10,9 +10,6 @@ set(SDL_TEST OFF CACHE BOOL "" FORCE) # Тесты не нужны
 # Dviglo: Добавлено. Отключаем встроенный 2D-рендерер
 set(SDL_RENDER_ENABLED_BY_DEFAULT OFF)
 
-# Dviglo: Добавлено. Нужно для компиляции динамической версии движка в GCC и Clang (добавляет -fPIC)
-set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-
 cmake_minimum_required(VERSION 3.0.0)
 
 if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)

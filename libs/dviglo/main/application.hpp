@@ -12,7 +12,7 @@
 namespace dviglo
 {
 
-class DV_API Application
+class Application
 {
 private:
     /// Аргументы командной строки

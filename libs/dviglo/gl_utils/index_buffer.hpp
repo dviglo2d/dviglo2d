@@ -18,7 +18,7 @@ enum class IndexType : GLenum
 };
 
 
-class DV_API IndexBuffer
+class IndexBuffer
 {
 private:
     GLuint gpu_object_name_ = 0; ///< Идентификатор объекта OpenGL

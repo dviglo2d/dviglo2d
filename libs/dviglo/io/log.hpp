@@ -18,7 +18,7 @@ enum class LogLevel : u32
     none       // 4
 };
 
-class DV_API Log
+class Log
 {
 private:
     /// Инициализируется в конструкторе

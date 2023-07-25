@@ -9,7 +9,7 @@
 namespace dviglo
 {
 
-class DV_API TextureCache
+class TextureCache
 {
 private:
     /// Инициализируется в конструкторе

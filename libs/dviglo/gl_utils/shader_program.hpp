@@ -14,7 +14,7 @@
 namespace dviglo
 {
 
-class DV_API ShaderProgram
+class ShaderProgram
 {
 private:
     /// Идентификатор объекта OpenGL

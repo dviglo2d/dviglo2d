@@ -11,7 +11,7 @@
 namespace dviglo
 {
 
-class DV_API ShaderCache
+class ShaderCache
 {
 private:
     /// Инициализируется в конструкторе

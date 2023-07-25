@@ -3,8 +3,6 @@
 
 #pragma once
 
-#include "../common/config.hpp"
-
 #include <glm/glm.hpp>
 #include <SDL.h>
 
@@ -12,7 +10,7 @@
 namespace dviglo
 {
 
-class DV_API OsWindow
+class OsWindow
 {
 private:
     /// Инициализируется в конструкторе

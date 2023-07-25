@@ -6,7 +6,6 @@
 
 #pragma once
 
-#include "../common/config.hpp"
 #include "../common/primitive_types.hpp"
 
 #include <algorithm>

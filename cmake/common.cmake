@@ -65,7 +65,6 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 include(CMakeDependentOption)
 
 option(DV_SAMPLES "Примеры" TRUE)
-option(DV_SHARED "Динамическая версия (а не статическая)" FALSE)
 option(DV_CTEST "Поддержка CTest" FALSE)
 cmake_dependent_option(DV_STATIC_RUNTIME "Статическая линковка MSVC runtime" FALSE "MSVC" FALSE) # Всегда FALSE, если не VS
 cmake_dependent_option(DV_WIN32_CONSOLE "Использовать main(), а не WinMain()" FALSE "WIN32" FALSE) # Не на Windows всегда FALSE
@@ -156,11 +155,6 @@ function(dv_copy_shared_libs_to_bin_dir exe_target_name exe_target_dir copying_t
     if(NOT TARGET ${copying_target_name})
         # Полные пути к библиотекам, которые будут скопированы в папку с экзешником
         unset(libs)
-
-        # Если движок скомпилирован как динамическая библиотека, то добавляем её в список
-        if(DV_SHARED)
-            list(APPEND libs "$<TARGET_FILE:dviglo>")
-        endif()
 
         # Если движок не линкует MSVC runtime статически, то добавляем библиотеки в список
         if(MSVC AND NOT DV_STATIC_RUNTIME)

@@ -25,7 +25,7 @@ struct Glyph
     i16 page = std::numeric_limits<i16>::max(); /// Номер текстуры
 };
 
-class DV_API SpriteFont
+class SpriteFont
 {
 private:
     StrUtf8 face_; // Название исходного шрифта (из которого был сгенерирован растровый шрифт)
