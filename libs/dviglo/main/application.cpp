@@ -6,6 +6,7 @@
 
 #include "os_window.hpp"
 
+#include "../audio/audio.hpp"
 #include "../gl_utils/shader_cache.hpp"
 #include "../gl_utils/texture_cache.hpp"
 #include "../io/log.hpp"
@@ -75,6 +76,7 @@ i32 Application::run()
     setup();
 
     unique_ptr<OsWindow> os_window = make_unique<OsWindow>();
+    unique_ptr<Audio> audio = make_unique<Audio>();
 
     start();
 

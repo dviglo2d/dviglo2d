@@ -65,6 +65,15 @@ void App::start()
     CCounter& ent2_counter = ecs_.emplace<CCounter>(ent2);
     ent2_counter.value = 100;
     */
+
+    StrUtf8 music_path = base_path + "data/audio/in_the_field.mp3";
+    music_ = Mix_LoadMUS(music_path.c_str());
+
+    if (!music_)
+        DV_LOG->write_error(format("App::start(): !music_ | {}", SDL_GetError()));
+
+    if (Mix_PlayMusic(music_, -1) < 0)
+        DV_LOG->write_error(format("App::start(): Mix_PlayMusic(...) < 0 | {}", SDL_GetError()));
 }
 
 static float rotation = 0.f;
@@ -114,4 +123,10 @@ void App::draw()
     sprite_batch_->draw_string(fps_text, font_.get(), vec2{3.f, 0.f}, 0xFFFFFFFF);
 
     sprite_batch_->flush();
+}
+
+App::~App()
+{
+    Mix_FreeMusic(music_); // Проверка на nullptr не нужна
+    music_ = nullptr;
 }

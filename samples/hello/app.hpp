@@ -13,6 +13,8 @@
 #include <dviglo/graphics/sprite_font.hpp>
 #include <dviglo/main/application.hpp>
 
+#include <SDL3/SDL_mixer.h>
+
 using namespace std;
 
 
@@ -27,8 +29,11 @@ class App : public Application
     unique_ptr<SpriteBatch> sprite_batch_;
     unique_ptr<SpriteFont> font_;
 
+    Mix_Music* music_ = nullptr;
+
 public:
     App(const vector<StrUtf8>& args);
+    ~App();
 
     entt::registry& ecs() { return ecs_; }
 
