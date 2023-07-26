@@ -7,7 +7,7 @@
 
 #include <fmt/format.h>
 #include <SDL.h>
-#include <SDL3/SDL_mixer.h>
+#include <SDL_mixer.h>
 
 #include <cassert>
 
