@@ -593,7 +593,7 @@ SDL_RWops *SDL_RWFromFile(const char *file, const char *mode)
     return rwops;
 }
 
-SDL_RWops *SDL_RWFromMem(void *mem, int size)
+SDL_RWops *SDL_RWFromMem(void *mem, size_t size)
 {
     SDL_RWops *rwops = NULL;
     if (mem == NULL) {
@@ -620,7 +620,7 @@ SDL_RWops *SDL_RWFromMem(void *mem, int size)
     return rwops;
 }
 
-SDL_RWops *SDL_RWFromConstMem(const void *mem, int size)
+SDL_RWops *SDL_RWFromConstMem(const void *mem, size_t size)
 {
     SDL_RWops *rwops = NULL;
     if (mem == NULL) {
@@ -666,7 +666,7 @@ void SDL_DestroyRW(SDL_RWops *area)
 }
 
 /* Load all the data from an SDL data stream */
-void *SDL_LoadFile_RW(SDL_RWops *src, size_t *datasize, int freesrc)
+void *SDL_LoadFile_RW(SDL_RWops *src, size_t *datasize, SDL_bool freesrc)
 {
     static const Sint64 FILE_CHUNK_SIZE = 1024;
     Sint64 size;

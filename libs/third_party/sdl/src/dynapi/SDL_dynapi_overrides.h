@@ -213,8 +213,6 @@
 #define SDL_GetGamepadAppleSFSymbolsNameForButton SDL_GetGamepadAppleSFSymbolsNameForButton_REAL
 #define SDL_GetGamepadAxis SDL_GetGamepadAxis_REAL
 #define SDL_GetGamepadAxisFromString SDL_GetGamepadAxisFromString_REAL
-#define SDL_GetGamepadBindForAxis SDL_GetGamepadBindForAxis_REAL
-#define SDL_GetGamepadBindForButton SDL_GetGamepadBindForButton_REAL
 #define SDL_GetGamepadButton SDL_GetGamepadButton_REAL
 #define SDL_GetGamepadButtonFromString SDL_GetGamepadButtonFromString_REAL
 #define SDL_GetGamepadFirmwareVersion SDL_GetGamepadFirmwareVersion_REAL
@@ -306,7 +304,7 @@
 #define SDL_GetNumTouchFingers SDL_GetNumTouchFingers_REAL
 #define SDL_GetNumVideoDrivers SDL_GetNumVideoDrivers_REAL
 #define SDL_GetOriginalMemoryFunctions SDL_GetOriginalMemoryFunctions_REAL
-#define SDL_GetPath SDL_GetPath_REAL
+#define SDL_GetUserFolder SDL_GetUserFolder_REAL
 #define SDL_GetPerformanceCounter SDL_GetPerformanceCounter_REAL
 #define SDL_GetPerformanceFrequency SDL_GetPerformanceFrequency_REAL
 #define SDL_GetPixelFormatEnumForMasks SDL_GetPixelFormatEnumForMasks_REAL
@@ -895,3 +893,15 @@
 
 /* New API symbols are added at the end */
 #define SDL_ClearClipboardData SDL_ClearClipboardData_REAL
+#define SDL_GetGamepadInstanceID SDL_GetGamepadInstanceID_REAL
+#define SDL_GetGamepadPowerLevel SDL_GetGamepadPowerLevel_REAL
+#define SDL_SetGamepadMapping SDL_SetGamepadMapping_REAL
+#define SDL_strndup SDL_strndup_REAL
+#define SDL_GetGamepadTypeFromString SDL_GetGamepadTypeFromString_REAL
+#define SDL_GetGamepadStringForType SDL_GetGamepadStringForType_REAL
+#define SDL_GetRealGamepadInstanceType SDL_GetRealGamepadInstanceType_REAL
+#define SDL_GetRealGamepadType SDL_GetRealGamepadType_REAL
+#define SDL_wcsnlen SDL_wcsnlen_REAL
+#define SDL_strnlen SDL_strnlen_REAL
+#define SDL_AddGamepadMappingsFromFile SDL_AddGamepadMappingsFromFile_REAL
+#define SDL_ReloadGamepadMappings SDL_ReloadGamepadMappings_REAL

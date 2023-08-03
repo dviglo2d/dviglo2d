@@ -135,16 +135,15 @@ static int UIKit_AddSingleDisplayMode(SDL_VideoDisplay *display, int w, int h,
                                       UIScreen *uiscreen, UIScreenMode *uiscreenmode)
 {
     SDL_DisplayMode mode;
-    float scale = uiscreen.nativeScale;
 
     SDL_zero(mode);
     if (UIKit_AllocateDisplayModeData(&mode, uiscreenmode) < 0) {
         return -1;
     }
 
-    mode.w = w / scale;
-    mode.h = h / scale;
-    mode.pixel_density = scale;
+    mode.w = w;
+    mode.h = h;
+    mode.pixel_density = uiscreen.nativeScale;
     mode.refresh_rate = UIKit_GetDisplayModeRefreshRate(uiscreen);
     mode.format = SDL_PIXELFORMAT_ABGR8888;
 
@@ -189,7 +188,7 @@ static CGSize GetUIScreenModeSize(UIScreen *uiscreen, UIScreenMode *mode)
      * https://github.com/libsdl-org/SDL/issues/3220
      */
     CGSize size = mode.size;
-    
+
     size.width = SDL_round(size.width / uiscreen.scale);
     size.height = SDL_round(size.height / uiscreen.scale);
 
@@ -393,7 +392,7 @@ void UIKit_QuitModes(SDL_VideoDevice *_this)
     int i, j;
     @autoreleasepool {
         for (i = 0; i < _this->num_displays; i++) {
-            SDL_VideoDisplay *display = &_this->displays[i];
+            SDL_VideoDisplay *display = _this->displays[i];
 
             UIKit_FreeDisplayModeData(&display->desktop_mode);
             for (j = 0; j < display->num_fullscreen_modes; j++) {

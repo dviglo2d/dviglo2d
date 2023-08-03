@@ -113,7 +113,8 @@ SDL_Mutex *SDL_joystick_lock = NULL; /* This needs to support recursive locks */
 static SDL_AtomicInt SDL_joystick_lock_pending;
 static int SDL_joysticks_locked;
 static SDL_bool SDL_joysticks_initialized;
-static SDL_bool SDL_joysticks_quitting = SDL_FALSE;
+static SDL_bool SDL_joysticks_quitting;
+static SDL_bool SDL_joystick_being_added;
 static SDL_Joystick *SDL_joysticks SDL_GUARDED_BY(SDL_joystick_lock) = NULL;
 static SDL_AtomicInt SDL_last_joystick_instance_id SDL_GUARDED_BY(SDL_joystick_lock);
 static int SDL_joystick_player_count SDL_GUARDED_BY(SDL_joystick_lock) = 0;
@@ -585,6 +586,7 @@ static SDL_bool ShouldAttemptSensorFusion(SDL_Joystick *joystick, SDL_bool *inve
         SDL_JoystickGUID guid;
         Uint16 vendor, product;
         SDL_bool enabled;
+        SDL_zero(gamepads);
 
         /* See if the gamepad is in our list of devices to enable */
         guid = SDL_GetJoystickGUID(joystick);
@@ -1500,12 +1502,20 @@ void SDL_CloseJoystick(SDL_Joystick *joystick)
 void SDL_QuitJoysticks(void)
 {
     int i;
+    SDL_JoystickID *joysticks;
 
     SDL_LockJoysticks();
 
     SDL_joysticks_quitting = SDL_TRUE;
 
-    /* Stop the event polling */
+    joysticks = SDL_GetJoysticks(NULL);
+    if (joysticks) {
+        for (i = 0; joysticks[i]; ++i) {
+            SDL_PrivateJoystickRemoved(joysticks[i]);
+        }
+        SDL_free(joysticks);
+    }
+
     while (SDL_joysticks) {
         SDL_joysticks->ref_count = 1;
         SDL_CloseJoystick(SDL_joysticks);
@@ -1612,6 +1622,8 @@ void SDL_PrivateJoystickAdded(SDL_JoystickID instance_id)
         return;
     }
 
+    SDL_joystick_being_added = SDL_TRUE;
+
     if (SDL_GetDriverAndJoystickIndex(instance_id, &driver, &device_index)) {
         player_index = driver->GetDevicePlayerIndex(device_index);
     }
@@ -1635,6 +1647,17 @@ void SDL_PrivateJoystickAdded(SDL_JoystickID instance_id)
         }
     }
 #endif /* !SDL_EVENTS_DISABLED */
+
+    SDL_joystick_being_added = SDL_FALSE;
+
+    if (SDL_IsGamepad(instance_id)) {
+        SDL_PrivateGamepadAdded(instance_id);
+    }
+}
+
+SDL_bool SDL_IsJoystickBeingAdded(void)
+{
+    return SDL_joystick_being_added;
 }
 
 void SDL_PrivateJoystickForceRecentering(SDL_Joystick *joystick)
@@ -1685,6 +1708,13 @@ void SDL_PrivateJoystickRemoved(SDL_JoystickID instance_id)
             joystick->attached = SDL_FALSE;
             break;
         }
+    }
+
+    /* FIXME: The driver no longer provides the name and GUID at this point, so we
+     *        don't know whether this was a gamepad. For now always send the event.
+     */
+    if (SDL_TRUE /*SDL_IsGamepad(instance_id)*/) {
+        SDL_PrivateGamepadRemoved(instance_id);
     }
 
 #ifndef SDL_EVENTS_DISABLED
@@ -2011,7 +2041,7 @@ void SDL_GetJoystickGUIDInfo(SDL_JoystickGUID guid, Uint16 *vendor, Uint16 *prod
         if (crc16) {
             *crc16 = SDL_SwapLE16(guid16[1]);
         }
-    } else if (bus < ' ') {
+    } else if (bus < ' ' || bus == SDL_HARDWARE_BUS_VIRTUAL) {
         /* This GUID fits the unknown VID/PID form:
          * 16-bit bus
          * 16-bit CRC16 of the joystick name (can be zero)
@@ -2270,7 +2300,7 @@ void SDL_SetJoystickGUIDCRC(SDL_JoystickGUID *guid, Uint16 crc)
 
 SDL_GamepadType SDL_GetGamepadTypeFromVIDPID(Uint16 vendor, Uint16 product, const char *name, SDL_bool forUI)
 {
-    SDL_GamepadType type = SDL_GAMEPAD_TYPE_UNKNOWN;
+    SDL_GamepadType type = SDL_GAMEPAD_TYPE_STANDARD;
 
     if (vendor == 0x0000 && product == 0x0000) {
         /* Some devices are only identifiable by their name */
@@ -2283,17 +2313,10 @@ SDL_GamepadType SDL_GetGamepadTypeFromVIDPID(Uint16 vendor, Uint16 product, cons
         }
 
     } else if (vendor == 0x0001 && product == 0x0001) {
-        type = SDL_GAMEPAD_TYPE_UNKNOWN;
+        type = SDL_GAMEPAD_TYPE_STANDARD;
 
     } else if (vendor == USB_VENDOR_MICROSOFT && product == USB_PRODUCT_XBOX_ONE_XINPUT_CONTROLLER) {
         type = SDL_GAMEPAD_TYPE_XBOXONE;
-
-    } else if ((vendor == USB_VENDOR_AMAZON && product == USB_PRODUCT_AMAZON_LUNA_CONTROLLER) ||
-               (vendor == BLUETOOTH_VENDOR_AMAZON && product == BLUETOOTH_PRODUCT_LUNA_CONTROLLER)) {
-        type = SDL_GAMEPAD_TYPE_AMAZON_LUNA;
-
-    } else if (vendor == USB_VENDOR_GOOGLE && product == USB_PRODUCT_GOOGLE_STADIA_CONTROLLER) {
-        type = SDL_GAMEPAD_TYPE_GOOGLE_STADIA;
 
     } else if (vendor == USB_VENDOR_NINTENDO && product == USB_PRODUCT_NINTENDO_SWITCH_JOYCON_LEFT) {
         type = SDL_GAMEPAD_TYPE_NINTENDO_SWITCH_JOYCON_LEFT;
@@ -2301,7 +2324,7 @@ SDL_GamepadType SDL_GetGamepadTypeFromVIDPID(Uint16 vendor, Uint16 product, cons
     } else if (vendor == USB_VENDOR_NINTENDO && product == USB_PRODUCT_NINTENDO_SWITCH_JOYCON_RIGHT) {
         if (name && SDL_strstr(name, "NES Controller") != NULL) {
             /* We don't have a type for the Nintendo Online NES Controller */
-            type = SDL_GAMEPAD_TYPE_UNKNOWN;
+            type = SDL_GAMEPAD_TYPE_STANDARD;
         } else {
             type = SDL_GAMEPAD_TYPE_NINTENDO_SWITCH_JOYCON_RIGHT;
         }
@@ -2315,11 +2338,6 @@ SDL_GamepadType SDL_GetGamepadTypeFromVIDPID(Uint16 vendor, Uint16 product, cons
 
     } else if (vendor == USB_VENDOR_NINTENDO && product == USB_PRODUCT_NINTENDO_SWITCH_JOYCON_PAIR) {
         type = SDL_GAMEPAD_TYPE_NINTENDO_SWITCH_JOYCON_PAIR;
-
-    } else if (vendor == USB_VENDOR_NVIDIA &&
-               (product == USB_PRODUCT_NVIDIA_SHIELD_CONTROLLER_V103 ||
-                product == USB_PRODUCT_NVIDIA_SHIELD_CONTROLLER_V104)) {
-        type = SDL_GAMEPAD_TYPE_NVIDIA_SHIELD;
 
     } else {
         switch (GuessControllerType(vendor, product)) {
@@ -2342,7 +2360,7 @@ SDL_GamepadType SDL_GetGamepadTypeFromVIDPID(Uint16 vendor, Uint16 product, cons
             if (forUI) {
                 type = SDL_GAMEPAD_TYPE_PS4;
             } else {
-                type = SDL_GAMEPAD_TYPE_UNKNOWN;
+                type = SDL_GAMEPAD_TYPE_STANDARD;
             }
             break;
         case k_eControllerType_SwitchProController:
@@ -2353,7 +2371,7 @@ SDL_GamepadType SDL_GetGamepadTypeFromVIDPID(Uint16 vendor, Uint16 product, cons
             if (forUI) {
                 type = SDL_GAMEPAD_TYPE_NINTENDO_SWITCH_PRO;
             } else {
-                type = SDL_GAMEPAD_TYPE_UNKNOWN;
+                type = SDL_GAMEPAD_TYPE_STANDARD;
             }
             break;
         default:
@@ -2370,13 +2388,10 @@ SDL_GamepadType SDL_GetGamepadTypeFromGUID(SDL_JoystickGUID guid, const char *na
 
     SDL_GetJoystickGUIDInfo(guid, &vendor, &product, NULL, NULL);
     type = SDL_GetGamepadTypeFromVIDPID(vendor, product, name, SDL_TRUE);
-    if (type == SDL_GAMEPAD_TYPE_UNKNOWN) {
+    if (type == SDL_GAMEPAD_TYPE_STANDARD) {
         if (SDL_IsJoystickXInput(guid)) {
             /* This is probably an Xbox One controller */
             return SDL_GAMEPAD_TYPE_XBOXONE;
-        }
-        if (SDL_IsJoystickVIRTUAL(guid)) {
-            return SDL_GAMEPAD_TYPE_VIRTUAL;
         }
 #ifdef SDL_JOYSTICK_HIDAPI
         if (SDL_IsJoystickHIDAPI(guid)) {
@@ -2542,6 +2557,24 @@ SDL_bool SDL_IsJoystickNintendoSwitchJoyConGrip(Uint16 vendor_id, Uint16 product
 SDL_bool SDL_IsJoystickNintendoSwitchJoyConPair(Uint16 vendor_id, Uint16 product_id)
 {
     return vendor_id == USB_VENDOR_NINTENDO && product_id == USB_PRODUCT_NINTENDO_SWITCH_JOYCON_PAIR;
+}
+
+SDL_bool SDL_IsJoystickAmazonLunaController(Uint16 vendor_id, Uint16 product_id)
+{
+    return ((vendor_id == USB_VENDOR_AMAZON && product_id == USB_PRODUCT_AMAZON_LUNA_CONTROLLER) ||
+            (vendor_id == BLUETOOTH_VENDOR_AMAZON && product_id == BLUETOOTH_PRODUCT_LUNA_CONTROLLER));
+}
+
+SDL_bool SDL_IsJoystickGoogleStadiaController(Uint16 vendor_id, Uint16 product_id)
+{
+    return vendor_id == USB_VENDOR_GOOGLE && product_id == USB_PRODUCT_GOOGLE_STADIA_CONTROLLER;
+}
+
+SDL_bool SDL_IsJoystickNVIDIASHIELDController(Uint16 vendor_id, Uint16 product_id)
+{
+    return (vendor_id == USB_VENDOR_NVIDIA &&
+            (product_id == USB_PRODUCT_NVIDIA_SHIELD_CONTROLLER_V103 ||
+             product_id == USB_PRODUCT_NVIDIA_SHIELD_CONTROLLER_V104));
 }
 
 SDL_bool SDL_IsJoystickSteamController(Uint16 vendor_id, Uint16 product_id)

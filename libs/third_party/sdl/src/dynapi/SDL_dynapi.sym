@@ -189,8 +189,6 @@ SDL3_0.0.0 {
     SDL_GetGamepadAppleSFSymbolsNameForButton;
     SDL_GetGamepadAxis;
     SDL_GetGamepadAxisFromString;
-    SDL_GetGamepadBindForAxis;
-    SDL_GetGamepadBindForButton;
     SDL_GetGamepadButton;
     SDL_GetGamepadButtonFromString;
     SDL_GetGamepadFirmwareVersion;
@@ -282,7 +280,7 @@ SDL3_0.0.0 {
     SDL_GetNumTouchFingers;
     SDL_GetNumVideoDrivers;
     SDL_GetOriginalMemoryFunctions;
-    SDL_GetPath;
+    SDL_GetUserFolder;
     SDL_GetPerformanceCounter;
     SDL_GetPerformanceFrequency;
     SDL_GetPixelFormatEnumForMasks;
@@ -869,6 +867,18 @@ SDL3_0.0.0 {
     SDL_wcsstr;
     SDL_wcstol;
     SDL_ClearClipboardData;
+    SDL_GetGamepadInstanceID;
+    SDL_GetGamepadPowerLevel;
+    SDL_SetGamepadMapping;
+    SDL_strndup;
+    SDL_GetGamepadTypeFromString;
+    SDL_GetGamepadStringForType;
+    SDL_GetRealGamepadInstanceType;
+    SDL_GetRealGamepadType;
+    SDL_wcsnlen;
+    SDL_strnlen;
+    SDL_AddGamepadMappingsFromFile;
+    SDL_ReloadGamepadMappings;
     # extra symbols go here (don't modify this line)
   local: *;
 };
