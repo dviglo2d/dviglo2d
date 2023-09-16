@@ -3,3 +3,6 @@
 <https://github.com/fmtlib/fmt/commit/fe9d39d7cbbf3ae5a90b0553e741937a1c521a8a>.
 
 Из папки `src` удалён файл `fmt.cc`.
+
+`std::format` не работает в GCC 12, но работает в GCC 13.
+Поэтому данная библиотека будет удалена в будущем.
