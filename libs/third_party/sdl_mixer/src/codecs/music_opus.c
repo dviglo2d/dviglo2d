@@ -146,11 +146,7 @@ static int set_op_error(const char *function, int error)
 
 static int sdl_read_func(void *datasource, unsigned char *ptr, int size)
 {
-    Sint64 amount = SDL_RWread((SDL_RWops*)datasource, ptr, size);
-    if (amount <= 0) {
-        return 0;
-    }
-    return (int)amount;
+    return (int)SDL_RWread((SDL_RWops*)datasource, ptr, (size_t)size);
 }
 
 static int sdl_seek_func(void *datasource, opus_int64 offset, int whence)
@@ -169,6 +165,7 @@ static void OPUS_Delete(void*);
 static int OPUS_UpdateSection(OPUS_music *music)
 {
     const OpusHead *op_info;
+    SDL_AudioSpec srcspec;
 
     op_info = opus.op_head(music->of, -1);
     if (!op_info) {
@@ -191,17 +188,15 @@ static int OPUS_UpdateSection(OPUS_music *music)
         music->stream = NULL;
     }
 
-    music->stream = SDL_CreateAudioStream(SDL_AUDIO_S16SYS,
-                                          (Uint8)op_info->channel_count,
-                                          48000,
-                                          music_spec.format,
-                                          music_spec.channels,
-                                          music_spec.freq);
+    srcspec.format = SDL_AUDIO_S16;
+    srcspec.channels = op_info->channel_count;
+    srcspec.freq = 48000;
+    music->stream = SDL_CreateAudioStream(&srcspec, &music_spec);
     if (!music->stream) {
         return -1;
     }
 
-    music->buffer_size = (int)music_spec.samples * (int)sizeof(opus_int16) * op_info->channel_count;
+    music->buffer_size = (int)4096/*music_spec.samples*/ * (int)sizeof(opus_int16) * op_info->channel_count;
     music->buffer = (char *)SDL_malloc((size_t)music->buffer_size);
     if (!music->buffer) {
         return -1;

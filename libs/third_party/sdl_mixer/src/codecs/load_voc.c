@@ -29,7 +29,7 @@
         (http://www.freshmeat.net/projects/sox/)
 */
 
-#include <SDL3/SDL_mixer.h>
+#include <SDL3_mixer/SDL_mixer.h>
 #include "load_voc.h"
 
 /* Private data for VOC file */
@@ -449,8 +449,6 @@ SDL_AudioSpec *Mix_LoadVOC_RW (SDL_RWops *src, SDL_bool freesrc,
         *audio_buf = ptr;
         fillptr = ((Uint8 *) ptr) + (*audio_len - v.rest);
     }
-
-    spec->samples = (Uint16)(*audio_len / v.size);
 
     /* Don't return a buffer that isn't a multiple of samplesize */
     samplesize = ((spec->format & 0xFF)/8)*spec->channels;

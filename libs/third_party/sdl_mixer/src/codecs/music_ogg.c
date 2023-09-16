@@ -166,11 +166,10 @@ static int set_ov_error(const char *function, int error)
 
 static size_t sdl_read_func(void *ptr, size_t size, size_t nmemb, void *datasource)
 {
-    Sint64 amount = SDL_RWread((SDL_RWops*)datasource, ptr, size * nmemb);
-    if (amount <= 0) {
-        return 0;
+    if (size > 0 && nmemb > 0) {
+        return SDL_RWread((SDL_RWops*)datasource, ptr, size * nmemb) / size;
     }
-    return (size_t)(amount / size);
+    return 0;
 }
 
 static int sdl_seek_func(void *datasource, ogg_int64_t offset, int whence)
@@ -188,6 +187,7 @@ static void OGG_Delete(void *context);
 
 static int OGG_UpdateSection(OGG_music *music)
 {
+    SDL_AudioSpec srcspec;
     vorbis_info *vi;
 
     vi = vorbis.ov_info(&music->vf, -1);
@@ -211,16 +211,15 @@ static int OGG_UpdateSection(OGG_music *music)
         music->stream = NULL;
     }
 
-    music->stream = SDL_CreateAudioStream(SDL_AUDIO_S16SYS,
-                                          (Uint8)vi->channels, (int)vi->rate,
-                                          music_spec.format,
-                                          music_spec.channels,
-                                          music_spec.freq);
+    srcspec.format = SDL_AUDIO_S16;
+    srcspec.channels = vi->channels;
+    srcspec.freq = (int)vi->rate;
+    music->stream = SDL_CreateAudioStream(&srcspec, &music_spec);
     if (!music->stream) {
         return -1;
     }
 
-    music->buffer_size = music_spec.samples * (int)sizeof(Sint16) * vi->channels;
+    music->buffer_size = 4096/*music_spec.samples*/ * (int)sizeof(Sint16) * vi->channels;
     music->buffer = (char *)SDL_malloc((size_t)music->buffer_size);
     if (!music->buffer) {
         return -1;

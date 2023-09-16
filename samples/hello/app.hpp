@@ -13,7 +13,7 @@
 #include <dviglo/graphics/sprite_font.hpp>
 #include <dviglo/main/application.hpp>
 
-#include <SDL3/SDL_mixer.h>
+#include <SDL3_mixer/SDL_mixer.h>
 
 using namespace std;
 

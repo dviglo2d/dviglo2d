@@ -10,7 +10,7 @@ set "PATH=c:\program files\git\bin"
 git clone https://github.com/libsdl-org/SDL repo
 
 :: Возвращаем состояние репозитория к определённой версии
-git -C repo reset --hard 06bea1eb5544e778c1258d3d7f47f6d06110c379
+git -C repo reset --hard 31229fd47f5d38282ead8ff27c2f2c8b8b9e0a56
 
 :: Ждём нажатие Enter перед закрытием консоли
 pause

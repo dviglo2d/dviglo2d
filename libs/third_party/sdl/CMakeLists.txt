@@ -20,6 +20,9 @@ if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)
   message(FATAL_ERROR "Prevented in-tree build. Please create a build directory outside of the SDL source code and run \"cmake -S ${CMAKE_SOURCE_DIR} -B .\" from there")
 endif()
 
+# MSVC runtime library flags are selected by an abstraction.
+set(CMAKE_POLICY_DEFAULT_CMP0091 NEW)
+
 # See docs/release_checklist.md
 project(SDL3 LANGUAGES C CXX VERSION "3.0.0")
 
@@ -128,8 +131,8 @@ endif()
 #  for systems without support. It's not currently enough to not use
 #  pthread functions in a pthread-build; it won't start up on unsupported
 #  browsers. As such, you have to explicitly enable it on Emscripten builds
-#  for the time being. This default with change to ON once this becomes
-#  commonly supported in browsers or the Emscripten teams makes a single
+#  for the time being. This default will change to ON once this becomes
+#  commonly supported in browsers or the Emscripten team makes a single
 #  binary work everywhere.
 if (UNIX_OR_MAC_SYS AND NOT EMSCRIPTEN)
   set(SDL_PTHREADS_DEFAULT ON)
@@ -147,18 +150,10 @@ endif()
 #  so we'll just use libusb when it's available. libusb does not support iOS,
 #  so we default to yes on iOS.
 #  TODO: Windows can support libusb, the hid.c file just depends on Unix APIs
-if((WINDOWS AND NOT WINDOWS_STORE) OR IOS OR TVOS OR ANDROID)
+if((WINDOWS AND NOT WINDOWS_STORE) OR IOS OR TVOS OR VISIONOS OR ANDROID)
   set(SDL_HIDAPI_LIBUSB_AVAILABLE FALSE)
 else()
   set(SDL_HIDAPI_LIBUSB_AVAILABLE TRUE)
-endif()
-
-# On the other hand, *BSD specifically uses libusb only, so we make a special
-#  case just for them.
-if(FREEBSD OR NETBSD OR OPENBSD OR BSDI)
-  set(SDL_HIDAPI_LIBUSB_DEFAULT TRUE)
-else()
-  set(SDL_HIDAPI_LIBUSB_DEFAULT FALSE)
 endif()
 
 set(SDL_ASSEMBLY_DEFAULT OFF)
@@ -182,6 +177,9 @@ endif()
 if(MSVC)
   option(SDL_FORCE_STATIC_VCRT "Force /MT for static VC runtimes" OFF)
   if(SDL_FORCE_STATIC_VCRT)
+    if(NOT DEFINED CMAKE_MSVC_RUNTIME_LIBRARY)
+      set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+    endif()
     foreach(flag_var
         CMAKE_C_FLAGS CMAKE_C_FLAGS_DEBUG CMAKE_C_FLAGS_RELEASE
         CMAKE_C_FLAGS_MINSIZEREL CMAKE_C_FLAGS_RELWITHDEBINFO)
@@ -319,8 +317,8 @@ set_option(SDL_DISKAUDIO           "Support the disk writer audio driver" ON)
 set_option(SDL_DUMMYAUDIO          "Support the dummy audio driver" ON)
 set_option(SDL_DUMMYVIDEO          "Use dummy video driver" ON)
 dep_option(SDL_IBUS                "Enable IBus support" ON ${UNIX_SYS} OFF)
-set_option(SDL_OPENGL              "Include OpenGL support" ON)
-set_option(SDL_OPENGLES            "Include OpenGL ES support" ON)
+dep_option(SDL_OPENGL              "Include OpenGL support" ON "NOT VISIONOS" OFF)
+dep_option(SDL_OPENGLES            "Include OpenGL ES support" ON "NOT VISIONOS" OFF)
 set_option(SDL_PTHREADS            "Use POSIX threads for multi-threading" ${SDL_PTHREADS_DEFAULT})
 dep_option(SDL_PTHREADS_SEM        "Use pthread semaphores" ON "SDL_PTHREADS" OFF)
 dep_option(SDL_OSS                 "Support the OSS audio API" ON "UNIX_SYS OR RISCOS" OFF)
@@ -364,8 +362,9 @@ dep_option(SDL_KMSDRM_SHARED       "Dynamically load KMS DRM support" ON "SDL_KM
 set_option(SDL_OFFSCREEN           "Use offscreen video driver" ON)
 option_string(SDL_BACKGROUNDING_SIGNAL "number to use for magic backgrounding signal or 'OFF'" OFF)
 option_string(SDL_FOREGROUNDING_SIGNAL "number to use for magic foregrounding signal or 'OFF'" OFF)
-set_option(SDL_HIDAPI              "Enable the HIDAPI subsystem" ON)
-dep_option(SDL_HIDAPI_LIBUSB       "Use libusb for low level joystick drivers" ${SDL_HIDAPI_LIBUSB_DEFAULT} "SDL_HIDAPI;${SDL_HIDAPI_LIBUSB_AVAILABLE}" OFF)
+dep_option(SDL_HIDAPI              "Enable the HIDAPI subsystem" ON "NOT VISIONOS" OFF)
+dep_option(SDL_HIDAPI_LIBUSB       "Use libusb for low level joystick drivers" ON SDL_HIDAPI_LIBUSB_AVAILABLE OFF)
+dep_option(SDL_HIDAPI_LIBUSB_SHARED "Dynamically load libusb support" ON SDL_HIDAPI_LIBUSB OFF)
 dep_option(SDL_HIDAPI_JOYSTICK     "Use HIDAPI for low level joystick drivers" ON SDL_HIDAPI OFF)
 dep_option(SDL_VIRTUAL_JOYSTICK    "Enable the virtual-joystick driver" ON SDL_HIDAPI OFF)
 set_option(SDL_LIBUDEV             "Enable libudev support" ON)
@@ -381,7 +380,7 @@ option(SDL_TEST_LIBRARY   "Build the SDL3_test library" ON)
 
 dep_option(SDL_STATIC_PIC      "Static version of the library should be built with Position Independent Code" "${CMAKE_POSITION_INDEPENDENT_CODE}" "SDL_STATIC" OFF)
 dep_option(SDL_TESTS           "Build the test directory" OFF SDL_TEST_LIBRARY OFF)
-dep_option(SDL_INSTALL_TESTS   "Install test-cases" OFF "NOT SDL_DISABLE_INSTALL;NOT SDL_FRAMEWORK" OFF)
+dep_option(SDL_INSTALL_TESTS   "Install test-cases" OFF "NOT SDL_DISABLE_INSTALL;NOT SDL_FRAMEWORK;NOT WINDOWS_STORE" OFF)
 dep_option(SDL_TESTS_LINK_SHARED "link tests to shared SDL library" "${SDL_SHARED}" "SDL_SHARED;SDL_STATIC" "${SDL_SHARED}")
 set(SDL_TESTS_TIMEOUT_MULTIPLIER "1" CACHE STRING "Timeout multiplier to account for really slow machines")
 
@@ -2047,7 +2046,7 @@ elseif(APPLE)
   endif()
 
   if(SDL_MISC)
-    if(IOS OR TVOS)
+    if(IOS OR TVOS OR VISIONOS)
       sdl_glob_sources("${SDL3_SOURCE_DIR}/src/misc/ios/*.m")
     else()
       sdl_glob_sources("${SDL3_SOURCE_DIR}/src/misc/macos/*.m")
@@ -2070,10 +2069,10 @@ elseif(APPLE)
 
   if(SDL_JOYSTICK)
     sdl_glob_sources("${SDL3_SOURCE_DIR}/src/joystick/apple/*.m")
-    if(IOS OR TVOS)
+    if(IOS OR TVOS OR VISIONOS)
       sdl_glob_sources("${SDL3_SOURCE_DIR}/src/joystick/steam/*.c")
       set(SDL_JOYSTICK_MFI 1)
-      if(IOS)
+      if(IOS OR VISIONOS)
         set(SDL_FRAMEWORK_COREMOTION 1)
       endif()
       set(SDL_FRAMEWORK_GAMECONTROLLER 1)
@@ -2105,15 +2104,17 @@ elseif(APPLE)
         set(SDL_FRAMEWORK_GAMECONTROLLER 1)
         set(SDL_FRAMEWORK_COREHAPTICS 1)
       endif()
-      set(SDL_JOYSTICK_IOKIT 1)
-      set(SDL_FRAMEWORK_IOKIT 1)
+      if(NOT VISIONOS)
+        set(SDL_JOYSTICK_IOKIT 1)
+        set(SDL_FRAMEWORK_IOKIT 1)
+      endif()
       set(SDL_FRAMEWORK_FF 1)
     endif()
     set(HAVE_SDL_JOYSTICK TRUE)
   endif()
 
   if(SDL_HAPTIC)
-    if (IOS OR TVOS)
+    if (IOS OR TVOS OR VISIONOS)
       sdl_glob_sources("${SDL3_SOURCE_DIR}/src/haptic/dummy/*.c")
       set(SDL_HAPTIC_DUMMY 1)
     else()
@@ -2126,7 +2127,7 @@ elseif(APPLE)
   endif()
 
   if(SDL_POWER)
-    if (IOS OR TVOS)
+    if (IOS OR TVOS OR VISIONOS)
       sdl_glob_sources("${SDL3_SOURCE_DIR}/src/power/uikit/*.m")
       set(SDL_POWER_UIKIT 1)
     else()
@@ -2155,7 +2156,7 @@ elseif(APPLE)
   endif()
 
   if(SDL_SENSOR)
-    if(IOS)
+    if(IOS OR VISIONOS)
       set(SDL_SENSOR_COREMOTION 1)
       set(HAVE_SDL_SENSORS TRUE)
       sdl_glob_sources("${SDL3_SOURCE_DIR}/src/sensor/coremotion/*.m")
@@ -2164,7 +2165,7 @@ elseif(APPLE)
 
   # iOS hack needed - http://code.google.com/p/ios-cmake/ ?
   if(SDL_VIDEO)
-    if (IOS OR TVOS)
+    if (IOS OR TVOS OR VISIONOS)
       set(SDL_VIDEO_DRIVER_UIKIT 1)
       set(SDL_FRAMEWORK_COREGRAPHICS 1)
       set(SDL_FRAMEWORK_QUARTZCORE 1)
@@ -2184,7 +2185,7 @@ elseif(APPLE)
     endif()
 
     if(SDL_OPENGLES)
-      if(IOS OR TVOS)
+      if(IOS OR TVOS OR VISIONOS)
         set(SDL_FRAMEWORK_OPENGLES 1)
         set(SDL_VIDEO_OPENGL_ES 1)
       else()
@@ -2269,7 +2270,7 @@ elseif(APPLE)
     endif()
   endif()
   if(SDL_FRAMEWORK_METAL)
-    if(IOS OR TVOS)
+    if(IOS OR TVOS OR VISIONOS)
       sdl_link_dependency(metal LINK_OPTIONS "-Wl,-framework,Metal")
     else()
       sdl_link_dependency(metal LINK_OPTIONS "-Wl,-weak_framework,Metal")
@@ -2279,7 +2280,7 @@ elseif(APPLE)
     sdl_link_dependency(opengles LINK_OPTIONS "-Wl,-framework,OpenGLES")
   endif()
   if(SDL_FRAMEWORK_QUARTZCORE)
-    if(IOS OR TVOS)
+    if(IOS OR TVOS OR VISIONOS)
       sdl_link_dependency(quartz_core LINK_OPTIONS "-Wl,-framework,QuartzCore")
     else()
       sdl_link_dependency(metal LINK_OPTIONS "-Wl,-weak_framework,QuartzCore")
@@ -3381,6 +3382,7 @@ if(NOT SDL_DISABLE_INSTALL)
     SDL_generate_manpages(
       SYMBOL "SDL_Init"
       WIKIHEADERS_PL_PATH "${CMAKE_CURRENT_SOURCE_DIR}/build-scripts/wikiheaders.pl"
+      REVISION "${SDL_REVISION}"
     )
     if(TARGET SDL3-javadoc)
       set(SDL_INSTALL_JAVADOCDIR "${CMAKE_INSTALL_DATAROOTDIR}/javadoc" CACHE PATH "Path where to install SDL3 javadoc")

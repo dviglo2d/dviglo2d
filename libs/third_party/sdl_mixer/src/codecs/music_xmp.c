@@ -73,7 +73,7 @@ static xmp_loader libxmp;
 #else
 #define FUNCTION_LOADER(FUNC, SIG) \
     libxmp.FUNC = FUNC; \
-    if (libxmp.FUNC == NULL) { Mix_SetError("Missing xmp_lite.framework"); return -1; }
+    if (libxmp.FUNC == NULL) { Mix_SetError("Missing xmp.framework"); return -1; }
 #endif
 
 static int XMP_Load(void)
@@ -177,11 +177,10 @@ static void libxmp_set_error(int e)
 }
 
 static unsigned long xmp_fread(void *dst, unsigned long len, unsigned long nmemb, void *src) {
-    Sint64 amount = SDL_RWread((SDL_RWops*)src, dst, len * nmemb);
-    if (amount <= 0) {
-        return 0;
+    if (len > 0 && nmemb > 0) {
+        return SDL_RWread((SDL_RWops*)src, dst, len * nmemb) / len;
     }
-    return (unsigned long)(amount / len);
+    return 0;
 }
 static int xmp_fseek(void *src, long offset, int whence) {
     return (SDL_RWseek((SDL_RWops*)src, offset, whence) < 0)? -1 : 0;
@@ -193,6 +192,7 @@ static long xmp_ftell(void *src) {
 /* Load a libxmp stream from an SDL_RWops object */
 void *XMP_CreateFromRW(SDL_RWops *src, SDL_bool freesrc)
 {
+    SDL_AudioSpec srcspec;
     XMP_Music *music;
     struct xmp_callbacks file_callbacks = {
            xmp_fread, xmp_fseek, xmp_ftell, NULL
@@ -211,7 +211,7 @@ void *XMP_CreateFromRW(SDL_RWops *src, SDL_bool freesrc)
         goto e0;
     }
 
-    music->buffer_size = music_spec.samples * 2 * 2;
+    music->buffer_size = 4096/*music_spec.samples*/ * 2 * 2;
     music->buffer = SDL_malloc((size_t)music->buffer_size);
     if (!music->buffer) {
         SDL_OutOfMemory();
@@ -243,11 +243,10 @@ void *XMP_CreateFromRW(SDL_RWops *src, SDL_bool freesrc)
     }
 
     music->volume = MIX_MAX_VOLUME;
-    music->stream = SDL_CreateAudioStream(SDL_AUDIO_S16SYS, 2,
-                                          music_spec.freq,
-                                          music_spec.format,
-                                          music_spec.channels,
-                                          music_spec.freq);
+    srcspec.format = SDL_AUDIO_S16;
+    srcspec.channels = 2;
+    srcspec.freq = music_spec.freq;
+    music->stream = SDL_CreateAudioStream(&srcspec, &music_spec);
     if (!music->stream) {
         goto e3;
     }

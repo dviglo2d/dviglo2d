@@ -6,7 +6,7 @@
 #include "../io/log.hpp"
 
 #include <entt/entt.hpp>
-#include <SDL.h>
+#include <SDL3/SDL.h>
 
 
 namespace dviglo

@@ -1740,7 +1740,7 @@ Uint32 SDL_GetWindowPixelFormat(SDL_Window *window)
 }
 
 #define CREATE_FLAGS \
-    (SDL_WINDOW_OPENGL | SDL_WINDOW_BORDERLESS | SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY | SDL_WINDOW_ALWAYS_ON_TOP | SDL_WINDOW_POPUP_MENU | SDL_WINDOW_UTILITY | SDL_WINDOW_TOOLTIP | SDL_WINDOW_VULKAN | SDL_WINDOW_MINIMIZED | SDL_WINDOW_METAL | SDL_WINDOW_TRANSPARENT)
+    (SDL_WINDOW_OPENGL | SDL_WINDOW_BORDERLESS | SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY | SDL_WINDOW_ALWAYS_ON_TOP | SDL_WINDOW_POPUP_MENU | SDL_WINDOW_UTILITY | SDL_WINDOW_TOOLTIP | SDL_WINDOW_VULKAN | SDL_WINDOW_MINIMIZED | SDL_WINDOW_METAL | SDL_WINDOW_TRANSPARENT | SDL_WINDOW_NOT_FOCUSABLE)
 
 static SDL_INLINE SDL_bool IsAcceptingDragAndDrop(void)
 {
@@ -3203,6 +3203,24 @@ int SDL_SetWindowInputFocus(SDL_Window *window)
     }
 
     return _this->SetWindowInputFocus(_this, window);
+}
+
+int SDL_SetWindowFocusable(SDL_Window *window, SDL_bool focusable)
+{
+    CHECK_WINDOW_MAGIC(window, -1);
+
+    const int want = (focusable != SDL_FALSE); /* normalize the flag. */
+    const int have = !(window->flags & SDL_WINDOW_NOT_FOCUSABLE);
+    if ((want != have) && (_this->SetWindowFocusable)) {
+        if (want) {
+            window->flags &= ~SDL_WINDOW_NOT_FOCUSABLE;
+        } else {
+            window->flags |= SDL_WINDOW_NOT_FOCUSABLE;
+        }
+        _this->SetWindowFocusable(_this, window, (SDL_bool)want);
+    }
+
+    return 0;
 }
 
 void SDL_UpdateWindowGrab(SDL_Window *window)
@@ -5052,6 +5070,19 @@ int SDL_ShowSimpleMessageBox(Uint32 flags, const char *title, const char *messag
 SDL_bool SDL_ShouldAllowTopmost(void)
 {
     return SDL_GetHintBoolean(SDL_HINT_ALLOW_TOPMOST, SDL_TRUE);
+}
+
+int SDL_ShowWindowSystemMenu(SDL_Window *window, int x, int y)
+{
+    CHECK_WINDOW_MAGIC(window, -1)
+    CHECK_WINDOW_NOT_POPUP(window, -1)
+
+    if (_this->ShowWindowSystemMenu) {
+        _this->ShowWindowSystemMenu(window, x, y);
+        return 0;
+    }
+
+    return SDL_Unsupported();
 }
 
 int SDL_SetWindowHitTest(SDL_Window *window, SDL_HitTest callback, void *callback_data)

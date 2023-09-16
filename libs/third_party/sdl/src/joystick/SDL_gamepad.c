@@ -57,52 +57,6 @@
 static SDL_bool SDL_gamepads_initialized;
 static SDL_Gamepad *SDL_gamepads SDL_GUARDED_BY(SDL_joystick_lock) = NULL;
 
-typedef enum
-{
-    SDL_GAMEPAD_BINDTYPE_NONE = 0,
-    SDL_GAMEPAD_BINDTYPE_BUTTON,
-    SDL_GAMEPAD_BINDTYPE_AXIS,
-    SDL_GAMEPAD_BINDTYPE_HAT
-} SDL_GamepadBindingType;
-
-typedef struct
-{
-    SDL_GamepadBindingType inputType;
-    union
-    {
-        int button;
-
-        struct
-        {
-            int axis;
-            int axis_min;
-            int axis_max;
-        } axis;
-
-        struct
-        {
-            int hat;
-            int hat_mask;
-        } hat;
-
-    } input;
-
-    SDL_GamepadBindingType outputType;
-    union
-    {
-        SDL_GamepadButton button;
-
-        struct
-        {
-            SDL_GamepadAxis axis;
-            int axis_min;
-            int axis_max;
-        } axis;
-
-    } output;
-
-} SDL_GamepadBinding;
-
 /* our hard coded list of mapping support */
 typedef enum
 {
@@ -362,6 +316,8 @@ void SDL_PrivateGamepadRemoved(SDL_JoystickID instance_id)
     SDL_Event event;
     SDL_Gamepad *gamepad;
 
+    SDL_AssertJoysticksLocked();
+
     if (!SDL_gamepads_initialized) {
         return;
     }
@@ -466,6 +422,8 @@ static void AdjustSensorOrientation(SDL_Joystick *joystick, float *src, float *d
 {
     unsigned int i, j;
 
+    SDL_AssertJoysticksLocked();
+
     for (i = 0; i < 3; ++i) {
         dst[i] = 0.0f;
         for (j = 0; j < 3; ++j) {
@@ -558,6 +516,8 @@ static void AddMappingChangeTracking(GamepadMapping_t *mapping)
 static SDL_bool HasMappingChangeTracking(MappingChangeTracker *tracker, GamepadMapping_t *mapping)
 {
     int i;
+
+    SDL_AssertJoysticksLocked();
 
     for (i = 0; i < tracker->num_changed_mappings; ++i) {
         if (tracker->changed_mappings[i] == mapping) {
@@ -1654,10 +1614,12 @@ static GamepadMapping_t *SDL_PrivateGenerateAutomaticGamepadMapping(const char *
     SDL_PrivateAppendToMappingString(mapping, sizeof(mapping), "dpleft", &raw_map->dpleft);
     SDL_PrivateAppendToMappingString(mapping, sizeof(mapping), "dpright", &raw_map->dpright);
     SDL_PrivateAppendToMappingString(mapping, sizeof(mapping), "misc1", &raw_map->misc1);
-    SDL_PrivateAppendToMappingString(mapping, sizeof(mapping), "paddle1", &raw_map->paddle1);
-    SDL_PrivateAppendToMappingString(mapping, sizeof(mapping), "paddle2", &raw_map->paddle2);
-    SDL_PrivateAppendToMappingString(mapping, sizeof(mapping), "paddle3", &raw_map->paddle3);
-    SDL_PrivateAppendToMappingString(mapping, sizeof(mapping), "paddle4", &raw_map->paddle4);
+    /* Keep using paddle1-4 in the generated mapping so that it can be
+     * reused with SDL2 */
+    SDL_PrivateAppendToMappingString(mapping, sizeof(mapping), "paddle1", &raw_map->right_paddle1);
+    SDL_PrivateAppendToMappingString(mapping, sizeof(mapping), "paddle2", &raw_map->left_paddle1);
+    SDL_PrivateAppendToMappingString(mapping, sizeof(mapping), "paddle3", &raw_map->right_paddle2);
+    SDL_PrivateAppendToMappingString(mapping, sizeof(mapping), "paddle4", &raw_map->left_paddle2);
     SDL_PrivateAppendToMappingString(mapping, sizeof(mapping), "leftx", &raw_map->leftx);
     SDL_PrivateAppendToMappingString(mapping, sizeof(mapping), "lefty", &raw_map->lefty);
     SDL_PrivateAppendToMappingString(mapping, sizeof(mapping), "rightx", &raw_map->rightx);
@@ -1694,40 +1656,18 @@ static GamepadMapping_t *SDL_PrivateGetGamepadMapping(SDL_JoystickID instance_id
 /*
  * Add or update an entry into the Mappings Database
  */
-int SDL_AddGamepadMappingsFromRW(SDL_RWops *src, int freesrc)
+int SDL_AddGamepadMappingsFromRW(SDL_RWops *src, SDL_bool freesrc)
 {
     const char *platform = SDL_GetPlatform();
     int gamepads = 0;
     char *buf, *line, *line_end, *tmp, *comma, line_platform[64];
-    Sint64 db_size;
+    size_t db_size;
     size_t platform_len;
 
-    if (src == NULL) {
-        return SDL_InvalidParamError("src");
-    }
-    db_size = SDL_RWsize(src);
-
-    buf = (char *)SDL_malloc((size_t)db_size + 1);
+    buf = (char *)SDL_LoadFile_RW(src, &db_size, freesrc);
     if (buf == NULL) {
-        if (freesrc) {
-            SDL_RWclose(src);
-        }
         return SDL_SetError("Could not allocate space to read DB into memory");
     }
-
-    if (SDL_RWread(src, buf, db_size) != db_size) {
-        if (freesrc) {
-            SDL_RWclose(src);
-        }
-        SDL_free(buf);
-        return SDL_SetError("Could not read DB");
-    }
-
-    if (freesrc) {
-        SDL_RWclose(src);
-    }
-
-    buf[db_size] = '\0';
     line = buf;
 
     PushMappingChangeTracking();
@@ -3192,6 +3132,45 @@ SDL_Gamepad *SDL_GetGamepadFromPlayerIndex(int player_index)
     SDL_UnlockJoysticks();
 
     return retval;
+}
+
+/*
+ * Get the SDL joystick layer bindings for this gamepad
+ */
+SDL_GamepadBinding **SDL_GetGamepadBindings(SDL_Gamepad *gamepad, int *count)
+{
+    SDL_GamepadBinding **bindings = NULL;
+
+    if (count) {
+        *count = 0;
+    }
+
+    SDL_LockJoysticks();
+    {
+        CHECK_GAMEPAD_MAGIC(gamepad, NULL);
+
+        size_t pointers_size = ((gamepad->num_bindings + 1) * sizeof(SDL_GamepadBinding *));
+        size_t elements_size = (gamepad->num_bindings * sizeof(SDL_GamepadBinding));
+        bindings = (SDL_GamepadBinding **)SDL_malloc(pointers_size + elements_size);
+        if (bindings) {
+            SDL_GamepadBinding *binding = (SDL_GamepadBinding *)((Uint8 *)bindings + pointers_size);
+            int i;
+            for (i = 0; i < gamepad->num_bindings; ++i, ++binding) {
+                bindings[i] = binding;
+                SDL_copyp(binding, &gamepad->bindings[i]);
+            }
+            bindings[i] = NULL;
+
+            if (count) {
+                *count = gamepad->num_bindings;
+            }
+        } else {
+            SDL_OutOfMemory();
+        }
+    }
+    SDL_UnlockJoysticks();
+
+    return bindings;
 }
 
 int SDL_RumbleGamepad(SDL_Gamepad *gamepad, Uint16 low_frequency_rumble, Uint16 high_frequency_rumble, Uint32 duration_ms)

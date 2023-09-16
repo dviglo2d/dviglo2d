@@ -4,7 +4,7 @@
 #pragma once
 
 #include <glm/glm.hpp>
-#include <SDL.h>
+#include <SDL3/SDL.h>
 
 
 namespace dviglo

@@ -22,7 +22,7 @@
 #include <SDL3/SDL_log.h>
 #include <SDL3/SDL_timer.h>
 
-#include <SDL3/SDL_mixer.h>
+#include <SDL3_mixer/SDL_mixer.h>
 #include "mixer.h"
 #include "music.h"
 
@@ -530,7 +530,7 @@ void open_music(const SDL_AudioSpec *spec)
     Mix_VolumeMusic(MIX_MAX_VOLUME);
 
     /* Calculate the number of ms for each callback */
-    ms_per_step = (int) (((float)spec->samples * 1000.0f) / spec->freq);
+    ms_per_step = (int) ((4096.0f * 1000.0f) / spec->freq);
 }
 
 /* Return SDL_TRUE if the music type is available */

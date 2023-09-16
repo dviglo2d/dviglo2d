@@ -6,8 +6,8 @@
 #include "../io/log.hpp"
 
 #include <fmt/format.h>
-#include <SDL.h>
-#include <SDL_mixer.h>
+#include <SDL3/SDL.h>
+#include <SDL3_mixer/SDL_mixer.h>
 
 #include <cassert>
 
@@ -25,27 +25,27 @@ Audio::Audio()
         return;
     }
 
-    i32 audio_rate = MIX_DEFAULT_FREQUENCY;
-    Uint16 audio_format = MIX_DEFAULT_FORMAT;
-    i32 audio_channels = MIX_DEFAULT_CHANNELS;
-    i32 audio_buffers = 4096;
     i32 audio_volume = MIX_MAX_VOLUME;
 
-    if (Mix_OpenAudio(audio_rate, audio_format, audio_channels, audio_buffers) < 0)
+    SDL_AudioSpec spec;
+    spec.freq = MIX_DEFAULT_FREQUENCY;
+    spec.format = MIX_DEFAULT_FORMAT;
+    spec.channels = MIX_DEFAULT_CHANNELS;
+
+    if (Mix_OpenAudio(0, &spec) < 0)
     {
         DV_LOG->write_error(format("Audio::Audio(): Mix_OpenAudio(...) < 0 | {}", SDL_GetError()));
         return;
     }
 
-    Mix_QuerySpec(&audio_rate, &audio_format, &audio_channels);
+    Mix_QuerySpec(&spec.freq, &spec.format, &spec.channels);
 
-    DV_LOG->write_info(format(
-        "Opened audio at {} Hz {} bit{} {} {} bytes audio buffer\n",
-        audio_rate,
-        audio_format & 0xFF,
-        SDL_AUDIO_ISFLOAT(audio_format) ? " (float)" : "",
-        (audio_channels > 2) ? "surround" : (audio_channels > 1) ? "stereo" : "mono",
-        audio_buffers
+    DV_LOG->write_info(fmt::format(
+        "Opened audio at {} Hz {} bit{} {}",
+        spec.freq,
+        spec.format & 0xFF,
+        SDL_AUDIO_ISFLOAT(spec.format) ? " (float)" : "",
+        (spec.channels > 2) ? "surround" : (spec.channels > 1) ? "stereo" : "mono"
     ));
 
     Mix_VolumeMusic(audio_volume);

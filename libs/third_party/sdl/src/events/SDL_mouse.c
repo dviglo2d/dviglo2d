@@ -213,7 +213,7 @@ void SDL_PostInitMouse(void)
     /* Create a dummy mouse cursor for video backends that don't support true cursors,
      * so that mouse grab and focus functionality will work.
      */
-    if (!mouse->CreateCursor) {
+    if (!mouse->def_cursor) {
         SDL_Surface *surface = SDL_CreateSurface(1, 1, SDL_PIXELFORMAT_ARGB8888);
         if (surface) {
             SDL_memset(surface->pixels, 0, (size_t)surface->h * surface->pitch);
@@ -227,7 +227,41 @@ void SDL_SetDefaultCursor(SDL_Cursor *cursor)
 {
     SDL_Mouse *mouse = SDL_GetMouse();
 
+    if (cursor == mouse->def_cursor) {
+        return;
+    }
+
+    if (mouse->def_cursor) {
+        SDL_Cursor *default_cursor = mouse->def_cursor;
+        SDL_Cursor *prev, *curr;
+
+        if (mouse->cur_cursor == mouse->def_cursor) {
+            mouse->cur_cursor = NULL;
+        }
+        mouse->def_cursor = NULL;
+
+        for (prev = NULL, curr = mouse->cursors; curr;
+             prev = curr, curr = curr->next) {
+            if (curr == default_cursor) {
+                if (prev) {
+                    prev->next = curr->next;
+                } else {
+                    mouse->cursors = curr->next;
+                }
+
+                break;
+            }
+        }
+
+        if (mouse->FreeCursor && default_cursor->driverdata) {
+            mouse->FreeCursor(default_cursor);
+        } else {
+            SDL_free(default_cursor);
+        }
+    }
+
     mouse->def_cursor = cursor;
+
     if (!mouse->cur_cursor) {
         SDL_SetCursor(cursor);
     }
@@ -575,6 +609,13 @@ static int SDL_PrivateSendMouseMotion(Uint64 timestamp, SDL_Window *window, SDL_
         }
     }
 
+    if (mouse->has_position && xrel == 0.0f && yrel == 0.0f) { /* Drop events that don't change state */
+#ifdef DEBUG_MOUSE
+        SDL_Log("Mouse event didn't change state - dropped!\n");
+#endif
+        return 0;
+    }
+
     /* Ignore relative motion positioning the first touch */
     if (mouseID == SDL_TOUCH_MOUSEID && !GetButtonState(mouse, SDL_TRUE)) {
         xrel = 0.0f;
@@ -582,13 +623,6 @@ static int SDL_PrivateSendMouseMotion(Uint64 timestamp, SDL_Window *window, SDL_
     }
 
     if (mouse->has_position) {
-        if (xrel == 0.0f && yrel == 0.0f) { /* Drop events that don't change state */
-#ifdef DEBUG_MOUSE
-            SDL_Log("Mouse event didn't change state - dropped!\n");
-#endif
-            return 0;
-        }
-
         /* Update internal mouse coordinates */
         if (!mouse->relative_mode) {
             mouse->x = x;
@@ -853,6 +887,10 @@ void SDL_QuitMouse(void)
     SDL_SetRelativeMouseMode(SDL_FALSE);
     SDL_ShowCursor();
 
+    if (mouse->def_cursor) {
+        SDL_SetDefaultCursor(NULL);
+    }
+
     cursor = mouse->cursors;
     while (cursor) {
         next = cursor->next;
@@ -861,15 +899,6 @@ void SDL_QuitMouse(void)
     }
     mouse->cursors = NULL;
     mouse->cur_cursor = NULL;
-
-    if (mouse->def_cursor) {
-        if (mouse->FreeCursor) {
-            mouse->FreeCursor(mouse->def_cursor);
-        } else {
-            SDL_free(mouse->def_cursor);
-        }
-        mouse->def_cursor = NULL;
-    }
 
     if (mouse->sources) {
         SDL_free(mouse->sources);
@@ -1385,7 +1414,7 @@ void SDL_DestroyCursor(SDL_Cursor *cursor)
                 mouse->cursors = curr->next;
             }
 
-            if (mouse->FreeCursor) {
+            if (mouse->FreeCursor && curr->driverdata) {
                 mouse->FreeCursor(curr);
             } else {
                 SDL_free(curr);

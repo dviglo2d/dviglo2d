@@ -65,7 +65,10 @@ static int read_config_file(const char *name, int rcf_count)
   char *w[MAXWORDS], *cp;
   char *endp;
   ToneBank *bank;
-  int i, j, k, line, r, words;
+  int i, j, k, r, words;
+#ifdef DEBUG_CHATTER
+  int line;
+#endif
 
   if (rcf_count >= MAX_RCFCOUNT) {
     SNDDBG(("Probable source loop in configuration files\n"));
@@ -76,12 +79,16 @@ static int read_config_file(const char *name, int rcf_count)
    return -1;
 
   bank = NULL;
+#ifdef DEBUG_CHATTER
   line = 0;
+#endif
   r = -1; /* start by assuming failure, */
 
   while (RWgets(rw, tmp, sizeof(tmp)))
   {
+#ifdef DEBUG_CHATTER
     line++;
+#endif
     words=0;
     w[0]=SDL_strtok_r(tmp, " \t\240", &endp);
     if (!w[0]) continue;
@@ -551,25 +558,25 @@ static void do_song_load(SDL_RWops *rw, SDL_AudioSpec *audio, MidiSong **out)
       goto fail;
   }
   switch (audio->format) {
-  case SDL_AUDIO_S8 :
+  case SDL_AUDIO_S8:
     song->write = timi_s32tos8;
     break;
-  case SDL_AUDIO_U8 :
+  case SDL_AUDIO_U8:
     song->write = timi_s32tou8;
     break;
-  case SDL_AUDIO_S16LSB :
+  case SDL_AUDIO_S16LE:
     song->write = timi_s32tos16l;
     break;
-  case SDL_AUDIO_S16MSB :
+  case SDL_AUDIO_S16BE:
     song->write = timi_s32tos16b;
     break;
-  case SDL_AUDIO_S32LSB :
+  case SDL_AUDIO_S32LE:
     song->write = timi_s32tos32l;
     break;
-  case SDL_AUDIO_S32MSB :
+  case SDL_AUDIO_S32BE:
     song->write = timi_s32tos32b;
     break;
-  case SDL_AUDIO_F32SYS :
+  case SDL_AUDIO_F32:
     song->write = timi_s32tof32;
     break;
   default:
@@ -577,10 +584,10 @@ static void do_song_load(SDL_RWops *rw, SDL_AudioSpec *audio, MidiSong **out)
     goto fail;
   }
 
-  song->buffer_size = audio->samples;
-  song->resample_buffer = SDL_malloc(audio->samples * sizeof(sample_t));
+  song->buffer_size = 4096/*audio->samples*/;
+  song->resample_buffer = SDL_malloc(4096/*audio->samples*/ * sizeof(sample_t));
   if (!song->resample_buffer) goto fail;
-  song->common_buffer = SDL_malloc(audio->samples * 2 * sizeof(Sint32));
+  song->common_buffer = SDL_malloc(4096/*audio->samples*/ * 2 * sizeof(Sint32));
   if (!song->common_buffer) goto fail;
 
   song->control_ratio = audio->freq / CONTROLS_PER_SECOND;

@@ -39,8 +39,6 @@
 #include "SDL_x11opengles.h"
 #endif
 
-#include "SDL_x11vulkan.h"
-
 /* Initialization/Query functions */
 static int X11_VideoInit(SDL_VideoDevice *_this);
 static void X11_VideoQuit(SDL_VideoDevice *_this);
@@ -213,6 +211,8 @@ static SDL_VideoDevice *X11_CreateDevice(void)
     device->SetWindowHitTest = X11_SetWindowHitTest;
     device->AcceptDragAndDrop = X11_AcceptDragAndDrop;
     device->FlashWindow = X11_FlashWindow;
+    device->ShowWindowSystemMenu = X11_ShowWindowSystemMenu;
+    device->SetWindowFocusable = X11_SetWindowFocusable;
 
 #ifdef SDL_VIDEO_DRIVER_X11_XFIXES
     device->SetWindowMouseRect = X11_SetWindowMouseRect;
