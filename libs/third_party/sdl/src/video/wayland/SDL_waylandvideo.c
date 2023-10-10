@@ -55,6 +55,8 @@
 #include "primary-selection-unstable-v1-client-protocol.h"
 #include "fractional-scale-v1-client-protocol.h"
 #include "input-timestamps-unstable-v1-client-protocol.h"
+#include "relative-pointer-unstable-v1-client-protocol.h"
+#include "pointer-constraints-unstable-v1-client-protocol.h"
 
 #ifdef HAVE_LIBDECOR_H
 #include <libdecor.h>
@@ -125,6 +127,14 @@ static SDL_VideoDevice *Wayland_CreateDevice(void)
     SDL_VideoDevice *device;
     SDL_VideoData *data;
     struct wl_display *display;
+
+    /* Are we trying to connect to or are currently in a Wayland session? */
+    if (!getenv("WAYLAND_DISPLAY")) {
+        const char *session = getenv("XDG_SESSION_TYPE");
+        if (session && SDL_strcasecmp(session, "wayland")) {
+            return NULL;
+        }
+    }
 
     if (!SDL_WAYLAND_LoadSymbols()) {
         return NULL;
@@ -762,9 +772,9 @@ static void display_handle_global(void *data, struct wl_registry *registry, uint
     } else if (SDL_strcmp(interface, "wl_shm") == 0) {
         d->shm = wl_registry_bind(registry, id, &wl_shm_interface, 1);
     } else if (SDL_strcmp(interface, "zwp_relative_pointer_manager_v1") == 0) {
-        Wayland_display_add_relative_pointer_manager(d, id);
+        d->relative_pointer_manager = wl_registry_bind(d->registry, id, &zwp_relative_pointer_manager_v1_interface, 1);
     } else if (SDL_strcmp(interface, "zwp_pointer_constraints_v1") == 0) {
-        Wayland_display_add_pointer_constraints(d, id);
+        d->pointer_constraints = wl_registry_bind(d->registry, id, &zwp_pointer_constraints_v1_interface, 1);
     } else if (SDL_strcmp(interface, "zwp_keyboard_shortcuts_inhibit_manager_v1") == 0) {
         d->key_inhibitor_manager = wl_registry_bind(d->registry, id, &zwp_keyboard_shortcuts_inhibit_manager_v1_interface, 1);
     } else if (SDL_strcmp(interface, "zwp_idle_inhibit_manager_v1") == 0) {
@@ -916,7 +926,7 @@ static int Wayland_GetDisplayBounds(SDL_VideoDevice *_this, SDL_VideoDisplay *di
     /* When an emulated, exclusive fullscreen window has focus, treat the mode dimensions as the display bounds. */
     if (display->fullscreen_window &&
         display->fullscreen_window->fullscreen_exclusive &&
-        display->fullscreen_window == SDL_GetFocusWindow() &&
+        display->fullscreen_window->driverdata->active &&
         display->fullscreen_window->current_fullscreen_mode.w != 0 &&
         display->fullscreen_window->current_fullscreen_mode.h != 0) {
         rect->w = display->fullscreen_window->current_fullscreen_mode.w;
@@ -941,8 +951,16 @@ static void Wayland_VideoCleanup(SDL_VideoDevice *_this)
     }
 
     Wayland_display_destroy_input(data);
-    Wayland_display_destroy_pointer_constraints(data);
-    Wayland_display_destroy_relative_pointer_manager(data);
+
+    if (data->pointer_constraints) {
+        zwp_pointer_constraints_v1_destroy(data->pointer_constraints);
+        data->pointer_constraints = NULL;
+    }
+
+    if (data->relative_pointer_manager) {
+        zwp_relative_pointer_manager_v1_destroy(data->relative_pointer_manager);
+        data->relative_pointer_manager = NULL;
+    }
 
     if (data->activation_manager) {
         xdg_activation_v1_destroy(data->activation_manager);
