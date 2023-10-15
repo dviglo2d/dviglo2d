@@ -1,0 +1,5 @@
+# https://git-scm.com/docs/gitignore
+# https://www.atlassian.com/ru/git/tutorials/saving-changes/gitignore
+
+# Игнорируем папку, которую создаёт VS Code
+/build/
