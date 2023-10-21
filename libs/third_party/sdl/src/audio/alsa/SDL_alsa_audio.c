@@ -37,7 +37,7 @@
 #include <signal.h> // For kill()
 #include <string.h>
 
-#include "../SDL_audio_c.h"
+#include "../SDL_sysaudio.h"
 #include "SDL_alsa_audio.h"
 
 #ifdef SDL_AUDIO_DRIVER_ALSA_DYNAMIC
@@ -813,10 +813,10 @@ static void ALSA_HotplugIteration(SDL_bool *has_default_output, SDL_bool *has_de
                     SDL_bool have_output = SDL_FALSE;
                     SDL_bool have_input = SDL_FALSE;
 
-                    free(ioid);
+                    free(ioid); // This should NOT be SDL_free()
 
                     if (!isoutput && !isinput) {
-                        free(name);
+                        free(name); // This should NOT be SDL_free()
                         continue;
                     }
 
@@ -826,7 +826,7 @@ static void ALSA_HotplugIteration(SDL_bool *has_default_output, SDL_bool *has_de
                         } else if (has_default_capture && isinput) {
                             *has_default_capture = SDL_TRUE;
                         }
-                        free(name);
+                        free(name); // This should NOT be SDL_free()
                         continue;
                     }
 
@@ -875,7 +875,6 @@ static void ALSA_HotplugIteration(SDL_bool *has_default_output, SDL_bool *has_de
             //SDL_LogInfo(SDL_LOG_CATEGORY_AUDIO, "ALSA: removing %s device '%s'", dev->iscapture ? "capture" : "output", dev->name);
             next = dev->next;
             SDL_AudioDeviceDisconnected(SDL_FindPhysicalAudioDeviceByHandle(dev->name));
-            SDL_free(dev->name);
             SDL_free(dev);
         }
     }
@@ -923,7 +922,7 @@ static void ALSA_DetectDevices(SDL_AudioDevice **default_output, SDL_AudioDevice
 #endif
 }
 
-static void ALSA_Deinitialize(void)
+static void ALSA_DeinitializeStart(void)
 {
     ALSA_Device *dev;
     ALSA_Device *next;
@@ -940,11 +939,18 @@ static void ALSA_Deinitialize(void)
     for (dev = hotplug_devices; dev; dev = next) {
         //SDL_LogInfo(SDL_LOG_CATEGORY_AUDIO, "ALSA: at shutdown, removing %s device '%s'", dev->iscapture ? "capture" : "output", dev->name);
         next = dev->next;
-        SDL_free(dev->name);
         SDL_free(dev);
     }
     hotplug_devices = NULL;
+}
 
+static void ALSA_FreeDeviceHandle(SDL_AudioDevice *device)
+{
+    SDL_free(device->handle);
+}
+
+static void ALSA_Deinitialize(void)
+{
     UnloadALSALibrary();
 }
 
@@ -960,10 +966,12 @@ static SDL_bool ALSA_Init(SDL_AudioDriverImpl *impl)
     impl->GetDeviceBuf = ALSA_GetDeviceBuf;
     impl->PlayDevice = ALSA_PlayDevice;
     impl->CloseDevice = ALSA_CloseDevice;
+    impl->DeinitializeStart = ALSA_DeinitializeStart;
     impl->Deinitialize = ALSA_Deinitialize;
     impl->WaitCaptureDevice = ALSA_WaitDevice;
     impl->CaptureFromDevice = ALSA_CaptureFromDevice;
     impl->FlushCapture = ALSA_FlushCapture;
+    impl->FreeDeviceHandle = ALSA_FreeDeviceHandle;
 
     impl->HasCaptureSupport = SDL_TRUE;
 

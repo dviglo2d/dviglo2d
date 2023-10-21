@@ -21,6 +21,7 @@
 
 #include "build_config/SDL_build_config.h"
 #include "SDL_dynapi.h"
+#include "SDL_dynapi_unsupported.h"
 
 #if SDL_DYNAMIC_API
 
@@ -274,6 +275,16 @@ static int SDLCALL SDL_asprintf_LOGSDLCALLS(char **strp, SDL_PRINTF_FORMAT_STRIN
     va_end(ap);
     return retval;
 }
+static int SDLCALL SDL_swprintf_LOGSDLCALLS(SDL_OUT_Z_CAP(maxlen) wchar_t *buf, size_t maxlen, SDL_PRINTF_FORMAT_STRING const wchar_t *fmt, ...)
+{
+    int retval;
+    va_list ap;
+    SDL_Log_REAL("SDL3CALL SDL_swprintf");
+    va_start(ap, fmt);
+    retval = SDL_vswprintf_REAL(buf, maxlen, fmt, ap);
+    va_end(ap);
+    return retval;
+}
 static void SDLCALL SDL_Log_LOGSDLCALLS(SDL_PRINTF_FORMAT_STRING const char *fmt, ...)
 {
     va_list ap;
@@ -521,6 +532,19 @@ static void SDL_InitDynamicAPI(void)
     #ifndef SDL_ATOMIC_DISABLED
     SDL_AtomicUnlock_REAL(&lock);
     #endif
+}
+
+#else /* SDL_DYNAMIC_API */
+
+#include <SDL3/SDL.h>
+
+Sint32 SDL_DYNAPI_entry(Uint32 apiver, void *table, Uint32 tablesize);
+Sint32 SDL_DYNAPI_entry(Uint32 apiver, void *table, Uint32 tablesize)
+{
+    (void)apiver;
+    (void)table;
+    (void)tablesize;
+    return -1; /* not compatible. */
 }
 
 #endif /* SDL_DYNAMIC_API */

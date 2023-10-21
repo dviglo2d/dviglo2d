@@ -20,7 +20,7 @@
 */
 #include "SDL_internal.h"
 
-#include "SDL_audio_c.h"
+#include "SDL_sysaudio.h"
 
 #include "SDL_audioqueue.h"
 #include "SDL_audioresample.h"
@@ -404,10 +404,8 @@ static int UpdateAudioStreamInputSpec(SDL_AudioStream *stream, const SDL_AudioSp
 
 SDL_AudioStream *SDL_CreateAudioStream(const SDL_AudioSpec *src_spec, const SDL_AudioSpec *dst_spec)
 {
-    if (!SDL_WasInit(SDL_INIT_AUDIO)) {
-        SDL_SetError("Audio subsystem is not initialized");
-        return NULL;
-    }
+    SDL_ChooseAudioConverters();
+    SDL_SetupAudioResampler();
 
     SDL_AudioStream *retval = (SDL_AudioStream *)SDL_calloc(1, sizeof(SDL_AudioStream));
     if (retval == NULL) {
@@ -438,6 +436,18 @@ SDL_AudioStream *SDL_CreateAudioStream(const SDL_AudioSpec *src_spec, const SDL_
     }
 
     return retval;
+}
+
+SDL_PropertiesID SDL_GetAudioStreamProperties(SDL_AudioStream *stream)
+{
+    if (!stream) {
+        SDL_InvalidParamError("stream");
+        return 0;
+    }
+    if (stream->props == 0) {
+        stream->props = SDL_CreateProperties();
+    }
+    return stream->props;
 }
 
 int SDL_SetAudioStreamGetCallback(SDL_AudioStream *stream, SDL_AudioStreamCallback callback, void *userdata)
@@ -1162,6 +1172,8 @@ void SDL_DestroyAudioStream(SDL_AudioStream *stream)
     if (stream == NULL) {
         return;
     }
+
+    SDL_DestroyProperties(stream->props);
 
     OnAudioStreamDestroy(stream);
 

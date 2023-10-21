@@ -18,24 +18,32 @@
      misrepresented as being the original software.
   3. This notice may not be removed or altered from any source distribution.
 */
+#include "SDL_internal.h"
 
-#ifndef SDL_vitaaudio_h
-#define SDL_vitaaudio_h
+#if !(defined(__WIN32__) || defined(__WINGDK__))
 
-#include "../SDL_sysaudio.h"
-
-#define NUM_BUFFERS 2
-
-struct SDL_PrivateAudioData
+DECLSPEC void *SDLCALL SDL_GetRenderD3D9Device(SDL_Renderer *renderer); /* returns IDirect3DDevice9 * */
+void *SDL_GetRenderD3D9Device(SDL_Renderer *renderer)
 {
-    // The hardware input/output port.
-    int port;
-    // The raw allocated mixing buffer.
-    Uint8 *rawbuf;
-    // Individual mixing buffers.
-    Uint8 *mixbufs[NUM_BUFFERS];
-    // Index of the next available mixing buffer.
-    int next_buffer;
-};
+    (void)renderer;
+    SDL_Unsupported();
+    return NULL;
+}
 
-#endif // SDL_vitaaudio_h
+DECLSPEC void *SDLCALL SDL_GetRenderD3D11Device(SDL_Renderer *renderer); /* returns ID3D11Device * */
+void *SDL_GetRenderD3D11Device(SDL_Renderer *renderer)
+{
+    (void)renderer;
+    SDL_Unsupported();
+    return NULL;
+}
+
+DECLSPEC void *SDLCALL SDL_RenderGetD3D12Device(SDL_Renderer *renderer); /* return ID3D12Device * */
+void *SDL_RenderGetD3D12Device(SDL_Renderer *renderer)
+{
+    (void)renderer;
+    SDL_Unsupported();
+    return NULL;
+}
+
+#endif

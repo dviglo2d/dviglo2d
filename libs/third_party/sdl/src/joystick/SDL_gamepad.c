@@ -1670,6 +1670,8 @@ int SDL_AddGamepadMappingsFromRW(SDL_RWops *src, SDL_bool freesrc)
     }
     line = buf;
 
+    SDL_LockJoysticks();
+
     PushMappingChangeTracking();
 
     while (line < buf + db_size) {
@@ -1701,6 +1703,8 @@ int SDL_AddGamepadMappingsFromRW(SDL_RWops *src, SDL_bool freesrc)
     }
 
     PopMappingChangeTracking();
+
+    SDL_UnlockJoysticks();
 
     SDL_free(buf);
     return gamepads;
@@ -2923,6 +2927,21 @@ SDL_JoystickID SDL_GetGamepadInstanceID(SDL_Gamepad *gamepad)
         return 0;
     }
     return SDL_GetJoystickInstanceID(joystick);
+}
+
+SDL_PropertiesID SDL_GetGamepadProperties(SDL_Gamepad *gamepad)
+{
+    SDL_PropertiesID retval = 0;
+
+    SDL_LockJoysticks();
+    {
+        CHECK_GAMEPAD_MAGIC(gamepad, 0);
+
+        retval = SDL_GetJoystickProperties(gamepad->joystick);
+    }
+    SDL_UnlockJoysticks();
+
+    return retval;
 }
 
 const char *SDL_GetGamepadName(SDL_Gamepad *gamepad)

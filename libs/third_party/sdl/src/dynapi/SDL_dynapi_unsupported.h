@@ -19,23 +19,30 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef SDL_vitaaudio_h
-#define SDL_vitaaudio_h
+#ifndef SDL_dynapi_unsupported_h_
+#define SDL_dynapi_unsupported_h_
 
-#include "../SDL_sysaudio.h"
 
-#define NUM_BUFFERS 2
+#if !(defined(__WIN32__) || defined(__GDK__))
+typedef struct ID3D12Device ID3D12Device;
+typedef void *SDL_WindowsMessageHook;
+#endif
 
-struct SDL_PrivateAudioData
-{
-    // The hardware input/output port.
-    int port;
-    // The raw allocated mixing buffer.
-    Uint8 *rawbuf;
-    // Individual mixing buffers.
-    Uint8 *mixbufs[NUM_BUFFERS];
-    // Index of the next available mixing buffer.
-    int next_buffer;
-};
+#if !(defined(__WIN32__) || defined(__WINGDK__))
+typedef struct ID3D11Device ID3D11Device;
+typedef struct IDirect3DDevice9 IDirect3DDevice9;
+#endif
 
-#endif // SDL_vitaaudio_h
+#ifndef __GDK__
+typedef struct XTaskQueueHandle XTaskQueueHandle;
+#endif
+
+#ifndef __WINRT__
+typedef int SDL_WinRT_DeviceFamily;
+typedef int SDL_WinRT_Path;
+#endif
+#ifndef __GDK__
+typedef struct XUserHandle XUserHandle;
+#endif
+
+#endif

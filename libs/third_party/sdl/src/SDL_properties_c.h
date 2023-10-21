@@ -1,5 +1,5 @@
 /*
-  Simple DirectMedia Layer
+  Simple DiretMedia Layer
   Copyright (C) 1997-2023 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
@@ -19,11 +19,5 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef SDL_audio_c_h_
-#define SDL_audio_c_h_
-
-/* !!! FIXME: remove this header and have things just include SDL_sysaudio.h directly. */
-
-#include "SDL_sysaudio.h"
-
-#endif /* SDL_audio_c_h_ */
+extern int SDL_InitProperties(void);
+extern void SDL_QuitProperties(void);
