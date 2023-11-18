@@ -168,13 +168,15 @@ jobs:
             ID: gcc,
             #C: gcc,
             #CXX: g++,
-            C: gcc-12, # Используем GCC 12 вместо дефолтного 11, так как 11 не поддерживает shared_ptr<T[]>
-            CXX: g++-12,
+            C: gcc-13, # Используем GCC 13, так как 12 не поддерживает std::format
+            CXX: g++-13,
           }
         - {
             ID: clang,
-            C: clang,
-            CXX: clang++,
+            #C: clang,
+            #CXX: clang++,
+            C: clang-13,
+            CXX: clang++-13,
           }
         BUILD_TYPE:
         - {

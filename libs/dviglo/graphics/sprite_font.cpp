@@ -7,10 +7,10 @@
 #include "../io/log.hpp"
 #include "../io/path.hpp"
 
-#include <fmt/format.h>
 #include <pugixml.hpp>
 
-using namespace fmt;
+#include <format>
+
 using namespace pugi;
 using namespace std;
 

@@ -5,13 +5,13 @@
 
 #include "../io/log.hpp"
 
-#include <fmt/format.h>
 #include <SDL3/SDL.h>
 #include <SDL3_mixer/SDL_mixer.h>
 
 #include <cassert>
+#include <format>
 
-using namespace fmt;
+using namespace std;
 
 
 namespace dviglo
@@ -40,7 +40,7 @@ Audio::Audio()
 
     Mix_QuerySpec(&spec.freq, &spec.format, &spec.channels);
 
-    DV_LOG->write_info(fmt::format(
+    DV_LOG->write_info(format(
         "Opened audio at {} Hz {} bit{} {}",
         spec.freq,
         spec.format & 0xFF,

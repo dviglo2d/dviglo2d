@@ -8,11 +8,11 @@
 #include "../io/log.hpp"
 
 #include <glad/gl.h>
-#include <fmt/format.h>
 
 #include <cassert>
+#include <format>
 
-using namespace fmt;
+using namespace std;
 
 
 namespace dviglo

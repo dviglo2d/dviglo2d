@@ -1,8 +1,8 @@
 # Поддерживаемые компиляторы
 
 Linux:
-1. GCC 12 (GCC 11 не поддерживает `shared_ptr<T[]>`)
-2. Clang (проверена версия 14)
+1. GCC 13 (GCC 11 не поддерживает `shared_ptr<T[]>`, GCC 12 не поддерживает `std::format`)
+2. Clang 13 (проверена версия 13.0.1)
 
 Windows:
 1. Visual Studio 2022

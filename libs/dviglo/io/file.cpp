@@ -7,9 +7,9 @@
 
 #include "../io/log.hpp"
 
-#include <fmt/format.h>
+#include <format>
 
-using namespace fmt;
+using namespace std;
 
 
 namespace dviglo

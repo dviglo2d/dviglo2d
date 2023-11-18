@@ -12,12 +12,10 @@
 #include "../io/log.hpp"
 #include "../std_utils/scope_guard.hpp"
 
-#include <fmt/format.h>
 #include <glad/gl.h>
 
 #include <memory>
 
-using namespace fmt;
 using namespace std;
 
 
