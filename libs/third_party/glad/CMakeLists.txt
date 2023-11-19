@@ -1,4 +1,4 @@
-# Copyright (c) 2022-present the Dviglo project
+# Copyright (c) the Dviglo project
 # License: MIT
 
 # Только движок должен подключать этот таргет (приложениям нельзя)
