@@ -1,4 +1,4 @@
-// Copyright (c) 2022-2023 the Dviglo project
+// Copyright (c) 2022-present the Dviglo project
 // License: MIT
 
 // Файл называется str.h, а не string.h, так как в стандартной библиотеке

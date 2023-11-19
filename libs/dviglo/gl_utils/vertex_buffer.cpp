@@ -1,4 +1,4 @@
-// Copyright (c) 2022-2023 the Dviglo project
+// Copyright (c) 2022-present the Dviglo project
 // License: MIT
 
 #include "vertex_buffer.hpp"
