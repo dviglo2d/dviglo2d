@@ -21,7 +21,8 @@ sudo apt install gcc-13 g++-13 -y
 * https://github.com/actions/runner-images/blob/50625a842ad09f741de40651332bdc6064c7f0a9/images/ubuntu/scripts/build/gcc.sh
 * https://phoenixnap.com/kb/install-gcc-ubuntu
 
-Если что, подключенный PPA-репозиторий можно удалить с помощью программы `Источники приложений`.
+Если что, подключенный PPA-репозиторий можно удалить с помощью программы `Источники приложений`
+или командой `sudo add-apt-repository --remove ppa:ubuntu-toolchain-r/test`.
 
 # Компиляция в Linux
 
