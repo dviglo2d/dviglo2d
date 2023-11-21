@@ -23,6 +23,7 @@ sudo apt install gcc-13 g++-13 -y
 
 Если что, подключенный PPA-репозиторий можно удалить с помощью программы `Источники приложений`
 или командой `sudo add-apt-repository --remove ppa:ubuntu-toolchain-r/test`.
+Не забудьте после этого сделать `sudo apt-get update` и `sudo apt-get upgrade`.
 
 # Компиляция в Linux
 
