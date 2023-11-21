@@ -22,3 +22,26 @@ sudo apt install gcc-13 g++-13 -y
 * https://phoenixnap.com/kb/install-gcc-ubuntu
 
 Если что, подключенный PPA-репозиторий можно удалить с помощью программы `Источники приложений`.
+
+# Скачивание и сборка движка в Linux
+
+```
+#!/bin/sh
+
+# Качаем репозиторий в папку repo
+git clone https://github.com/dviglo2d/dviglo2d repo
+
+# Создаём проекты для GCC 13 в папке build, используя конфиг CMakeLists.txt из папки repo
+cmake repo -B build -G "Unix Makefiles" \
+    -D CMAKE_C_COMPILER=gcc-13 -D CMAKE_CXX_COMPILER=g++-13 \
+    -D CMAKE_BUILD_TYPE=Release
+
+# CMAKE_BUILD_TYPE может быть Debug, Release, MinSizeRel или RelWithDebInfo
+
+# Если хотите использовать Clang, а не GCC, тогда -D CMAKE_C_COMPILER=clang-13 -D CMAKE_CXX_COMPILER=clang++-13
+
+# Компилируем проекты в папке build
+cmake --build build
+```
+
+Но удобнее компилировать с помощью [Visual Studio Code](vscode.md).
