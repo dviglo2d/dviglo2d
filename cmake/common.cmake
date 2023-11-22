@@ -49,7 +49,7 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-# Указывем Студии на то, что исходники в кодировке UTF-8.
+# Указываем Студии на то, что исходники в кодировке UTF-8.
 # Это позволяет писать U'🍌'. У других компиляторов, похоже, нет с этим проблем.
 # https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2022/p2295r6.pdf
 if(MSVC)
