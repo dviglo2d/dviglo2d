@@ -5,11 +5,11 @@
 2. Linux
 
 Необходимый софт:
-1. git для скачивания исходников из репозитория
+1. Git для скачивания исходников из репозитория
 2. один из поддерживаемых компиляторов (об этом ниже)
 3. CMake для генерации проектов для используемого компилятора
 
-В Windows `git` можно скачать [отсюда](https://git-scm.com), а `CMake` [отсюда](https://cmake.org).
+В Windows `Git` можно скачать [отсюда](https://git-scm.com), а `CMake` [отсюда](https://cmake.org).
 
 --------------------------------------------------
 
@@ -75,7 +75,7 @@ cmake --build build
 Поддерживаемые компиляторы:
 
 1. Visual Studio 2022
-2. mingw-w64 12.1 из пакета MSYS2
+2. MinGW-w64 13.2 из пакета MSYS2
 
 ## Visual Studio
 
@@ -104,3 +104,37 @@ pause
 Использовать компилятор от Microsoft можно и без установки `Visual Studio` IDE.
 Достаточно установить [Build Tools](https://visualstudio.microsoft.com/downloads/?q=build+tools).
 А в качестве IDE использовать [Visual Studio Code](vscode.md).
+
+## MinGW-w64
+
+### Установка
+
+1. Качаем и устанавливаем MSYS2 с <https://www.msys2.org>
+2. Запускаем `MSYS2 UCRT64` из меню `Пуск`
+3. Вводим `pacman -S mingw-w64-ucrt-x86_64-toolchain`
+
+Источник: https://stackoverflow.com/questions/30069830/how-can-i-install-mingw-w64-and-msys2
+
+### Скачивание и компиляция движка
+
+```
+:: Меняем кодировку консоли на UTF-8
+chcp 65001
+
+:: Указываем пути к необходимым утилитам
+set "PATH=c:\windows\system32;c:\program files\git\bin;c:\programs\cmake\bin;c:\msys64\ucrt64\bin"
+
+:: Качаем репозиторий в папку repo
+git clone https://github.com/dviglo2d/dviglo2d repo
+
+:: Создаём проекты для MinGW-w64 в папке build, используя конфиг CMakeLists.txt из папки repo
+cmake repo -B build -G "MinGW Makefiles" -D CMAKE_BUILD_TYPE=Release
+
+:: CMAKE_BUILD_TYPE может быть Debug, Release, MinSizeRel или RelWithDebInfo
+
+:: Компилируем проекты в папке build
+cmake --build build
+
+:: Ждём нажатие Enter перед закрытием консоли
+pause
+```
