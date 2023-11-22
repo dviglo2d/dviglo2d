@@ -1,15 +1,26 @@
-# Поддерживаемые компиляторы
+# Сборка
 
-Linux:
+Поддерживаемые OS:
+1. Windows
+2. Linux
+
+Необходимый софт:
+1. git для скачивания исходников из репозитория
+2. один из поддерживаемых компиляторов (об этом ниже)
+3. CMake для генерации проектов для используемого компилятора
+
+В Windows `git` можно скачать [отсюда](https://git-scm.com), а `CMake` [отсюда](https://cmake.org).
+
+--------------------------------------------------
+
+# Сборка в Linux
+
+Поддерживаемые компиляторы:
 1. GCC 13 (GCC 11 не поддерживает `shared_ptr<T[]>`, GCC 12 не поддерживает `std::format`)
 2. Clang 13 (проверена версия 13.0.1). Clang использует заголовки от GCC (libstdc++),
    поэтому GCC 13 всё равно должен быть установлен
 
-Windows:
-1. Visual Studio 2022
-2. mingw-w64 12.1 из пакета MSYS2
-
-# Установка GCC 13 в Linux Mint 21.2
+## Установка GCC 13 в Linux Mint 21.2
 
 ```
 sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
@@ -25,20 +36,16 @@ sudo apt install gcc-13 g++-13 -y
 или командой `sudo add-apt-repository --remove ppa:ubuntu-toolchain-r/test`.
 Не забудьте после этого сделать `sudo apt-get update` и `sudo apt-get upgrade`.
 
-# Компиляция в Linux
-
 ## Установка необходимых зависимостей
 
 ```
-#!/bin/sh
-
 sudo apt update
 
 # Без libxrandr-dev не получится узнать список поддерживаемых разрешений
 sudo apt install libgl1-mesa-dev libxrandr-dev libasound2-dev
 ```
 
-## Скачивание и сборка движка
+## Скачивание и компиляция движка
 
 ```
 #!/bin/sh
@@ -61,13 +68,16 @@ cmake --build build
 
 Но удобнее компилировать с помощью [Visual Studio Code](vscode.md).
 
-# Компиляция в Windows
+--------------------------------------------------
+
+# Сборка в Windows
+
+Поддерживаемые компиляторы:
+
+1. Visual Studio 2022
+2. mingw-w64 12.1 из пакета MSYS2
 
 ## Visual Studio
-
-Использовать компилятор от Microsoft можно и без установки Visual Studio IDE.
-Достаточно установить [Build Tools](https://visualstudio.microsoft.com/downloads/?q=build+tools).
-А в качестве IDE использовать [Visual Studio Code](vscode.md).
 
 ```
 :: Меняем кодировку консоли на UTF-8
@@ -90,3 +100,7 @@ cmake --build build --config Release
 :: Ждём нажатие Enter перед закрытием консоли
 pause
 ```
+
+Использовать компилятор от Microsoft можно и без установки `Visual Studio` IDE.
+Достаточно установить [Build Tools](https://visualstudio.microsoft.com/downloads/?q=build+tools).
+А в качестве IDE использовать [Visual Studio Code](vscode.md).
