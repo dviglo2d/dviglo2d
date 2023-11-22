@@ -60,3 +60,33 @@ cmake --build build
 ```
 
 Но удобнее компилировать с помощью [Visual Studio Code](vscode.md).
+
+# Компиляция в Windows
+
+## Visual Studio
+
+Использовать компилятор от Microsoft можно и без установки Visual Studio IDE.
+Достаточно установить [Build Tools](https://visualstudio.microsoft.com/downloads/?q=build+tools).
+А в качестве IDE использовать [Visual Studio Code](vscode.md).
+
+```
+:: Меняем кодировку консоли на UTF-8
+chcp 65001
+
+:: Указываем пути к необходимым утилитам
+set "PATH=c:\programs\cmake\bin;c:\program files\git\bin"
+
+:: Качаем репозиторий в папку repo
+git clone https://github.com/dviglo2d/dviglo2d repo
+
+:: Создаём проекты для Visual Studio 2022 в папке build, используя конфиг CMakeLists.txt из папки repo
+cmake repo -B build -G "Visual Studio 17" -A x64
+
+:: Компилируем проекты в папке build
+cmake --build build --config Release
+
+:: --config может быть Debug, Release, MinSizeRel или RelWithDebInfo
+
+:: Ждём нажатие Enter перед закрытием консоли
+pause
+```
