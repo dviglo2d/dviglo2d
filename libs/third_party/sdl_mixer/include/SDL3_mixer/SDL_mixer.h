@@ -348,10 +348,9 @@ extern DECLSPEC void SDLCALL Mix_PauseAudio(int pause_on);
  *                 count.
  * \returns 1 if the audio device has been opened, 0 otherwise.
  *
- * \since This function is available since SDL_mixer 2.0.0.
+ * \since This function is available since SDL_mixer 3.0.0.
  *
  * \sa Mix_OpenAudio
- * \sa Mix_OpenAudioDevice
  */
 extern DECLSPEC int SDLCALL Mix_QuerySpec(int *frequency, Uint16 *format, int *channels);
 
@@ -701,8 +700,8 @@ extern DECLSPEC void SDLCALL Mix_FreeMusic(Mix_Music *music);
  *
  * This list can change between builds AND runs of the program, if external
  * libraries that add functionality become available. You must successfully
- * call Mix_OpenAudio() or Mix_OpenAudioDevice() before calling this function,
- * as decoders are activated at device open time.
+ * call Mix_OpenAudio() before calling this function, as decoders are
+ * activated at device open time.
  *
  * Appearing in this list doesn't promise your specific audio file will
  * decode...but it's handy to know if you have, say, a functioning Ogg Vorbis
@@ -729,8 +728,8 @@ extern DECLSPEC int SDLCALL Mix_GetNumChunkDecoders(void);
  *
  * This list can change between builds AND runs of the program, if external
  * libraries that add functionality become available. You must successfully
- * call Mix_OpenAudio() or Mix_OpenAudioDevice() before calling this function,
- * as decoders are activated at device open time.
+ * call Mix_OpenAudio() before calling this function, as decoders are
+ * activated at device open time.
  *
  * \param index index of the chunk decoder.
  * \returns the chunk decoder's name.
@@ -746,8 +745,8 @@ extern DECLSPEC const char * SDLCALL Mix_GetChunkDecoder(int index);
  *
  * This result can change between builds AND runs of the program, if external
  * libraries that add functionality become available. You must successfully
- * call Mix_OpenAudio() or Mix_OpenAudioDevice() before calling this function,
- * as decoders are activated at device open time.
+ * call Mix_OpenAudio() before calling this function, as decoders are
+ * activated at device open time.
  *
  * Decoder names are arbitrary but also obvious, so you have to know what
  * you're looking for ahead of time, but usually it's the file extension in
@@ -769,8 +768,8 @@ extern DECLSPEC SDL_bool SDLCALL Mix_HasChunkDecoder(const char *name);
  *
  * This list can change between builds AND runs of the program, if external
  * libraries that add functionality become available. You must successfully
- * call Mix_OpenAudio() or Mix_OpenAudioDevice() before calling this function,
- * as decoders are activated at device open time.
+ * call Mix_OpenAudio() before calling this function, as decoders are
+ * activated at device open time.
  *
  * Appearing in this list doesn't promise your specific audio file will
  * decode...but it's handy to know if you have, say, a functioning Ogg Vorbis
@@ -797,8 +796,8 @@ extern DECLSPEC int SDLCALL Mix_GetNumMusicDecoders(void);
  *
  * This list can change between builds AND runs of the program, if external
  * libraries that add functionality become available. You must successfully
- * call Mix_OpenAudio() or Mix_OpenAudioDevice() before calling this function,
- * as decoders are activated at device open time.
+ * call Mix_OpenAudio() before calling this function, as decoders are
+ * activated at device open time.
  *
  * \param index index of the music decoder.
  * \returns the music decoder's name.
@@ -814,8 +813,8 @@ extern DECLSPEC const char * SDLCALL Mix_GetMusicDecoder(int index);
  *
  * This result can change between builds AND runs of the program, if external
  * libraries that add functionality become available. You must successfully
- * call Mix_OpenAudio() or Mix_OpenAudioDevice() before calling this function,
- * as decoders are activated at device open time.
+ * call Mix_OpenAudio() before calling this function, as decoders are
+ * activated at device open time.
  *
  * Decoder names are arbitrary but also obvious, so you have to know what
  * you're looking for ahead of time, but usually it's the file extension in
@@ -1229,7 +1228,7 @@ extern DECLSPEC int SDLCALL Mix_RegisterEffect(int chan, Mix_EffectFunc_t f, Mix
  * zero if there's an error, not on success. We apologize for the API design
  * inconsistency here.
  *
- * \param chan the channel to unregister an effect on, or MIX_CHANNEL_POST.
+ * \param channel the channel to unregister an effect on, or MIX_CHANNEL_POST.
  * \param f effect the callback stop calling in future mixing iterations.
  * \returns zero if error (no such channel or effect), nonzero if removed.
  *          Error messages can be retrieved from Mix_GetError().
@@ -1255,7 +1254,8 @@ extern DECLSPEC int SDLCALL Mix_UnregisterEffect(int channel, Mix_EffectFunc_t f
  * zero if there's an error, not on success. We apologize for the API design
  * inconsistency here.
  *
- * \param chan the channel to unregister all effects on, or MIX_CHANNEL_POST.
+ * \param channel the channel to unregister all effects on, or
+ *                MIX_CHANNEL_POST.
  * \returns zero if error (no such channel), nonzero if all effects removed.
  *          Error messages can be retrieved from Mix_GetError().
  *
@@ -1613,8 +1613,8 @@ extern DECLSPEC int SDLCALL Mix_GroupNewer(int tag);
  *
  * \param channel the channel on which to play the new chunk.
  * \param chunk the new chunk to play.
- * \param loop the number of times the chunk should loop, -1 to loop (not
- *             actually) infinitely.
+ * \param loops the number of times the chunk should loop, -1 to loop (not
+ *              actually) infinitely.
  * \returns which channel was used to play the sound, or -1 if sound could not
  *          be played.
  *
@@ -1644,8 +1644,8 @@ extern DECLSPEC int SDLCALL Mix_PlayChannel(int channel, Mix_Chunk *chunk, int l
  *
  * \param channel the channel on which to play the new chunk.
  * \param chunk the new chunk to play.
- * \param loop the number of times the chunk should loop, -1 to loop (not
- *             actually) infinitely.
+ * \param loops the number of times the chunk should loop, -1 to loop (not
+ *              actually) infinitely.
  * \param ticks the maximum number of milliseconds of this chunk to mix for
  *              playback.
  * \returns which channel was used to play the sound, or -1 if sound could not
@@ -1696,8 +1696,8 @@ extern DECLSPEC int SDLCALL Mix_PlayMusic(Mix_Music *music, int loops);
  * Mix_VolumeMusic() on fading music).
  *
  * \param music the new music object to play.
- * \param loop the number of times the chunk should loop, -1 to loop (not
- *             actually) infinitely.
+ * \param loops the number of times the chunk should loop, -1 to loop (not
+ *              actually) infinitely.
  * \param ms the number of milliseconds to spend fading in.
  * \returns zero on success, -1 on error.
  *
@@ -1733,8 +1733,8 @@ extern DECLSPEC int SDLCALL Mix_FadeInMusic(Mix_Music *music, int loops, int ms)
  * To convert from milliseconds, divide by 1000.0.
  *
  * \param music the new music object to play.
- * \param loop the number of times the chunk should loop, -1 to loop (not
- *             actually) infinitely.
+ * \param loops the number of times the chunk should loop, -1 to loop (not
+ *              actually) infinitely.
  * \param ms the number of milliseconds to spend fading in.
  * \param position the start position within the music, in seconds, where
  *                 playback should start.
@@ -1774,8 +1774,8 @@ extern DECLSPEC int SDLCALL Mix_FadeInMusicPos(Mix_Music *music, int loops, int 
  * \param channel the channel on which to play the new chunk, or -1 to find
  *                any available.
  * \param chunk the new chunk to play.
- * \param loop the number of times the chunk should loop, -1 to loop (not
- *             actually) infinitely.
+ * \param loops the number of times the chunk should loop, -1 to loop (not
+ *              actually) infinitely.
  * \param ms the number of milliseconds to spend fading in.
  * \returns which channel was used to play the sound, or -1 if sound could not
  *          be played.
@@ -1816,8 +1816,8 @@ extern DECLSPEC int SDLCALL Mix_FadeInChannel(int channel, Mix_Chunk *chunk, int
  * \param channel the channel on which to play the new chunk, or -1 to find
  *                any available.
  * \param chunk the new chunk to play.
- * \param loop the number of times the chunk should loop, -1 to loop (not
- *             actually) infinitely.
+ * \param loops the number of times the chunk should loop, -1 to loop (not
+ *              actually) infinitely.
  * \param ms the number of milliseconds to spend fading in.
  * \param ticks the maximum number of milliseconds of this chunk to mix for
  *              playback.
@@ -2104,7 +2104,6 @@ extern DECLSPEC int SDLCALL Mix_FadeOutGroup(int tag, int ms);
  * requested; it just schedules the music to fade and notes the time for the
  * mixer to manage later, and returns immediately.
  *
- * \param which the channel to fade out.
  * \param ms number of milliseconds to fade before halting the channel.
  * \returns non-zero if music was scheduled to fade, zero otherwise. If no
  *          music is currently playing, this returns zero.
@@ -2181,6 +2180,31 @@ extern DECLSPEC Mix_Fading SDLCALL Mix_FadingChannel(int which);
 extern DECLSPEC void SDLCALL Mix_Pause(int channel);
 
 /**
+ * Pause playing of a group of channels by arbitrary tag.
+ *
+ * Pausing a channel will prevent further playback of the assigned chunk but
+ * will maintain the chunk's current mixing position. When resumed, this
+ * channel will continue to mix the chunk where it left off.
+ *
+ * A paused channel can be resumed by calling Mix_Resume() or
+ * Mix_ResumeGroup().
+ *
+ * A paused channel with an expiration will not expire while paused (the
+ * expiration countdown will be adjusted once resumed).
+ *
+ * A tag is an arbitrary number that can be assigned to several mixer
+ * channels, to form groups of channels.
+ *
+ * The default tag for a channel is -1.
+ *
+ * \param tag an arbitrary value, assigned to channels, to search for.
+ * \returns zero, whether any channels were halted or not.
+ *
+ * \since This function is available since SDL_mixer 3.0.0.
+ */
+extern DECLSPEC int SDLCALL Mix_PauseGroup(int tag);
+
+/**
  * Resume a particular channel.
  *
  * It is legal to resume an unpaused or invalid channel; it causes no effect
@@ -2197,6 +2221,27 @@ extern DECLSPEC void SDLCALL Mix_Pause(int channel);
  * \since This function is available since SDL_mixer 3.0.0.
  */
 extern DECLSPEC void SDLCALL Mix_Resume(int channel);
+
+/**
+ * Resume playing of a group of channels by arbitrary tag.
+ *
+ * It is legal to resume an unpaused or invalid channel; it causes no effect
+ * and reports no error.
+ *
+ * If the paused channel has an expiration, its expiration countdown resumes
+ * now, as well.
+ *
+ * A tag is an arbitrary number that can be assigned to several mixer
+ * channels, to form groups of channels.
+ *
+ * The default tag for a channel is -1.
+ *
+ * \param tag an arbitrary value, assigned to channels, to search for.
+ * \returns zero, whether any channels were resumed or not.
+ *
+ * \since This function is available since SDL_mixer 3.0.0.
+ */
+extern DECLSPEC int SDLCALL Mix_ResumeGroup(int tag);
 
 /**
  * Query whether a particular channel is paused.
@@ -2650,5 +2695,3 @@ extern DECLSPEC void SDLCALL Mix_CloseAudio(void);
 #include <SDL3/SDL_close_code.h>
 
 #endif /* SDL_MIXER_H_ */
-
-/* vi: set ts=4 sw=4 expandtab: */
