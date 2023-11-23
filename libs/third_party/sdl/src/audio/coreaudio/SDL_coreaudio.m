@@ -185,7 +185,7 @@ static void RefreshPhysicalDevices(void)
 
             CFIndex len = CFStringGetMaximumSizeForEncoding(CFStringGetLength(cfstr), kCFStringEncodingUTF8);
             char *name = (char *)SDL_malloc(len + 1);
-            SDL_bool usable = ((name != NULL) && (CFStringGetCString(cfstr, name, len + 1, kCFStringEncodingUTF8))) ? SDL_TRUE : SDL_FALSE;
+            SDL_bool usable = ((name != NULL) && (CFStringGetCString(cfstr, name, len + 1, kCFStringEncodingUTF8)));
 
             CFRelease(cfstr);
 
@@ -231,7 +231,7 @@ static OSStatus DeviceListChangedNotification(AudioObjectID systemObj, UInt32 nu
 static OSStatus DefaultAudioDeviceChangedNotification(AudioObjectID inObjectID, const AudioObjectPropertyAddress *addr)
 {
     AudioDeviceID devid;
-    Uint32 size = sizeof(devid);
+    UInt32 size = sizeof(devid);
     if (AudioObjectGetPropertyData(inObjectID, addr, 0, NULL, &size, &devid) == noErr) {
         SDL_DefaultAudioDeviceChanged(SDL_FindPhysicalAudioDeviceByHandle((void *)((size_t)devid)));
     }

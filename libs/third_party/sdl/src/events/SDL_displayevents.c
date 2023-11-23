@@ -28,7 +28,7 @@ int SDL_SendDisplayEvent(SDL_VideoDisplay *display, SDL_EventType displayevent, 
 {
     int posted;
 
-    if (display == NULL || display->id == 0) {
+    if (!display || display->id == 0) {
         return 0;
     }
     switch (displayevent) {
@@ -54,8 +54,8 @@ int SDL_SendDisplayEvent(SDL_VideoDisplay *display, SDL_EventType displayevent, 
     }
 
     switch (displayevent) {
-    case SDL_EVENT_DISPLAY_CONNECTED:
-        SDL_OnDisplayConnected(display);
+    case SDL_EVENT_DISPLAY_ADDED:
+        SDL_OnDisplayAdded(display);
         break;
     default:
         break;

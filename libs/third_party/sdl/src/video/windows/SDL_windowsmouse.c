@@ -84,75 +84,104 @@ static SDL_Cursor *WIN_CreateDefaultCursor()
     return cursor;
 }
 
-static SDL_Cursor *WIN_CreateCursor(SDL_Surface *surface, int hot_x, int hot_y)
+static HBITMAP CreateColorBitmap(SDL_Surface *surface)
 {
-    /* msdn says cursor mask has to be padded out to word alignment. Not sure
-        if that means machine word or WORD, but this handles either case. */
-    const size_t pad = (sizeof(size_t) * 8); /* 32 or 64, or whatever. */
-    SDL_Cursor *cursor;
-    HICON hicon;
-    HICON hcursor;
-    HDC hdc;
-    BITMAPV4HEADER bmh;
-    LPVOID pixels;
-    LPVOID maskbits;
-    size_t maskbitslen;
+    HBITMAP bitmap;
+    BITMAPINFO bi;
+    void *pixels;
+
+    SDL_assert(surface->format->format == SDL_PIXELFORMAT_ARGB8888);
+
+    SDL_zero(bi);
+    bi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    bi.bmiHeader.biWidth = surface->w;
+    bi.bmiHeader.biHeight = -surface->h; /* Invert height to make the top-down DIB. */
+    bi.bmiHeader.biPlanes = 1;
+    bi.bmiHeader.biBitCount = 32;
+    bi.bmiHeader.biCompression = BI_RGB;
+
+    bitmap = CreateDIBSection(NULL, &bi, DIB_RGB_COLORS, &pixels, NULL, 0);
+    if (!bitmap || !pixels) {
+        WIN_SetError("CreateDIBSection()");
+        return NULL;
+    }
+
+    SDL_memcpy(pixels, surface->pixels, surface->pitch * surface->h);
+
+    return bitmap;
+}
+
+static HBITMAP CreateMaskBitmap(SDL_Surface *surface)
+{
+    HBITMAP bitmap;
     SDL_bool isstack;
-    ICONINFO ii;
+    void *pixels;
+    int x, y;
+    Uint8 *src, *dst;
+    const int pitch = ((surface->w + 15) & ~15) / 8;
+    static const unsigned char masks[] = { 0x80, 0x40, 0x20, 0x10, 0x8, 0x4, 0x2, 0x1 };
 
-    SDL_zero(bmh);
-    bmh.bV4Size = sizeof(bmh);
-    bmh.bV4Width = surface->w;
-    bmh.bV4Height = -surface->h; /* Invert the image */
-    bmh.bV4Planes = 1;
-    bmh.bV4BitCount = 32;
-    bmh.bV4V4Compression = BI_BITFIELDS;
-    bmh.bV4AlphaMask = 0xFF000000;
-    bmh.bV4RedMask = 0x00FF0000;
-    bmh.bV4GreenMask = 0x0000FF00;
-    bmh.bV4BlueMask = 0x000000FF;
+    SDL_assert(surface->format->format == SDL_PIXELFORMAT_ARGB8888);
 
-    maskbitslen = ((surface->w + (pad - (surface->w % pad))) / 8) * surface->h;
-    maskbits = SDL_small_alloc(Uint8, maskbitslen, &isstack);
-    if (maskbits == NULL) {
+    pixels = SDL_small_alloc(Uint8, pitch * surface->h, &isstack);
+    if (!pixels) {
         SDL_OutOfMemory();
         return NULL;
     }
 
-    /* AND the cursor against full bits: no change. We already have alpha. */
-    SDL_memset(maskbits, 0xFF, maskbitslen);
+    /* Make the entire mask completely transparent. */
+    SDL_memset(pixels, 0xff, pitch * surface->h);
 
-    hdc = GetDC(NULL);
+    SDL_LockSurface(surface);
+
+    src = surface->pixels;
+    dst = pixels;
+    for (y = 0; y < surface->h; y++, src += surface->pitch, dst += pitch) {
+        for (x = 0; x < surface->w; x++) {
+            Uint8 alpha = src[x * 4 + 3];
+            if (alpha != 0) {
+                /* Reset bit of an opaque pixel. */
+                dst[x >> 3] &= ~masks[x & 7];
+            }
+        }
+    }
+
+    SDL_UnlockSurface(surface);
+
+    bitmap = CreateBitmap(surface->w, surface->h, 1, 1, pixels);
+    SDL_small_free(pixels, isstack);
+    if (!bitmap) {
+        WIN_SetError("CreateBitmap()");
+        return NULL;
+    }
+
+    return bitmap;
+}
+
+static SDL_Cursor *WIN_CreateCursor(SDL_Surface *surface, int hot_x, int hot_y)
+{
+    HCURSOR hcursor;
+    SDL_Cursor *cursor;
+    ICONINFO ii;
+
     SDL_zero(ii);
     ii.fIcon = FALSE;
     ii.xHotspot = (DWORD)hot_x;
     ii.yHotspot = (DWORD)hot_y;
-    ii.hbmColor = CreateDIBSection(hdc, (BITMAPINFO *)&bmh, DIB_RGB_COLORS, &pixels, NULL, 0);
-    ii.hbmMask = CreateBitmap(surface->w, surface->h, 1, 1, maskbits);
-    ReleaseDC(NULL, hdc);
-    SDL_small_free(maskbits, isstack);
+    ii.hbmColor = CreateColorBitmap(surface);
+    ii.hbmMask = CreateMaskBitmap(surface);
 
-    SDL_assert(surface->format->format == SDL_PIXELFORMAT_ARGB8888);
-    SDL_assert(surface->pitch == surface->w * 4);
-    SDL_memcpy(pixels, surface->pixels, (size_t)surface->h * surface->pitch);
+    if (!ii.hbmColor || !ii.hbmMask) {
+        return NULL;
+    }
 
-    hicon = CreateIconIndirect(&ii);
+    hcursor = CreateIconIndirect(&ii);
 
     DeleteObject(ii.hbmColor);
     DeleteObject(ii.hbmMask);
 
-    if (!hicon) {
-        WIN_SetError("CreateIconIndirect()");
-        return NULL;
-    }
-
-    /* The cursor returned by CreateIconIndirect does not respect system cursor size
-        preference, use CopyImage to duplicate the cursor with desired sizes */
-    hcursor = CopyImage(hicon, IMAGE_CURSOR, surface->w, surface->h, 0);
-    DestroyIcon(hicon);
-
     if (!hcursor) {
-        WIN_SetError("CopyImage()");
+        WIN_SetError("CreateIconIndirect()");
         return NULL;
     }
 
@@ -160,7 +189,7 @@ static SDL_Cursor *WIN_CreateCursor(SDL_Surface *surface, int hot_x, int hot_y)
     if (cursor) {
         cursor->driverdata = hcursor;
     } else {
-        DestroyIcon(hcursor);
+        DestroyCursor(hcursor);
         SDL_OutOfMemory();
     }
 
@@ -223,15 +252,39 @@ static SDL_Cursor *WIN_CreateSystemCursor(SDL_SystemCursor id)
     case SDL_SYSTEM_CURSOR_HAND:
         name = IDC_HAND;
         break;
+    case SDL_SYSTEM_CURSOR_WINDOW_TOPLEFT:
+        name = IDC_SIZENWSE;
+        break;
+    case SDL_SYSTEM_CURSOR_WINDOW_TOP:
+        name = IDC_SIZENS;
+        break;
+    case SDL_SYSTEM_CURSOR_WINDOW_TOPRIGHT:
+        name = IDC_SIZENESW;
+        break;
+    case SDL_SYSTEM_CURSOR_WINDOW_RIGHT:
+        name = IDC_SIZEWE;
+        break;
+    case SDL_SYSTEM_CURSOR_WINDOW_BOTTOMRIGHT:
+        name = IDC_SIZENWSE;
+        break;
+    case SDL_SYSTEM_CURSOR_WINDOW_BOTTOM:
+        name = IDC_SIZENS;
+        break;
+    case SDL_SYSTEM_CURSOR_WINDOW_BOTTOMLEFT:
+        name = IDC_SIZENESW;
+        break;
+    case SDL_SYSTEM_CURSOR_WINDOW_LEFT:
+        name = IDC_SIZEWE;
+        break;
     }
 
     cursor = SDL_calloc(1, sizeof(*cursor));
     if (cursor) {
-        HICON hicon;
+        HCURSOR hcursor;
 
-        hicon = LoadCursor(NULL, name);
+        hcursor = LoadCursor(NULL, name);
 
-        cursor->driverdata = hicon;
+        cursor->driverdata = hcursor;
     } else {
         SDL_OutOfMemory();
     }
@@ -241,15 +294,15 @@ static SDL_Cursor *WIN_CreateSystemCursor(SDL_SystemCursor id)
 
 static void WIN_FreeCursor(SDL_Cursor *cursor)
 {
-    HICON hicon = (HICON)cursor->driverdata;
+    HCURSOR hcursor = (HCURSOR)cursor->driverdata;
 
-    DestroyIcon(hicon);
+    DestroyCursor(hcursor);
     SDL_free(cursor);
 }
 
 static int WIN_ShowCursor(SDL_Cursor *cursor)
 {
-    if (cursor == NULL) {
+    if (!cursor) {
         cursor = SDL_blank_cursor;
     }
     if (cursor) {

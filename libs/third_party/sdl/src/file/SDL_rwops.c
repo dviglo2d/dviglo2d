@@ -389,7 +389,7 @@ static SDL_RWops *SDL_RWFromFP(void *fp, SDL_bool autoclose)
     SDL_RWops *rwops = NULL;
 
     rwops = SDL_CreateRW();
-    if (rwops != NULL) {
+    if (rwops) {
         rwops->seek = stdio_seek;
         rwops->read = stdio_read;
         rwops->write = stdio_write;
@@ -462,7 +462,7 @@ static size_t SDLCALL mem_write(SDL_RWops *context, const void *ptr, size_t size
 SDL_RWops *SDL_RWFromFile(const char *file, const char *mode)
 {
     SDL_RWops *rwops = NULL;
-    if (file == NULL || !*file || mode == NULL || !*mode) {
+    if (!file || !*file || !mode || !*mode) {
         SDL_SetError("SDL_RWFromFile(): No file or no mode specified");
         return NULL;
     }
@@ -495,7 +495,7 @@ SDL_RWops *SDL_RWFromFile(const char *file, const char *mode)
 
     /* Try to open the file from the asset system */
     rwops = SDL_CreateRW();
-    if (rwops == NULL) {
+    if (!rwops) {
         return NULL; /* SDL_SetError already setup by SDL_CreateRW() */
     }
 
@@ -512,7 +512,7 @@ SDL_RWops *SDL_RWFromFile(const char *file, const char *mode)
 
 #elif defined(__WIN32__) || defined(__GDK__) || defined(__WINRT__)
     rwops = SDL_CreateRW();
-    if (rwops == NULL) {
+    if (!rwops) {
         return NULL; /* SDL_SetError already setup by SDL_CreateRW() */
     }
 
@@ -538,7 +538,7 @@ SDL_RWops *SDL_RWFromFile(const char *file, const char *mode)
 #else
         FILE *fp = fopen(file, mode);
 #endif
-        if (fp == NULL) {
+        if (!fp) {
             SDL_SetError("Couldn't open %s", file);
         } else {
             rwops = SDL_RWFromFP(fp, SDL_TRUE);
@@ -555,7 +555,7 @@ SDL_RWops *SDL_RWFromMem(void *mem, size_t size)
 {
     SDL_RWops *rwops = NULL;
 
-    if (mem == NULL) {
+    if (!mem) {
         SDL_InvalidParamError("mem");
         return NULL;
     }
@@ -565,7 +565,7 @@ SDL_RWops *SDL_RWFromMem(void *mem, size_t size)
     }
 
     rwops = SDL_CreateRW();
-    if (rwops != NULL) {
+    if (rwops) {
         rwops->size = mem_size;
         rwops->seek = mem_seek;
         rwops->read = mem_read;
@@ -582,7 +582,7 @@ SDL_RWops *SDL_RWFromConstMem(const void *mem, size_t size)
 {
     SDL_RWops *rwops = NULL;
 
-    if (mem == NULL) {
+    if (!mem) {
         SDL_InvalidParamError("mem");
         return NULL;
     }
@@ -592,7 +592,7 @@ SDL_RWops *SDL_RWFromConstMem(const void *mem, size_t size)
     }
 
     rwops = SDL_CreateRW();
-    if (rwops != NULL) {
+    if (rwops) {
         rwops->size = mem_size;
         rwops->seek = mem_seek;
         rwops->read = mem_read;
@@ -609,7 +609,7 @@ SDL_RWops *SDL_CreateRW(void)
     SDL_RWops *context;
 
     context = (SDL_RWops *)SDL_calloc(1, sizeof(*context));
-    if (context == NULL) {
+    if (!context) {
         SDL_OutOfMemory();
     } else {
         context->type = SDL_RWOPS_UNKNOWN;
@@ -632,7 +632,7 @@ void *SDL_LoadFile_RW(SDL_RWops *src, size_t *datasize, SDL_bool freesrc)
     char *data = NULL, *newdata;
     SDL_bool loading_chunks = SDL_FALSE;
 
-    if (src == NULL) {
+    if (!src) {
         SDL_InvalidParamError("src");
         return NULL;
     }
@@ -662,7 +662,7 @@ void *SDL_LoadFile_RW(SDL_RWops *src, size_t *datasize, SDL_bool freesrc)
                 } else {
                     newdata = SDL_realloc(data, (size_t)(size + 1));
                 }
-                if (newdata == NULL) {
+                if (!newdata) {
                     SDL_free(data);
                     data = NULL;
                     SDL_OutOfMemory();
@@ -805,6 +805,41 @@ size_t SDL_RWwrite(SDL_RWops *context, const void *ptr, size_t size)
     if (bytes == 0 && context->status == SDL_RWOPS_STATUS_READY) {
         context->status = SDL_RWOPS_STATUS_ERROR;
     }
+    return bytes;
+}
+
+size_t SDL_RWprintf(SDL_RWops *context, SDL_PRINTF_FORMAT_STRING const char *fmt, ...)
+{
+    va_list ap;
+    int size;
+    char *string;
+    size_t bytes;
+
+    va_start(ap, fmt);
+    size = SDL_vasprintf(&string, fmt, ap);
+    va_end(ap);
+    if (size < 0) {
+        return 0;
+    }
+
+    bytes = SDL_RWwrite(context, string, (size_t)size);
+    SDL_free(string);
+    return bytes;
+}
+
+size_t SDL_RWvprintf(SDL_RWops *context, const char *fmt, va_list ap)
+{
+    int size;
+    char *string;
+    size_t bytes;
+
+    size = SDL_vasprintf(&string, fmt, ap);
+    if (size < 0) {
+        return 0;
+    }
+
+    bytes = SDL_RWwrite(context, string, (size_t)size);
+    SDL_free(string);
     return bytes;
 }
 
@@ -952,13 +987,13 @@ SDL_bool SDL_ReadS64BE(SDL_RWops *src, Sint64 *value)
 
 SDL_bool SDL_WriteU8(SDL_RWops *dst, Uint8 value)
 {
-    return (SDL_RWwrite(dst, &value, sizeof(value)) == sizeof(value)) ? SDL_TRUE : SDL_FALSE;
+    return (SDL_RWwrite(dst, &value, sizeof(value)) == sizeof(value));
 }
 
 SDL_bool SDL_WriteU16LE(SDL_RWops *dst, Uint16 value)
 {
     const Uint16 swapped = SDL_SwapLE16(value);
-    return (SDL_RWwrite(dst, &swapped, sizeof(swapped)) == sizeof(swapped)) ? SDL_TRUE : SDL_FALSE;
+    return (SDL_RWwrite(dst, &swapped, sizeof(swapped)) == sizeof(swapped));
 }
 
 SDL_bool SDL_WriteS16LE(SDL_RWops *dst, Sint16 value)
@@ -969,7 +1004,7 @@ SDL_bool SDL_WriteS16LE(SDL_RWops *dst, Sint16 value)
 SDL_bool SDL_WriteU16BE(SDL_RWops *dst, Uint16 value)
 {
     const Uint16 swapped = SDL_SwapBE16(value);
-    return (SDL_RWwrite(dst, &swapped, sizeof(swapped)) == sizeof(swapped)) ? SDL_TRUE : SDL_FALSE;
+    return (SDL_RWwrite(dst, &swapped, sizeof(swapped)) == sizeof(swapped));
 }
 
 SDL_bool SDL_WriteS16BE(SDL_RWops *dst, Sint16 value)
@@ -980,7 +1015,7 @@ SDL_bool SDL_WriteS16BE(SDL_RWops *dst, Sint16 value)
 SDL_bool SDL_WriteU32LE(SDL_RWops *dst, Uint32 value)
 {
     const Uint32 swapped = SDL_SwapLE32(value);
-    return (SDL_RWwrite(dst, &swapped, sizeof(swapped)) == sizeof(swapped)) ? SDL_TRUE : SDL_FALSE;
+    return (SDL_RWwrite(dst, &swapped, sizeof(swapped)) == sizeof(swapped));
 }
 
 SDL_bool SDL_WriteS32LE(SDL_RWops *dst, Sint32 value)
@@ -991,7 +1026,7 @@ SDL_bool SDL_WriteS32LE(SDL_RWops *dst, Sint32 value)
 SDL_bool SDL_WriteU32BE(SDL_RWops *dst, Uint32 value)
 {
     const Uint32 swapped = SDL_SwapBE32(value);
-    return (SDL_RWwrite(dst, &swapped, sizeof(swapped)) == sizeof(swapped)) ? SDL_TRUE : SDL_FALSE;
+    return (SDL_RWwrite(dst, &swapped, sizeof(swapped)) == sizeof(swapped));
 }
 
 SDL_bool SDL_WriteS32BE(SDL_RWops *dst, Sint32 value)
@@ -1002,7 +1037,7 @@ SDL_bool SDL_WriteS32BE(SDL_RWops *dst, Sint32 value)
 SDL_bool SDL_WriteU64LE(SDL_RWops *dst, Uint64 value)
 {
     const Uint64 swapped = SDL_SwapLE64(value);
-    return (SDL_RWwrite(dst, &swapped, sizeof(swapped)) == sizeof(swapped)) ? SDL_TRUE : SDL_FALSE;
+    return (SDL_RWwrite(dst, &swapped, sizeof(swapped)) == sizeof(swapped));
 }
 
 SDL_bool SDL_WriteS64LE(SDL_RWops *dst, Sint64 value)
@@ -1013,7 +1048,7 @@ SDL_bool SDL_WriteS64LE(SDL_RWops *dst, Sint64 value)
 SDL_bool SDL_WriteU64BE(SDL_RWops *dst, Uint64 value)
 {
     const Uint64 swapped = SDL_SwapBE64(value);
-    return (SDL_RWwrite(dst, &swapped, sizeof(swapped)) == sizeof(swapped)) ? SDL_TRUE : SDL_FALSE;
+    return (SDL_RWwrite(dst, &swapped, sizeof(swapped)) == sizeof(swapped));
 }
 
 SDL_bool SDL_WriteS64BE(SDL_RWops *dst, Sint64 value)

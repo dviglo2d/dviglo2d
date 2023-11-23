@@ -18,20 +18,15 @@
      misrepresented as being the original software.
   3. This notice may not be removed or altered from any source distribution.
 */
-#include "SDL_internal.h"
 
-#ifndef SDL_x11shape_h_
-#define SDL_x11shape_h_
+#ifndef SDL_main_callbacks_h_
+#define SDL_main_callbacks_h_
 
-#include "../SDL_sysvideo.h"
+SDL_bool SDL_HasMainCallbacks();
+int SDL_InitMainCallbacks(int argc, char *argv[], SDL_AppInit_func appinit, SDL_AppIterate_func _appiter, SDL_AppEvent_func _appevent, SDL_AppQuit_func _appquit);
+int SDL_IterateMainCallbacks(SDL_bool pump_events);
+void SDL_QuitMainCallbacks(void);
 
-typedef struct
-{
-    void *bitmap;
-    Uint32 bitmapsize;
-} SDL_ShapeData;
+#endif // SDL_main_callbacks_h_
 
-extern SDL_WindowShaper *X11_CreateShaper(SDL_Window *window);
-extern int X11_SetWindowShape(SDL_WindowShaper *shaper, SDL_Surface *shape, SDL_WindowShapeMode *shape_mode);
 
-#endif /* SDL_x11shape_h_ */

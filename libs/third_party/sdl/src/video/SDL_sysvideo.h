@@ -27,36 +27,12 @@
 
 /* The SDL video driver */
 
-typedef struct SDL_WindowShaper SDL_WindowShaper;
-typedef struct SDL_ShapeDriver SDL_ShapeDriver;
 typedef struct SDL_VideoDisplay SDL_VideoDisplay;
 typedef struct SDL_VideoDevice SDL_VideoDevice;
 typedef struct SDL_VideoData SDL_VideoData;
 typedef struct SDL_DisplayData SDL_DisplayData;
 typedef struct SDL_DisplayModeData SDL_DisplayModeData;
 typedef struct SDL_WindowData SDL_WindowData;
-
-/* Define the SDL window-shaper structure */
-struct SDL_WindowShaper
-{
-    /* The window associated with the shaper */
-    SDL_Window *window;
-
-    /* The parameters for shape calculation. */
-    SDL_WindowShapeMode mode;
-
-    /* Has this window been assigned a shape? */
-    SDL_bool hasshape;
-
-    void *driverdata;
-};
-
-/* Define the SDL shape driver structure */
-struct SDL_ShapeDriver
-{
-    SDL_WindowShaper *(*CreateShaper)(SDL_Window *window);
-    int (*SetWindowShape)(SDL_WindowShaper *shaper, SDL_Surface *shape, SDL_WindowShapeMode *shape_mode);
-};
 
 /* Define the SDL window structure, corresponding to toplevel windows */
 struct SDL_Window
@@ -98,8 +74,6 @@ struct SDL_Window
     SDL_bool is_dropping; /* drag/drop in progress, expecting SDL_SendDropComplete(). */
 
     SDL_Rect mouse_rect;
-
-    SDL_WindowShaper *shaper;
 
     SDL_HitTest hit_test;
     void *hit_test_data;
@@ -146,11 +120,10 @@ struct SDL_VideoDisplay
 
     SDL_VideoDevice *device;
 
+    SDL_PropertiesID props;
+
     SDL_DisplayData *driverdata;
 };
-
-/* Forward declaration */
-struct SDL_SysWMinfo;
 
 /* Video device flags */
 typedef enum
@@ -223,8 +196,7 @@ struct SDL_VideoDevice
     /*
      * Window functions
      */
-    int (*CreateSDLWindow)(SDL_VideoDevice *_this, SDL_Window *window);
-    int (*CreateSDLWindowFrom)(SDL_VideoDevice *_this, SDL_Window *window, const void *data);
+    int (*CreateSDLWindow)(SDL_VideoDevice *_this, SDL_Window *window, SDL_PropertiesID create_props);
     void (*SetWindowTitle)(SDL_VideoDevice *_this, SDL_Window *window);
     int (*SetWindowIcon)(SDL_VideoDevice *_this, SDL_Window *window, SDL_Surface *icon);
     int (*SetWindowPosition)(SDL_VideoDevice *_this, SDL_Window *window);
@@ -261,15 +233,6 @@ struct SDL_VideoDevice
 
     /* * * */
     /*
-     * Shaped-window functions
-     */
-    SDL_ShapeDriver shape_driver;
-
-    /* Get some platform dependent window information */
-    int (*GetWindowWMInfo)(SDL_VideoDevice *_this, SDL_Window *window, struct SDL_SysWMinfo *info);
-
-    /* * * */
-    /*
      * OpenGL support
      */
     int (*GL_LoadLibrary)(SDL_VideoDevice *_this, const char *path);
@@ -290,8 +253,8 @@ struct SDL_VideoDevice
      */
     int (*Vulkan_LoadLibrary)(SDL_VideoDevice *_this, const char *path);
     void (*Vulkan_UnloadLibrary)(SDL_VideoDevice *_this);
-    SDL_bool (*Vulkan_GetInstanceExtensions)(SDL_VideoDevice *_this, unsigned *count, const char **names);
-    SDL_bool (*Vulkan_CreateSurface)(SDL_VideoDevice *_this, SDL_Window *window, VkInstance instance, VkSurfaceKHR *surface);
+    char const* const* (*Vulkan_GetInstanceExtensions)(SDL_VideoDevice *_this, Uint32 *count);
+    SDL_bool (*Vulkan_CreateSurface)(SDL_VideoDevice *_this, SDL_Window *window, VkInstance instance, const struct VkAllocationCallbacks *allocator, VkSurfaceKHR *surface);
 
     /* * * */
     /*
@@ -364,7 +327,6 @@ struct SDL_VideoDevice
     SDL_Window *windows;
     SDL_Window *grabbed_window;
     Uint8 window_magic;
-    SDL_WindowID next_object_id;
     Uint32 clipboard_sequence;
     SDL_ClipboardDataCallback clipboard_callback;
     SDL_ClipboardCleanupCallback clipboard_cleanup;
@@ -521,7 +483,7 @@ extern SDL_bool SDL_HasWindows(void);
 extern void SDL_RelativeToGlobalForWindow(SDL_Window *window, int rel_x, int rel_y, int *abs_x, int *abs_y);
 extern void SDL_GlobalToRelativeForWindow(SDL_Window *window, int abs_x, int abs_y, int *rel_x, int *rel_y);
 
-extern void SDL_OnDisplayConnected(SDL_VideoDisplay *display);
+extern void SDL_OnDisplayAdded(SDL_VideoDisplay *display);
 extern void SDL_OnWindowShown(SDL_Window *window);
 extern void SDL_OnWindowHidden(SDL_Window *window);
 extern void SDL_OnWindowMoved(SDL_Window *window);

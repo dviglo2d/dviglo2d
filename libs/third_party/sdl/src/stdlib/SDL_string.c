@@ -1199,12 +1199,45 @@ int SDL_vsscanf(const char *text, const char *fmt, va_list ap)
     return vsscanf(text, fmt, ap);
 }
 #else
+static SDL_bool CharacterMatchesSet(char c, const char *set, size_t set_len)
+{
+    SDL_bool invert = SDL_FALSE;
+    SDL_bool result = SDL_FALSE;
+
+    if (*set == '^') {
+        invert = SDL_TRUE;
+        ++set;
+        --set_len;
+    }
+    while (set_len > 0 && !result) {
+        if (set_len >= 3 && set[1] == '-') {
+            char low_char = SDL_min(set[0], set[2]);
+            char high_char = SDL_max(set[0], set[2]);
+            if (c >= low_char && c <= high_char) {
+                result = SDL_TRUE;
+            }
+            set += 3;
+            set_len -= 3;
+        } else {
+            if (c == *set) {
+                result = SDL_TRUE;
+            }
+            ++set;
+            --set_len;
+        }
+    }
+    if (invert) {
+        result = !result;
+    }
+    return result;
+}
+
 /* NOLINTNEXTLINE(readability-non-const-parameter) */
 int SDL_vsscanf(const char *text, const char *fmt, va_list ap)
 {
     int retval = 0;
 
-    if (text == NULL || !*text) {
+    if (!text || !*text) {
         return -1;
     }
 
@@ -1472,6 +1505,44 @@ int SDL_vsscanf(const char *text, const char *fmt, va_list ap)
                     }
                     done = SDL_TRUE;
                     break;
+                case '[':
+                {
+                    const char *set = fmt + 1;
+                    while (*fmt && *fmt != ']') {
+                        ++fmt;
+                    }
+                    if (*fmt) {
+                        size_t set_len = (fmt - set);
+                        if (suppress) {
+                            while (CharacterMatchesSet(*text, set, set_len)) {
+                                ++text;
+                                if (count) {
+                                    if (--count == 0) {
+                                        break;
+                                    }
+                                }
+                            }
+                        } else {
+                            SDL_bool had_match = SDL_FALSE;
+                            char *valuep = va_arg(ap, char *);
+                            while (CharacterMatchesSet(*text, set, set_len)) {
+                                had_match = SDL_TRUE;
+                                *valuep++ = *text++;
+                                if (count) {
+                                    if (--count == 0) {
+                                        break;
+                                    }
+                                }
+                            }
+                            *valuep = '\0';
+                            if (had_match) {
+                                ++retval;
+                            }
+                        }
+                    }
+                }
+                    done = SDL_TRUE;
+                    break;
                 default:
                     done = SDL_TRUE;
                     break;
@@ -1570,7 +1641,7 @@ static size_t SDL_PrintString(char *text, size_t maxlen, SDL_FormatInfo *info, c
     size_t length = 0;
     size_t slen, sz;
 
-    if (string == NULL) {
+    if (!string) {
         string = "(null)";
     }
 
@@ -1630,7 +1701,7 @@ static void SDL_IntPrecisionAdjust(char *num, size_t maxlen, SDL_FormatInfo *inf
 { /* left-pad num with zeroes. */
     size_t sz, pad, have_sign;
 
-    if (info == NULL) {
+    if (!info) {
         return;
     }
 
@@ -2118,7 +2189,7 @@ int SDL_vasprintf(char **strp, const char *fmt, va_list ap)
     *strp = NULL;
 
     p = (char *)SDL_malloc(size);
-    if (p == NULL) {
+    if (!p) {
         return -1;
     }
 
@@ -2130,6 +2201,7 @@ int SDL_vasprintf(char **strp, const char *fmt, va_list ap)
 
         /* Check error code */
         if (retval < 0) {
+            SDL_free(p);
             return retval;
         }
 
@@ -2143,7 +2215,7 @@ int SDL_vasprintf(char **strp, const char *fmt, va_list ap)
         size = retval + 1; /* Precisely what is needed */
 
         np = (char *)SDL_realloc(p, size);
-        if (np == NULL) {
+        if (!np) {
             SDL_free(p);
             return -1;
         } else {

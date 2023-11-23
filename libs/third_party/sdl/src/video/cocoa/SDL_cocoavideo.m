@@ -27,7 +27,6 @@
 #endif
 
 #include "SDL_cocoavideo.h"
-#include "SDL_cocoashape.h"
 #include "SDL_cocoavulkan.h"
 #include "SDL_cocoametalview.h"
 #include "SDL_cocoaopengles.h"
@@ -90,7 +89,6 @@ static SDL_VideoDevice *Cocoa_CreateDevice(void)
         device->SuspendScreenSaver = Cocoa_SuspendScreenSaver;
 
         device->CreateSDLWindow = Cocoa_CreateWindow;
-        device->CreateSDLWindowFrom = Cocoa_CreateWindowFrom;
         device->SetWindowTitle = Cocoa_SetWindowTitle;
         device->SetWindowIcon = Cocoa_SetWindowIcon;
         device->SetWindowPosition = Cocoa_SetWindowPosition;
@@ -115,14 +113,10 @@ static SDL_VideoDevice *Cocoa_CreateDevice(void)
         device->SetWindowMouseGrab = Cocoa_SetWindowMouseGrab;
         device->SetWindowKeyboardGrab = Cocoa_SetWindowKeyboardGrab;
         device->DestroyWindow = Cocoa_DestroyWindow;
-        device->GetWindowWMInfo = Cocoa_GetWindowWMInfo;
         device->SetWindowHitTest = Cocoa_SetWindowHitTest;
         device->AcceptDragAndDrop = Cocoa_AcceptDragAndDrop;
         device->FlashWindow = Cocoa_FlashWindow;
         device->SetWindowFocusable = Cocoa_SetWindowFocusable;
-
-        device->shape_driver.CreateShaper = Cocoa_CreateShaper;
-        device->shape_driver.SetWindowShape = Cocoa_SetWindowShape;
 
 #ifdef SDL_VIDEO_OPENGL_CGL
         device->GL_LoadLibrary = Cocoa_GL_LoadLibrary;

@@ -20,19 +20,28 @@
 */
 
 #include "SDL_internal.h"
+#include "../SDL_main_callbacks.h"
 
-#ifndef SDL_windowsshape_h_
-#define SDL_windowsshape_h_
+#include <emscripten.h>
 
-#include "../SDL_sysvideo.h"
-#include "../SDL_shape_internals.h"
-
-typedef struct
+static void EmscriptenInternalMainloop(void)
 {
-    SDL_ShapeTree *mask_tree;
-} SDL_ShapeData;
+    const int rc = SDL_IterateMainCallbacks(SDL_TRUE);
+    if (rc != 0) {
+        SDL_QuitMainCallbacks();
+        emscripten_cancel_main_loop();  // kill" the mainloop, so it stops calling back into it.
+        exit((rc < 0) ? 1 : 0);  // hopefully this takes down everything else, too.
+    }
+}
 
-extern SDL_WindowShaper *Win32_CreateShaper(SDL_Window *window);
-extern int Win32_SetWindowShape(SDL_WindowShaper *shaper, SDL_Surface *shape, SDL_WindowShapeMode *shape_mode);
+int SDL_EnterAppMainCallbacks(int argc, char* argv[], SDL_AppInit_func appinit, SDL_AppIterate_func appiter, SDL_AppEvent_func appevent, SDL_AppQuit_func appquit)
+{
+    const int rc = SDL_InitMainCallbacks(argc, argv, appinit, appiter, appevent, appquit);
+    if (rc == 0) {
+        emscripten_set_main_loop(EmscriptenInternalMainloop, 0, 0);  // run at refresh rate, don't throw an exception since we do an orderly return.
+    } else {
+        SDL_QuitMainCallbacks();
+    }
+    return (rc < 0) ? 1 : 0;
+}
 
-#endif /* SDL_windowsshape_h_ */

@@ -18,21 +18,16 @@
      misrepresented as being the original software.
   3. This notice may not be removed or altered from any source distribution.
 */
+#include "../SDL_internal.h"
+#include "../../include/SDL3/SDL_video_capture.h"
 
-#include "SDL_internal.h"
+#ifndef SDL_video_capture_c_h_
+#define SDL_video_capture_c_h_
 
-#ifndef SDL_cocoashape_h_
-#define SDL_cocoashape_h_
+/* Initialize the video_capture subsystem */
+int SDL_VideoCaptureInit(void);
 
-#include "../SDL_shape_internals.h"
+/* Shutdown the video_capture subsystem */
+void SDL_QuitVideoCapture(void);
 
-@interface SDL_ShapeData : NSObject
-@property(nonatomic) NSGraphicsContext *context;
-@property(nonatomic) SDL_bool saved;
-@property(nonatomic) SDL_ShapeTree *shape;
-@end
-
-extern SDL_WindowShaper *Cocoa_CreateShaper(SDL_Window *window);
-extern int Cocoa_SetWindowShape(SDL_WindowShaper *shaper, SDL_Surface *shape, SDL_WindowShapeMode *shape_mode);
-
-#endif /* SDL_cocoashape_h_ */
+#endif /* SDL_video_capture_c_h_ */

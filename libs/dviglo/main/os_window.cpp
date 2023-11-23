@@ -36,13 +36,15 @@ OsWindow::OsWindow()
     SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
     SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
 
-    SDL_WindowFlags flags = SDL_WINDOW_OPENGL;
-
-    window_ = SDL_CreateWindowWithPosition(
-        engine_params::window_title.c_str(),
-        SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, engine_params::window_size.x, engine_params::window_size.y,
-        flags
-    );
+    SDL_PropertiesID props = SDL_CreateProperties();
+    SDL_SetStringProperty(props, "title", engine_params::window_title.c_str());
+    SDL_SetNumberProperty(props, "x", SDL_WINDOWPOS_UNDEFINED);
+    SDL_SetNumberProperty(props, "y", SDL_WINDOWPOS_UNDEFINED);
+    SDL_SetNumberProperty(props, "width", engine_params::window_size.x);
+    SDL_SetNumberProperty(props, "height", engine_params::window_size.y);
+    SDL_SetNumberProperty(props, "flags", SDL_WINDOW_OPENGL);
+    window_ = SDL_CreateWindowWithProperties(props);
+    SDL_DestroyProperties(props);
 
     if (!window_)
     {

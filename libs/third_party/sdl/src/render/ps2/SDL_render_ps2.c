@@ -30,10 +30,16 @@
 #include <dmaKit.h>
 #include <gsToolkit.h>
 
+#ifdef HAVE_GCC_DIAGNOSTIC_PRAGMA
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeclaration-after-statement"
+#endif
+
 #include <gsInline.h>
+
+#ifdef HAVE_GCC_DIAGNOSTIC_PRAGMA
 #pragma GCC diagnostic pop
+#endif
 
 /* turn black GS Screen */
 #define GS_BLACK GS_SETREG_RGBA(0x00, 0x00, 0x00, 0x80)
@@ -100,11 +106,11 @@ static void PS2_WindowEvent(SDL_Renderer *renderer, const SDL_WindowEvent *event
 {
 }
 
-static int PS2_CreateTexture(SDL_Renderer *renderer, SDL_Texture *texture)
+static int PS2_CreateTexture(SDL_Renderer *renderer, SDL_Texture *texture, SDL_PropertiesID create_props)
 {
     GSTEXTURE *ps2_tex = (GSTEXTURE *)SDL_calloc(1, sizeof(GSTEXTURE));
 
-    if (ps2_tex == NULL) {
+    if (!ps2_tex) {
         return SDL_OutOfMemory();
     }
 
@@ -201,7 +207,7 @@ static int PS2_QueueDrawPoints(SDL_Renderer *renderer, SDL_RenderCommand *cmd, c
     gs_rgbaq rgbaq;
     int i;
 
-    if (vertices == NULL) {
+    if (!vertices) {
         return -1;
     }
 
@@ -236,7 +242,7 @@ static int PS2_QueueGeometry(SDL_Renderer *renderer, SDL_RenderCommand *cmd, SDL
         GSPRIMUVPOINT *vertices = (GSPRIMUVPOINT *) SDL_AllocateRenderVertices(renderer, count * sizeof(GSPRIMUVPOINT), 4, &cmd->data.draw.first);
         GSTEXTURE *ps2_tex = (GSTEXTURE *) texture->driverdata;
 
-        if (vertices == NULL) {
+        if (!vertices) {
             return -1;
         }
 
@@ -269,7 +275,7 @@ static int PS2_QueueGeometry(SDL_Renderer *renderer, SDL_RenderCommand *cmd, SDL
     } else {
         GSPRIMPOINT *vertices = (GSPRIMPOINT *)SDL_AllocateRenderVertices(renderer, count * sizeof(GSPRIMPOINT), 4, &cmd->data.draw.first);
 
-        if (vertices == NULL) {
+        if (!vertices) {
             return -1;
         }
 
@@ -530,11 +536,11 @@ static void PS2_DestroyTexture(SDL_Renderer *renderer, SDL_Texture *texture)
     GSTEXTURE *ps2_texture = (GSTEXTURE *)texture->driverdata;
     PS2_RenderData *data = (PS2_RenderData *)renderer->driverdata;
 
-    if (data == NULL) {
+    if (!data) {
         return;
     }
 
-    if (ps2_texture == NULL) {
+    if (!ps2_texture) {
         return;
     }
 
@@ -574,7 +580,7 @@ static int PS2_SetVSync(SDL_Renderer *renderer, const int vsync)
     return 0;
 }
 
-static SDL_Renderer *PS2_CreateRenderer(SDL_Window *window, Uint32 flags)
+static SDL_Renderer *PS2_CreateRenderer(SDL_Window *window, SDL_PropertiesID create_props)
 {
     SDL_Renderer *renderer;
     PS2_RenderData *data;
@@ -583,13 +589,13 @@ static SDL_Renderer *PS2_CreateRenderer(SDL_Window *window, Uint32 flags)
     SDL_bool dynamicVsync;
 
     renderer = (SDL_Renderer *)SDL_calloc(1, sizeof(*renderer));
-    if (renderer == NULL) {
+    if (!renderer) {
         SDL_OutOfMemory();
         return NULL;
     }
 
     data = (PS2_RenderData *)SDL_calloc(1, sizeof(*data));
-    if (data == NULL) {
+    if (!data) {
         PS2_DestroyRenderer(renderer);
         SDL_OutOfMemory();
         return NULL;
@@ -634,7 +640,9 @@ static SDL_Renderer *PS2_CreateRenderer(SDL_Window *window, Uint32 flags)
 
     data->gsGlobal = gsGlobal;
     dynamicVsync = SDL_GetHintBoolean(SDL_HINT_PS2_DYNAMIC_VSYNC, SDL_FALSE);
-    data->vsync = flags & SDL_RENDERER_PRESENTVSYNC ? (dynamicVsync ? 2 : 1) : 0;
+    if (SDL_GetBooleanProperty(create_props, "present_vsync", SDL_FALSE)) {
+        data->vsync = (dynamicVsync ? 2 : 1);
+    }
 
     renderer->WindowEvent = PS2_WindowEvent;
     renderer->CreateTexture = PS2_CreateTexture;
@@ -655,9 +663,13 @@ static SDL_Renderer *PS2_CreateRenderer(SDL_Window *window, Uint32 flags)
     renderer->DestroyRenderer = PS2_DestroyRenderer;
     renderer->SetVSync = PS2_SetVSync;
     renderer->info = PS2_RenderDriver.info;
+    renderer->info.flags = SDL_RENDERER_ACCELERATED;
     renderer->driverdata = data;
     renderer->window = window;
 
+    if (data->vsync) {
+        renderer->info.flags |= SDL_RENDERER_PRESENTVSYNC;
+    }
     return renderer;
 }
 

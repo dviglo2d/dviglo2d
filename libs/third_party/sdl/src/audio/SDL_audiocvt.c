@@ -207,7 +207,7 @@ static SDL_bool SDL_IsSupportedAudioFormat(const SDL_AudioFormat fmt)
 
 static SDL_bool SDL_IsSupportedChannelCount(const int channels)
 {
-    return ((channels >= 1) && (channels <= 8)) ? SDL_TRUE : SDL_FALSE;
+    return ((channels >= 1) && (channels <= 8));
 }
 
 
@@ -278,7 +278,7 @@ void ConvertAudio(int num_frames, const void *src, SDL_AudioFormat src_format, i
         }
     }
 
-    if (scratch == NULL) {
+    if (!scratch) {
         scratch = dst;
     }
 
@@ -408,7 +408,7 @@ SDL_AudioStream *SDL_CreateAudioStream(const SDL_AudioSpec *src_spec, const SDL_
     SDL_SetupAudioResampler();
 
     SDL_AudioStream *retval = (SDL_AudioStream *)SDL_calloc(1, sizeof(SDL_AudioStream));
-    if (retval == NULL) {
+    if (!retval) {
         SDL_OutOfMemory();
         return NULL;
     }
@@ -416,13 +416,13 @@ SDL_AudioStream *SDL_CreateAudioStream(const SDL_AudioSpec *src_spec, const SDL_
     retval->freq_ratio = 1.0f;
     retval->queue = SDL_CreateAudioQueue(4096);
 
-    if (retval->queue == NULL) {
+    if (!retval->queue) {
         SDL_free(retval);
         return NULL;
     }
 
     retval->lock = SDL_CreateMutex();
-    if (retval->lock == NULL) {
+    if (!retval->lock) {
         SDL_free(retval->queue);
         SDL_free(retval);
         return NULL;
@@ -476,12 +476,20 @@ int SDL_SetAudioStreamPutCallback(SDL_AudioStream *stream, SDL_AudioStreamCallba
 
 int SDL_LockAudioStream(SDL_AudioStream *stream)
 {
-    return stream ? SDL_LockMutex(stream->lock) : SDL_InvalidParamError("stream");
+    if (!stream) {
+        return SDL_InvalidParamError("stream");
+    }
+    SDL_LockMutex(stream->lock);
+    return 0;
 }
 
 int SDL_UnlockAudioStream(SDL_AudioStream *stream)
 {
-    return stream ? SDL_UnlockMutex(stream->lock) : SDL_InvalidParamError("stream");
+    if (!stream) {
+        return SDL_InvalidParamError("stream");
+    }
+    SDL_UnlockMutex(stream->lock);
+    return 0;
 }
 
 int SDL_GetAudioStreamFormat(SDL_AudioStream *stream, SDL_AudioSpec *src_spec, SDL_AudioSpec *dst_spec)
@@ -624,9 +632,9 @@ int SDL_PutAudioStreamData(SDL_AudioStream *stream, const void *buf, int len)
     SDL_Log("AUDIOSTREAM: wants to put %d bytes", len);
 #endif
 
-    if (stream == NULL) {
+    if (!stream) {
         return SDL_InvalidParamError("stream");
-    } else if (buf == NULL) {
+    } else if (!buf) {
         return SDL_InvalidParamError("buf");
     } else if (len < 0) {
         return SDL_InvalidParamError("len");
@@ -661,7 +669,7 @@ int SDL_PutAudioStreamData(SDL_AudioStream *stream, const void *buf, int len)
         size_t chunk_size = SDL_GetAudioQueueChunkSize(stream->queue);
         track = SDL_CreateChunkedAudioTrack(&src_spec, buf, len, chunk_size);
 
-        if (track == NULL) {
+        if (!track) {
             return -1;
         }
 
@@ -672,7 +680,7 @@ int SDL_PutAudioStreamData(SDL_AudioStream *stream, const void *buf, int len)
 
     int retval = 0;
 
-    if (track != NULL) {
+    if (track) {
         SDL_AddTrackToAudioQueue(stream->queue, track);
     } else {
         retval = SDL_WriteToAudioQueue(stream->queue, &stream->src_spec, buf, len);
@@ -693,7 +701,7 @@ int SDL_PutAudioStreamData(SDL_AudioStream *stream, const void *buf, int len)
 
 int SDL_FlushAudioStream(SDL_AudioStream *stream)
 {
-    if (stream == NULL) {
+    if (!stream) {
         return SDL_InvalidParamError("stream");
     }
 
@@ -713,7 +721,7 @@ static Uint8 *EnsureAudioStreamWorkBufferSize(SDL_AudioStream *stream, size_t ne
     }
 
     Uint8 *ptr = (Uint8 *) SDL_aligned_alloc(SDL_SIMDGetAlignment(), newlen);
-    if (ptr == NULL) {
+    if (!ptr) {
         SDL_OutOfMemory();
         return NULL;  // previous work buffer is still valid!
     }
@@ -733,7 +741,7 @@ static void UpdateAudioStreamHistoryBuffer(SDL_AudioStream* stream,
     Uint8 *history_buffer = stream->history_buffer;
     int history_bytes = history_buffer_frames * SDL_AUDIO_FRAMESIZE(stream->input_spec);
 
-    if (left_padding != NULL) {
+    if (left_padding) {
         // Fill in the left padding using the history buffer
         SDL_assert(padding_bytes <= history_bytes);
         SDL_memcpy(left_padding, history_buffer + history_bytes - padding_bytes, padding_bytes);
@@ -827,7 +835,7 @@ static Sint64 GetAudioStreamHead(SDL_AudioStream* stream, SDL_AudioSpec* out_spe
 {
     void* iter = SDL_BeginAudioQueueIter(stream->queue);
 
-    if (iter == NULL) {
+    if (!iter) {
         SDL_zerop(out_spec);
         *out_flushed = SDL_FALSE;
         return 0;
@@ -1017,9 +1025,9 @@ int SDL_GetAudioStreamData(SDL_AudioStream *stream, void *voidbuf, int len)
     SDL_Log("AUDIOSTREAM: want to get %d converted bytes", len);
 #endif
 
-    if (stream == NULL) {
+    if (!stream) {
         return SDL_InvalidParamError("stream");
-    } else if (buf == NULL) {
+    } else if (!buf) {
         return SDL_InvalidParamError("buf");
     } else if (len < 0) {
         return SDL_InvalidParamError("len");
@@ -1152,7 +1160,7 @@ int SDL_GetAudioStreamQueued(SDL_AudioStream *stream)
 
 int SDL_ClearAudioStream(SDL_AudioStream *stream)
 {
-    if (stream == NULL) {
+    if (!stream) {
         return SDL_InvalidParamError("stream");
     }
 
@@ -1169,7 +1177,7 @@ int SDL_ClearAudioStream(SDL_AudioStream *stream)
 
 void SDL_DestroyAudioStream(SDL_AudioStream *stream)
 {
-    if (stream == NULL) {
+    if (!stream) {
         return;
     }
 
@@ -1206,13 +1214,13 @@ int SDL_ConvertAudioSamples(const SDL_AudioSpec *src_spec, const Uint8 *src_data
         *dst_len = 0;
     }
 
-    if (src_data == NULL) {
+    if (!src_data) {
         return SDL_InvalidParamError("src_data");
     } else if (src_len < 0) {
         return SDL_InvalidParamError("src_len");
-    } else if (dst_data == NULL) {
+    } else if (!dst_data) {
         return SDL_InvalidParamError("dst_data");
-    } else if (dst_len == NULL) {
+    } else if (!dst_len) {
         return SDL_InvalidParamError("dst_len");
     }
 
@@ -1221,7 +1229,7 @@ int SDL_ConvertAudioSamples(const SDL_AudioSpec *src_spec, const Uint8 *src_data
     int dstlen = 0;
 
     SDL_AudioStream *stream = SDL_CreateAudioStream(src_spec, dst_spec);
-    if (stream != NULL) {
+    if (stream) {
         if ((SDL_PutAudioStreamData(stream, src_data, src_len) == 0) && (SDL_FlushAudioStream(stream) == 0)) {
             dstlen = SDL_GetAudioStreamAvailable(stream);
             if (dstlen >= 0) {

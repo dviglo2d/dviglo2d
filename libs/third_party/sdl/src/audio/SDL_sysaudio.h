@@ -151,6 +151,14 @@ typedef struct SDL_AudioDriverImpl
     SDL_bool OnlyHasDefaultCaptureDevice;   // !!! FIXME: is there ever a time where you'd have a default output and not a default capture (or vice versa)?
 } SDL_AudioDriverImpl;
 
+
+typedef struct SDL_PendingAudioDeviceEvent
+{
+    Uint32 type;
+    SDL_AudioDeviceID devid;
+    struct SDL_PendingAudioDeviceEvent *next;
+} SDL_PendingAudioDeviceEvent;
+
 typedef struct SDL_AudioDriver
 {
     const char *name;  // The name of this audio driver
@@ -161,11 +169,12 @@ typedef struct SDL_AudioDriver
     SDL_AudioStream *existing_streams;  // a list of all existing SDL_AudioStreams.
     SDL_AudioDeviceID default_output_device_id;
     SDL_AudioDeviceID default_capture_device_id;
+    SDL_PendingAudioDeviceEvent pending_events;
+    SDL_PendingAudioDeviceEvent *pending_events_tail;
 
     // !!! FIXME: most (all?) of these don't have to be atomic.
     SDL_AtomicInt output_device_count;
     SDL_AtomicInt capture_device_count;
-    SDL_AtomicInt last_device_instance_id;  // increments on each device add to provide unique instance IDs
     SDL_AtomicInt shutting_down;  // non-zero during SDL_Quit, so we known not to accept any last-minute device hotplugs.
 } SDL_AudioDriver;
 
@@ -248,6 +257,9 @@ struct SDL_AudioDevice
     // A mutex for locking access to this struct
     SDL_Mutex *lock;
 
+    // A condition variable to protect device close, where we can't hold the device lock forever.
+    SDL_Condition *close_cond;
+
     // Reference count of the device; logical devices, device threads, etc, add to this.
     SDL_AtomicInt refcount;
 
@@ -284,7 +296,7 @@ struct SDL_AudioDevice
     // non-zero if we are signaling the audio thread to end.
     SDL_AtomicInt shutdown;
 
-    // non-zero if this was a disconnected default device and we're waiting for its replacement.
+    // non-zero if this was a disconnected device and we're waiting for it to be decommissioned.
     SDL_AtomicInt zombie;
 
     // SDL_TRUE if this is a capture device instead of an output device
