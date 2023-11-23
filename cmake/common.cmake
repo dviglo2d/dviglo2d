@@ -66,17 +66,8 @@ include(CMakeDependentOption)
 
 option(DV_SAMPLES "Примеры" TRUE)
 option(DV_CTEST "Поддержка CTest" FALSE)
-cmake_dependent_option(DV_STATIC_RUNTIME "Статическая линковка MSVC runtime" FALSE "MSVC" FALSE) # Всегда FALSE, если не VS
 cmake_dependent_option(DV_WIN32_CONSOLE "Использовать main(), а не WinMain()" FALSE "WIN32" FALSE) # Не на Windows всегда FALSE
 option(DV_ALL_WARNINGS "Все предупреждения компилятора" FALSE) # Влияет только на таргет dviglo
-
-if(DV_STATIC_RUNTIME)
-    # Статически линкуем MSVC runtime
-    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
-else()
-    # Используем динамическую версию MSVC runtime
-    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
-endif()
 
 if(DV_CTEST)
     enable_testing() # Должно быть в корневом CMakeLists.txt
@@ -155,20 +146,6 @@ function(dv_copy_shared_libs_to_bin_dir exe_target_name exe_target_dir copying_t
     if(NOT TARGET ${copying_target_name})
         # Полные пути к библиотекам, которые будут скопированы в папку с экзешником
         unset(libs)
-
-        # Если движок не линкует MSVC runtime статически, то добавляем библиотеки в список
-        if(MSVC AND NOT DV_STATIC_RUNTIME)
-            # Помимо релизных будут искаться и отладочные версии библиотек
-            set(CMAKE_INSTALL_DEBUG_LIBRARIES TRUE)
-            # Ищем также библиотеки Windows Universal CRT (их очень много)
-            set(CMAKE_INSTALL_UCRT_LIBRARIES TRUE)
-            # Не создаём таргет INSTALL
-            set(CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS_SKIP TRUE)
-            # Заполняем список CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS
-            include(InstallRequiredSystemLibraries)
-            # Добавляем в список
-            list(APPEND libs ${CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS})
-        endif()
 
         # Ищем dll-ки msys64
         if(MINGW)
