@@ -84,7 +84,7 @@ cmake --build build
 chcp 65001
 
 :: Указываем пути к необходимым утилитам
-set "PATH=c:\programs\cmake\bin;c:\program files\git\bin"
+set "PATH=%SystemRoot%\system32;c:\programs\cmake\bin;c:\program files\git\bin"
 
 :: Качаем репозиторий в папку repo
 git clone https://github.com/dviglo2d/dviglo2d repo
@@ -122,7 +122,7 @@ pause
 chcp 65001
 
 :: Указываем пути к необходимым утилитам
-set "PATH=c:\windows\system32;c:\program files\git\bin;c:\programs\cmake\bin;c:\msys64\ucrt64\bin"
+set "PATH=%SystemRoot%\system32;c:\program files\git\bin;c:\programs\cmake\bin;c:\msys64\ucrt64\bin"
 
 :: Качаем репозиторий в папку repo
 git clone https://github.com/dviglo2d/dviglo2d repo

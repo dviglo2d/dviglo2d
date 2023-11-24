@@ -115,6 +115,7 @@ function(dv_create_dir_link from to)
     endif()
 
     if(NOT RESULT EQUAL 0)
+        # Причиной неудачи может быть перезаписанная переменная PATH, в которой нет %SystemRoot%\system32
         message("Не удалось создать ссылку для папки, поэтому копируем папку")
         execute_process(COMMAND ${CMAKE_COMMAND} -E copy_directory  ${from} ${to})
     endif()
