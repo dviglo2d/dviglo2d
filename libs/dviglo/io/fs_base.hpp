@@ -20,6 +20,7 @@ bool create_dir_silent(StrViewUtf8 path);
 /// <https://github.com/libsdl-org/SDL/issues/2587>.
 /// org может быть "".
 /// В конце пути добавляет '/'.
+/// Автоматически создаёт папки.
 /// В случае неудачи возвращает пустую строку
 StrUtf8 get_pref_path(StrViewUtf8 org, StrViewUtf8 app);
 
