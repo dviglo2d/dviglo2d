@@ -22,7 +22,7 @@ using namespace std;
 namespace dviglo
 {
 
-bool dir_exists(StrViewUtf8 path)
+bool dir_exists(const StrUtf8& path)
 {
 #ifndef _WIN32
     // Возвращаем true для корневой папки
@@ -38,14 +38,14 @@ bool dir_exists(StrViewUtf8 path)
 #else
     struct stat st{};
 
-    if (stat(StrUtf8(path).c_str(), &st) || !(st.st_mode & S_IFDIR))
+    if (stat(path.c_str(), &st) || !(st.st_mode & S_IFDIR))
         return false;
 #endif
 
     return true;
 }
 
-bool create_dir_silent(StrViewUtf8 path)
+bool create_dir_silent(const StrUtf8& path)
 {
     // Рекурсивно создаём родительские папки
     StrUtf8 parent_path = get_parent(path);
@@ -61,7 +61,7 @@ bool create_dir_silent(StrViewUtf8 path)
                    || GetLastError() == ERROR_ALREADY_EXISTS;
 #else
     // S_IRWXU == 0700
-    bool success = mkdir(StrUtf8(path).c_str(), S_IRWXU) == 0
+    bool success = mkdir(path.c_str(), S_IRWXU) == 0
                    || errno == EEXIST;
 #endif
 
@@ -91,9 +91,13 @@ StrUtf8 get_pref_path(StrViewUtf8 org, StrViewUtf8 app)
 #endif
 
     if (!org.empty())
-        ret += StrUtf8(org) + "/";
+    {
+        ret += org;
+        ret += '/';
+    }
 
-    ret += StrUtf8(app) + "/";
+    ret += app;
+    ret += '/';
 
     if (!create_dir_silent(ret))
         return StrUtf8();

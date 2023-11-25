@@ -11,10 +11,10 @@
 namespace dviglo
 {
 
-bool dir_exists(StrViewUtf8 path);
+bool dir_exists(const StrUtf8& path);
 
 /// Версия функции, которая не пишет с лог
-bool create_dir_silent(StrViewUtf8 path);
+bool create_dir_silent(const StrUtf8& path);
 
 /// Аналог SDL_GetPrefPath(), который не требует инициализации SDL
 /// <https://github.com/libsdl-org/SDL/issues/2587>.
