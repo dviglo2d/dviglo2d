@@ -1,9 +1,11 @@
 // Copyright (c) the Dviglo project
 // License: MIT
 
+#include "file_base.hpp"
 #include "log.hpp"
 
 #include <cassert>
+#include <format>
 #include <iostream>
 
 using namespace std;
@@ -31,10 +33,22 @@ Log::Log(StrViewUtf8 path)
     instance_ = this;
 
     write_debug("Log constructed");
+
+    stream_ = file_open(string(path), "w");
+
+    write_info(format("Opened log file {}", path));
 }
 
 Log::~Log()
 {
+    write_info("Closed log file");
+    
+    if (stream_)
+    {
+        file_close(stream_);
+        stream_ = nullptr;
+    }
+
     instance_ = nullptr;
 
     write_debug("Log destructed");
@@ -59,7 +73,14 @@ void Log::write(LogLevel message_type, StrViewUtf8 message)
     if (message_type == LogLevel::none)
         return;
 
-    cout << '[' << time_to_str() << "] " << to_string(message_type) << ": " << message << "\n";
+    StrUtf8 str = format("[{}] {}: {}\n", time_to_str(), to_string(message_type), message);
+    cout << str;
+
+    if (stream_)
+    {
+        file_write(str.c_str(), 1, str.size(), stream_);
+        file_flush(stream_);
+    }
 }
 
 } // namespace dviglo

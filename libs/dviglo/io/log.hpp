@@ -24,6 +24,8 @@ private:
     /// Инициализируется в конструкторе
     inline static Log* instance_ = nullptr;
 
+    FILE* stream_ = nullptr;
+
 public:
     static Log* instance() { return instance_; }
 
