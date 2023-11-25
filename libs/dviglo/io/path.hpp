@@ -19,12 +19,12 @@ constexpr StrUtf8 to_internal(StrViewUtf8 path)
 }
 
 /// В Windows заменяет '/' на '\\'
-constexpr StrUtf8 to_native(StrViewUtf8 path)
+constexpr StrUtf8 to_native(const StrUtf8& path)
 {
 #ifdef _WIN32
     return replace_all(path, '/', '\\');
 #else
-    return StrUtf8(path);
+    return path;
 #endif
 }
 
