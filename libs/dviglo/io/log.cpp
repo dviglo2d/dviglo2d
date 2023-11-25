@@ -26,7 +26,7 @@ static StrUtf8 time_to_str()
     return StrUtf8(tmp_buffer);
 }
 
-Log::Log(StrViewUtf8 path)
+Log::Log(const StrUtf8& path)
 {
     assert(!instance_);
 
@@ -34,9 +34,12 @@ Log::Log(StrViewUtf8 path)
 
     write_debug("Log constructed");
 
-    stream_ = file_open(string(path), "w");
+    stream_ = file_open(path.c_str(), "w");
 
-    write_info(format("Opened log file {}", path));
+    if (stream_)
+        write_info(format("Opened log file {}", path));
+    else
+        write_error(format("Failed to open log file {}", path));
 }
 
 Log::~Log()

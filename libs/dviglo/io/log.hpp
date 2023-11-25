@@ -29,7 +29,7 @@ private:
 public:
     static Log* instance() { return instance_; }
 
-    Log(StrViewUtf8 path);
+    Log(const StrUtf8& path);
     ~Log();
 
     void write(LogLevel message_type, StrViewUtf8 message);
