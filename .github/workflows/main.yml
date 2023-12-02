@@ -97,7 +97,7 @@ jobs:
           ARGS+=(-D CMAKE_BUILD_TYPE=${{ matrix.BUILD_TYPE }})
         fi
 
-        ARGS+=(-D DV_CTEST=1)
+        ARGS+=(-D DV_ALL_WARNINGS=1 -D DV_CTEST=1)
 
         cmake "${ARGS[@]}"
 
@@ -233,7 +233,7 @@ jobs:
         cmake engine_repo -B engine_build -G "Unix Makefiles" \
           -D CMAKE_C_COMPILER=${{ matrix.COMPILER.C }} -D CMAKE_CXX_COMPILER=${{ matrix.COMPILER.CXX }} \
           -D CMAKE_BUILD_TYPE=${{ matrix.BUILD_TYPE.VALUE }} \
-          -D DV_CTEST=1 
+          -D DV_ALL_WARNINGS=1 -D DV_CTEST=1 
 
         cmake --build engine_build
 
