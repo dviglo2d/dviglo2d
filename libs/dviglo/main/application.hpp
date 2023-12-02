@@ -44,6 +44,8 @@ protected:
     virtual void on_key(const SDL_KeyboardEvent& event_data);
 
 public:
+    const std::vector<StrUtf8>& args() const { return args_; }
+
     i32 run();
 };
 
