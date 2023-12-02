@@ -17,7 +17,7 @@ endif()
 
 include(cmake/common.cmake)
 
-# Папка для экзешников и динамических библиотек
+# Указываем папку для следующих скомпилированных экзешников
 dv_set_bin_dir(${CMAKE_BINARY_DIR}/result)
 
 add_subdirectory(libs)
