@@ -81,7 +81,7 @@ void Log::write(LogLevel message_type, StrViewUtf8 message)
 
     if (stream_)
     {
-        file_write(str.c_str(), 1, str.size(), stream_);
+        file_write(str.c_str(), 1, (i32)str.size(), stream_);
         file_flush(stream_);
     }
 }
