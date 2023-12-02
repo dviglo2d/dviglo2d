@@ -356,7 +356,7 @@ void SpriteBatch::draw_string(const StrUtf8& text, SpriteFont* font, const vec2&
         step = -1;
     }
 
-    for (; i >= 0 && i < unicode_text.size(); i += step)
+    for (; i >= 0 && i < (i32)unicode_text.size(); i += step)
     {
         const Glyph& glyph = font->glyph(unicode_text[i]);
 
