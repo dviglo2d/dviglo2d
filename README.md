@@ -1,3 +1,5 @@
+[![](https://github.com/dviglo2d/dviglo2d/actions/workflows/main.yml/badge.svg)](https://github.com/dviglo2d/dviglo2d/actions)
+
 # Dviglo2D
 
 Игровой движок на основе SpriteBatch.
