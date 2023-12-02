@@ -126,11 +126,11 @@ jobs:
         7z x mesa.7z -omesa
         rm mesa.7z
 
-        # Перемещаем нужные dll в папку bin
-        #mv mesa/x64/dxil.dll build/bin # Используется при эмуляции через DirectX
-        mv mesa/x64/libgallium_wgl.dll build/bin
-        mv mesa/x64/libglapi.dll build/bin
-        mv mesa/x64/opengl32.dll build/bin
+        # Перемещаем нужные dll в папку result
+        #mv mesa/x64/dxil.dll build/result # Используется при эмуляции через DirectX
+        mv mesa/x64/libgallium_wgl.dll build/result
+        mv mesa/x64/libglapi.dll build/result
+        mv mesa/x64/opengl32.dll build/result
 
     - name: CTest
       shell: bash {0} # Разрешаем перехват ошибок

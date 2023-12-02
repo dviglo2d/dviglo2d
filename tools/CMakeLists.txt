@@ -12,6 +12,6 @@ project("dv tools")
 set(CMAKE_FOLDER инструменты)
 
 # Папка для экзешников и динамических библиотек
-dv_set_bin_dir(${dviglo_BINARY_DIR}/bin/tools)
+dv_set_bin_dir(${CMAKE_BINARY_DIR}/result/tools)
 
 add_subdirectory(tests)

@@ -18,7 +18,7 @@ endif()
 include(cmake/common.cmake)
 
 # Папка для экзешников и динамических библиотек
-dv_set_bin_dir(${dviglo_BINARY_DIR}/bin)
+dv_set_bin_dir(${CMAKE_BINARY_DIR}/result)
 
 add_subdirectory(libs)
 add_subdirectory(samples)

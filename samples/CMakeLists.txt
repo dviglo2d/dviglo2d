@@ -15,16 +15,16 @@ project("dv samples")
 # В IDE таргеты будут отображаться в папке примеры
 set(CMAKE_FOLDER примеры)
 
-# Создаём папку bin
-file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+# Создаём папку result
+file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/result)
 
-# Список папок с ресурсами для копирования в bin
+# Список папок с ресурсами для копирования в result
 set(dir_names engine_data samples_data)
 
-# Копируем папки с ресурсами в bin, если нужно
+# Копируем папки с ресурсами в result, если нужно
 foreach(dir_name ${dir_names})
-    if(NOT EXISTS ${CMAKE_BINARY_DIR}/bin/${dir_name})
-        dv_create_dir_link(${CMAKE_SOURCE_DIR}/bin/${dir_name} ${CMAKE_BINARY_DIR}/bin/${dir_name})
+    if(NOT EXISTS ${CMAKE_BINARY_DIR}/result/${dir_name})
+        dv_create_dir_link(${CMAKE_SOURCE_DIR}/result/${dir_name} ${CMAKE_BINARY_DIR}/result/${dir_name})
     endif()
 endforeach()
 
