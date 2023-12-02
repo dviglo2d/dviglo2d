@@ -147,7 +147,7 @@ StrUtf8 get_base_path()
         if (len <= 0) // Возникла ошибка или функция вернула пустую строку
             return StrUtf8();
 
-        if (len == buffer_size)
+        if ((size_t)len == buffer_size)
         {
             // Буфер слишком маленький. Удваиваем его размер и пробуем ещё раз
             buffer_size *= 2;
