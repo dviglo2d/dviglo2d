@@ -17,9 +17,6 @@ endif()
 
 include(cmake/common.cmake)
 
-# В Linux динамическая версия движка будет искаться в папке с приложением
-set(CMAKE_BUILD_RPATH_USE_ORIGIN ON)
-
 # Папка для экзешников и динамических библиотек
 dv_set_bin_dir(${dviglo_BINARY_DIR}/bin)
 
