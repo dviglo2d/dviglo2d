@@ -45,7 +45,7 @@ if(DV_ALL_WARNINGS)
     endif()
 endif()
 
-# Делаем h-файлы движка доступными приложениям
+# Делаем hpp-файлы движка доступными приложениям
 target_include_directories(${target_name} INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/..)
 
 # VS определяет дефайн _DEBUG в отладочной версии. Определяем этот дефайн также в GCC и MinGW.
