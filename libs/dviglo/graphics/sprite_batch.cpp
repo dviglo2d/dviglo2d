@@ -67,8 +67,8 @@ SpriteBatch::SpriteBatch()
         VertexAttributes::position | VertexAttributes::color, BufferUsage::dynamic_draw, nullptr);
 
     StrUtf8 base_path = get_base_path();
-    t_shader_program_ = DV_SHADER_CACHE->get(base_path + "data/shaders/vert_color.vert", base_path + "data/shaders/vert_color.frag");
-    q_current_shader_program_ = q_default_shader_program_ = DV_SHADER_CACHE->get(base_path + "data/shaders/vert_color_texture.vert", base_path + "data/shaders/vert_color_texture.frag");
+    t_shader_program_ = DV_SHADER_CACHE->get(base_path + "engine_data/shaders/vert_color.vert", base_path + "engine_data/shaders/vert_color.frag");
+    q_current_shader_program_ = q_default_shader_program_ = DV_SHADER_CACHE->get(base_path + "engine_data/shaders/vert_color_texture.vert", base_path + "engine_data/shaders/vert_color_texture.frag");
     quad.shader_program = sprite.shader_program = q_default_shader_program_;
 
     set_shape_color(0xFFFFFFFF);

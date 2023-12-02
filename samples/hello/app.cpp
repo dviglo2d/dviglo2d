@@ -44,9 +44,9 @@ void App::start()
     StrUtf8 base_path = get_base_path();
     cout << "Папка программы: " << base_path << endl;
 
-    texture_ = DV_TEXTURE_CACHE->get(base_path + "data/textures/tile128.png");
+    texture_ = DV_TEXTURE_CACHE->get(base_path + "samples_data/textures/tile128.png");
     sprite_batch_ = make_unique<SpriteBatch>();
-    font_ = make_unique<SpriteFont>(base_path + "data/fonts/ubuntu-r_20_simple.fnt");
+    font_ = make_unique<SpriteFont>(base_path + "samples_data/fonts/ubuntu-r_20_simple.fnt");
 
     /*
     entt::entity ent1 = ecs_.create();
@@ -66,7 +66,7 @@ void App::start()
     ent2_counter.value = 100;
     */
 
-    StrUtf8 music_path = base_path + "data/audio/in_the_field.mp3";
+    StrUtf8 music_path = base_path + "samples_data/audio/in_the_field.mp3";
     music_ = Mix_LoadMUS(music_path.c_str());
 
     if (!music_)
