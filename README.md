@@ -12,6 +12,7 @@
 
 * [Компиляция](docs/building.md)
 * [Шаблон приложения / Минимальное приложение](https://github.com/dviglo2d-learn/minimal_app)
+* [Исходники небольших игр](https://github.com/dviglo2d-learn/mini_games)
 
 ## Структура репозитория
 
