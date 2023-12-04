@@ -38,10 +38,12 @@ protected:
 
     virtual void setup() = 0;
     virtual void start() = 0;
+
+    /// Обработчик событий вызывается перед update()
+    virtual void handle_sdl_event(const SDL_Event& event);
+
     virtual void update(u64 ns) = 0;
     virtual void draw() = 0;
-
-    virtual void on_key(const SDL_KeyboardEvent& event_data);
 
 public:
     const std::vector<StrUtf8>& args() const { return args_; }

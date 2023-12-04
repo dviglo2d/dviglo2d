@@ -53,13 +53,10 @@ Application::~Application()
     SDL_Quit();
 }
 
-void Application::on_key(const SDL_KeyboardEvent& event_data)
+void Application::handle_sdl_event(const SDL_Event& event)
 {
-    if (event_data.type == SDL_EVENT_KEY_DOWN && event_data.repeat == false
-        && event_data.keysym.scancode == SDL_SCANCODE_ESCAPE)
-    {
+    if (event.type == SDL_EVENT_QUIT)
         should_exit_ = true;
-    }
 }
 
 i32 Application::run()
@@ -88,24 +85,6 @@ i32 Application::run()
             should_exit_ = true;
 #endif
 
-        SDL_PumpEvents();
-        SDL_Event event;
-
-        while (SDL_PollEvent(&event))
-        {
-            switch (event.type)
-            {
-            case SDL_EVENT_QUIT:
-                should_exit_ = true;
-                break;
-
-            case SDL_EVENT_KEY_DOWN:
-            case SDL_EVENT_KEY_UP:
-                on_key(event.key);
-                break;
-            }
-        }
-
         u64 new_ticks = SDL_GetTicksNS();
         u64 ns = new_ticks - old_ticks;
         old_ticks = new_ticks;
@@ -117,6 +96,12 @@ i32 Application::run()
             SDL_DelayNS(SDL_NS_PER_MS / 2);
             continue;
         }
+
+        SDL_PumpEvents();
+        SDL_Event event;
+
+        while (SDL_PollEvent(&event))
+            handle_sdl_event(event);
 
         update(ns);
         draw();
