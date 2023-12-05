@@ -60,8 +60,15 @@ OsWindow::OsWindow()
         return;
     }
 
-    // Отключаем VSync
-    i32 vsync_ret = SDL_GL_SetSwapInterval(0);
+    // Настраиваем VSync
+    i32 vsync_ret = SDL_GL_SetSwapInterval(engine_params::vsync);
+
+    // Если не получилось включить адаптивную вертикалку, то пробуем включить обычную
+    if (vsync_ret < 0 && engine_params::vsync < 0)
+    {
+        DV_LOG->write_debug(format("Application::run(): vsync_ret < 0 && engine_params::vsync < 0 | {}", SDL_GetError()));
+        vsync_ret = SDL_GL_SetSwapInterval(-engine_params::vsync);
+    }
 
     // Вызывает ошибку при запуске через xvfb-run на сервере ГитХаба. Игнорируем
     if (vsync_ret < 0)
