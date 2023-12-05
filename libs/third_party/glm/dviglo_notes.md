@@ -3,4 +3,5 @@
 <https://github.com/g-truc/glm/commit/efec5db081e3aad807d0731e172ac597f6a39447>.
 
 Файл `CMakeLists.txt`в папке `glm` не используется.
-Некоторые файлы изменены.
+
+Вместо <glm/glm.hpp> нужно подключать <glm/glm_wrapped.hpp>.

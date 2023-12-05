@@ -1,5 +1,3 @@
-// Модифицировано для Dviglo
-
 #ifndef GLM_SETUP_INCLUDED
 
 #include <cassert>
@@ -700,8 +698,6 @@ namespace detail
 namespace glm{
 namespace detail
 {
-
-/* Dviglo: Закомментировано
 #	if GLM_HAS_EXTENDED_INTEGER_TYPE
 		typedef std::uint64_t						uint64;
 		typedef std::int64_t						int64;
@@ -723,12 +719,6 @@ namespace detail
 		typedef unsigned long long					uint64;
 		typedef signed long long					int64;
 #	endif
-*/
-
-    // Dviglo: Добавлено. Исправляем конфликты с типами движка
-    using uint64 = unsigned long long;
-    using int64 = long long;
-
 }//namespace detail
 }//namespace glm
 

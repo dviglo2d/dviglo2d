@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include <glm/glm.hpp>
+#include <glm/glm_wrapped.hpp>
 
 
 namespace dviglo

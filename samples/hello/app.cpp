@@ -10,7 +10,7 @@
 #include <dviglo/main/os_window.hpp>
 
 #include <glad/gl.h>
-#include <glm/glm.hpp>
+#include <glm/glm_wrapped.hpp>
 
 #include <format>
 #include <iostream>

@@ -1,13 +1,9 @@
-// Модифицировано для Dviglo
-
 #pragma once
 
 #include "detail/qualifier.hpp"
 
 namespace glm
 {
-
-/* Dviglo: Закомментировано
 #if GLM_HAS_EXTENDED_INTEGER_TYPE
 	typedef std::int8_t				int8;
 	typedef std::int16_t			int16;
@@ -29,17 +25,6 @@ namespace glm
 	typedef unsigned int			uint32;
 	typedef detail::uint64			uint64;
 #endif
-*/
-
-    // Dviglo: Добавлено. Исправляем конфликты с типами движка
-    using int8 = signed char;
-    using int16 = short;
-    using int32 = int;
-    using int64 = long long;
-    using uint8 = unsigned char;
-    using uint16 = unsigned short;
-    using uint32 = unsigned;
-    using uint64 = unsigned long long;
 
 	// Scalar int
 
