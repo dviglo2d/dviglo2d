@@ -142,6 +142,9 @@ void App::draw()
     sprite_batch_->set_shape_color(0xFFFF0000);
     sprite_batch_->draw_triangle({400.f, 0.f}, {400.f, 600.f}, {0.f, 600.f});
 
+    sprite_batch_->set_shape_color(0x90FFFF00);
+    sprite_batch_->draw_rect({{300.f, 300.f}, {600.f, 400.f}});
+
     sprite_batch_->draw_sprite(texture_, {100.f, 100.f});
     sprite_batch_->draw_sprite(texture_, {500.f, 100.f}, nullptr, 0xFFFFFFFF, rotation);
 

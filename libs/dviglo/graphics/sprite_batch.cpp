@@ -148,11 +148,26 @@ void SpriteBatch::flush()
     }
 }
 
+// ======================= Используем пакетный рендеринг треугольников =======================
+
 void SpriteBatch::draw_triangle(vec2 v0, vec2 v1, vec2 v2)
 {
     triangle_.v0.position = v0;
     triangle_.v1.position = v1;
     triangle_.v2.position = v2;
+    add_triangle();
+}
+
+void SpriteBatch::draw_rect(const Rect& rect)
+{
+    triangle_.v0.position = {rect.min.x, rect.min.y};
+    triangle_.v1.position = {rect.max.x, rect.min.y};
+    triangle_.v2.position = {rect.min.x, rect.max.y};
+    add_triangle();
+
+    triangle_.v0.position = {rect.max.x, rect.min.y};
+    triangle_.v1.position = {rect.max.x, rect.max.y};
+    triangle_.v2.position = {rect.min.x, rect.max.y};
     add_triangle();
 }
 
@@ -280,7 +295,7 @@ static Rect pos_to_dest(vec2 position, Texture* texture, const Rect* src)
         (
             {position.x, position.y},
             {position.x + (src->max.x - src->min.x), // Сперва вычисляем размер, так как там вероятно более близкие
-            position.y + (src->max.y - src->min.y)} // значения и меньше ошибка вычислений
+            position.y + (src->max.y - src->min.y)}  // значения и меньше ошибка вычислений
         );
     }
 }

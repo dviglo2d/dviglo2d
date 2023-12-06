@@ -153,6 +153,8 @@ public:
 
     void draw_triangle(glm::vec2 v0, glm::vec2 v1, glm::vec2 v2);
 
+    void draw_rect(const Rect& rect);
+
     // ======================= Используем пакетный рендеринг четырёхугольников =======================
 
 private:
