@@ -295,7 +295,7 @@ static Rect pos_to_dest(vec2 position, Texture* texture, const Rect* src)
         (
             {position.x, position.y},
             {position.x + (src->max.x - src->min.x), // Сперва вычисляем размер, так как там вероятно более близкие
-            position.y + (src->max.y - src->min.y)}  // значения и меньше ошибка вычислений
+             position.y + (src->max.y - src->min.y)} // значения и меньше ошибка вычислений
         );
     }
 }
