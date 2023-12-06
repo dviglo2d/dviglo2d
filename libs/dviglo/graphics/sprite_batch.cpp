@@ -243,7 +243,7 @@ void SpriteBatch::draw_sprite_internal()
 }
 
 // Преобразует пиксельные координаты в диапазон [0, 1]
-static Rect SrcToUV(const Rect* source, Texture* texture)
+static Rect src_to_uv(const Rect* source, Texture* texture)
 {
     if (source == nullptr)
     {
@@ -263,7 +263,7 @@ static Rect SrcToUV(const Rect* source, Texture* texture)
     }
 }
 
-static Rect PosToDest(vec2 position, Texture* texture, const Rect* src)
+static Rect pos_to_dest(vec2 position, Texture* texture, const Rect* src)
 {
     if (src == nullptr)
     {
@@ -294,7 +294,7 @@ void SpriteBatch::draw_sprite(Texture* texture, const Rect& destination, const R
     sprite.texture = texture;
     sprite.shader_program = q_default_shader_program_;
     sprite.destination = destination;
-    sprite.source_uv = SrcToUV(source, texture);
+    sprite.source_uv = src_to_uv(source, texture);
     sprite.flip_modes = flip_modes;
     sprite.scale = scale;
     sprite.rotation = rotation;
@@ -315,8 +315,8 @@ void SpriteBatch::draw_sprite(Texture* texture, vec2 position, const Rect* sourc
 
     sprite.texture = texture;
     sprite.shader_program = q_default_shader_program_;
-    sprite.destination = PosToDest(position, texture, source);
-    sprite.source_uv = SrcToUV(source, texture);
+    sprite.destination = pos_to_dest(position, texture, source);
+    sprite.source_uv = src_to_uv(source, texture);
     sprite.flip_modes = flip_modes;
     sprite.scale = scale;
     sprite.rotation = rotation;
