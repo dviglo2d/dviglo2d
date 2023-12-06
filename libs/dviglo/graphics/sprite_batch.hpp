@@ -151,7 +151,7 @@ public:
 
     // ======================= Используем пакетный рендеринг треугольников =======================
 
-    void draw_triangle(const glm::vec2& v0, const glm::vec2& v1, const glm::vec2& v2);
+    void draw_triangle(glm::vec2 v0, glm::vec2 v1, glm::vec2 v2);
 
     // ======================= Используем пакетный рендеринг четырёхугольников =======================
 
@@ -181,15 +181,15 @@ public:
 
     /// color - цвет в формате 0xAABBGGRR
     void draw_sprite(Texture* texture, const Rect& destination, const Rect* source = nullptr, u32 color = 0xFFFFFFFF,
-        float rotation = 0.f, const glm::vec2& origin = {0.f, 0.f}, const glm::vec2& scale = {1.f, 1.f}, FlipModes flip_modes = FlipModes::none);
+        float rotation = 0.f, glm::vec2 origin = {0.f, 0.f}, glm::vec2 scale = {1.f, 1.f}, FlipModes flip_modes = FlipModes::none);
 
     /// color - цвет в формате 0xAABBGGRR
-    void draw_sprite(Texture* texture, const glm::vec2& position, const Rect* source = nullptr, u32 color = 0xFFFFFFFF,
-        float rotation = 0.f, const glm::vec2& origin = {0.f, 0.f}, const glm::vec2& scale = {1.f, 1.f}, FlipModes flip_modes = FlipModes::none);
+    void draw_sprite(Texture* texture, glm::vec2 position, const Rect* source = nullptr, u32 color = 0xFFFFFFFF,
+        float rotation = 0.f, glm::vec2 origin = {0.f, 0.f}, glm::vec2 scale = {1.f, 1.f}, FlipModes flip_modes = FlipModes::none);
 
     /// color - цвет в формате 0xAABBGGRR
-    void draw_string(const StrUtf8& text, SpriteFont* font, const glm::vec2& position, u32 color = 0xFFFFFFFF,
-        float rotation = 0.0f, const glm::vec2& origin = {0.f, 0.f}, const glm::vec2& scale = {1.f, 1.f}, FlipModes flip_modes = FlipModes::none);
+    void draw_string(const StrUtf8& text, SpriteFont* font, glm::vec2 position, u32 color = 0xFFFFFFFF,
+        float rotation = 0.0f, glm::vec2 origin = {0.f, 0.f}, glm::vec2 scale = {1.f, 1.f}, FlipModes flip_modes = FlipModes::none);
 };
 
 } // namespace dviglo

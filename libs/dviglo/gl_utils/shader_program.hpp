@@ -63,7 +63,7 @@ public:
         glUniform1i(location, value);
     }
 
-    void set(const StrAscii& name, const glm::vec2& value) const
+    void set(const StrAscii& name, glm::vec2 value) const
     {
         GLint location = glGetUniformLocation(gpu_object_name_, name.c_str());
         glUniform2fv(location, 1, &value[0]);

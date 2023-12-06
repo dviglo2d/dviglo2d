@@ -148,7 +148,7 @@ void SpriteBatch::flush()
     }
 }
 
-void SpriteBatch::draw_triangle(const glm::vec2& v0, const glm::vec2& v1, const glm::vec2& v2)
+void SpriteBatch::draw_triangle(vec2 v0, vec2 v1, vec2 v2)
 {
     triangle_.v0.position = v0;
     triangle_.v1.position = v1;
@@ -263,7 +263,7 @@ static Rect SrcToUV(const Rect* source, Texture* texture)
     }
 }
 
-static Rect PosToDest(const vec2& position, Texture* texture, const Rect* src)
+static Rect PosToDest(vec2 position, Texture* texture, const Rect* src)
 {
     if (src == nullptr)
     {
@@ -286,7 +286,7 @@ static Rect PosToDest(const vec2& position, Texture* texture, const Rect* src)
 }
 
 void SpriteBatch::draw_sprite(Texture* texture, const Rect& destination, const Rect* source, u32 color,
-    float rotation, const vec2& origin, const vec2& scale, FlipModes flip_modes)
+    float rotation, vec2 origin, vec2 scale, FlipModes flip_modes)
 {
     if (!texture)
         return;
@@ -307,8 +307,8 @@ void SpriteBatch::draw_sprite(Texture* texture, const Rect& destination, const R
     draw_sprite_internal();
 }
 
-void SpriteBatch::draw_sprite(Texture* texture, const vec2& position, const Rect* source, u32 color,
-    float rotation, const vec2& origin, const vec2& scale, FlipModes flip_modes)
+void SpriteBatch::draw_sprite(Texture* texture, vec2 position, const Rect* source, u32 color,
+    float rotation, vec2 origin, vec2 scale, FlipModes flip_modes)
 {
     if (!texture)
         return;
@@ -329,8 +329,8 @@ void SpriteBatch::draw_sprite(Texture* texture, const vec2& position, const Rect
     draw_sprite_internal();
 }
 
-void SpriteBatch::draw_string(const StrUtf8& text, SpriteFont* font, const vec2& position, u32 color,
-    float rotation, const vec2& origin, const vec2& scale, FlipModes flip_modes)
+void SpriteBatch::draw_string(const StrUtf8& text, SpriteFont* font, vec2 position, u32 color,
+    float rotation, vec2 origin, vec2 scale, FlipModes flip_modes)
 {
     if (text.length() == 0)
         return;
