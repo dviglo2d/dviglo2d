@@ -3,14 +3,10 @@
 
 #include "app.hpp"
 
-#include <dviglo/gl_utils/shader_cache.hpp>
 #include <dviglo/gl_utils/texture_cache.hpp>
 #include <dviglo/io/fs_base.hpp>
 #include <dviglo/main/engine_params.hpp>
 #include <dviglo/main/os_window.hpp>
-
-#include <glad/gl.h>
-#include <glm/glm_wrapped.hpp>
 
 #include <format>
 #include <iostream>
@@ -114,7 +110,7 @@ void App::update(u64 ns)
     while (rotation >= 360.f)
         rotation -= 360.f;
 
-    s_test_.update(ecs_, ns);
+    //s_test_.update(ecs_, ns);
 }
 
 void App::draw()
