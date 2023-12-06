@@ -99,17 +99,28 @@ void App::on_key(const SDL_KeyboardEvent& event_data)
 }
 
 static float rotation = 0.f;
-
-static StrUtf8 fps_text;
+static StrUtf8 fps_text = "FPS: ?";
 
 void App::update(u64 ns)
 {
+    static u64 frame_counter = 0;
+    static u64 time_counter = 0;
+
+    ++frame_counter;
+    time_counter += ns;
+
+    // Обновляем fps_text каждые пол секунды
+    if (time_counter >= SDL_NS_PER_SECOND / 2)
+    {
+        u64 fps = frame_counter * SDL_NS_PER_SECOND / time_counter;
+        fps_text = format("FPS: {}", fps);
+        frame_counter = 0;
+        time_counter = 0;
+    }
+
     rotation += ns * 0.000'000'000'1f;
     while (rotation >= 360.f)
         rotation -= 360.f;
-
-    u64 fps = SDL_NS_PER_SECOND / ns;
-    fps_text = format("FPS: {}", fps);
 
     s_test_.update(ecs_, ns);
 }
