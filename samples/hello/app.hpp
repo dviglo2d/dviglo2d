@@ -5,10 +5,8 @@
 
 //#include "ecs/systems/s_test.hpp"
 
-#include <dviglo/gl_utils/texture.hpp>
 #include <dviglo/graphics/sprite_batch.hpp>
 #include <dviglo/main/application.hpp>
-#include <dviglo/std_utils/str.hpp>
 
 #include <SDL3_mixer/SDL_mixer.h>
 
