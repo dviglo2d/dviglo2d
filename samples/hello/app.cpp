@@ -16,10 +16,9 @@
 #include <iostream>
 
 using namespace glm;
-using namespace std;
 
 
-App::App(const std::vector<StrUtf8>& args)
+App::App(const vector<StrUtf8>& args)
     : Application(args)
 {
     cout << "Командная строка: " << join(args, " ") << endl;
