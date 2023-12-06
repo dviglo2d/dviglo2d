@@ -143,6 +143,9 @@ public:
 
     SpriteBatch();
 
+    /// Настраивает OpenGL для работы со SpriteBatch
+    void prepare_ogl();
+
     /// Рендерит накопленную геометрию (то есть текущую порцию)
     void flush();
 

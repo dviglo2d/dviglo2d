@@ -61,6 +61,19 @@ void SpriteBatch::add_quad()
         flush();
 }
 
+void SpriteBatch::prepare_ogl()
+{
+    // Задаём треугольники по часовой стрелке
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
+    glFrontFace(GL_CW);
+
+    // Включаем альфа-смешение
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glBlendEquation(GL_FUNC_ADD);
+}
+
 SpriteBatch::SpriteBatch()
 {
     t_vertex_buffer_ = make_unique<VertexBuffer>(max_triangles_in_portion_ * vertices_per_triangle_,

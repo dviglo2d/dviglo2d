@@ -121,14 +121,7 @@ void App::draw()
     glClearColor(1.0f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    // Задаём треугольники по часовой стрелке
-    glEnable(GL_CULL_FACE);
-    glCullFace(GL_BACK);
-    glFrontFace(GL_CW);
-
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glBlendEquation(GL_FUNC_ADD);
+    sprite_batch_->prepare_ogl();
 
     sprite_batch_->triangle_.v0 = {{800.f, 0.f}, 0xFF00FF00};
     sprite_batch_->triangle_.v1 = {{800.f, 300.f}, 0xFF0000FF};
