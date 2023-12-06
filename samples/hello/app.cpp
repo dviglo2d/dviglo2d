@@ -26,13 +26,6 @@ App::App(const vector<StrUtf8>& args)
     log_path_ = get_pref_path("dviglo2d", "samples") + "hello.log";
 }
 
-struct Vertex
-{
-    vec2 pos;
-    u32 color;
-    vec2 uv;
-};
-
 void App::setup()
 {
     engine_params::window_size = ivec2(800, 800);
