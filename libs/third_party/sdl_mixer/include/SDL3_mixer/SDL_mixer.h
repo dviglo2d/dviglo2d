@@ -1,6 +1,6 @@
 /*
   SDL_mixer:  An audio mixer library based on the SDL library
-  Copyright (C) 1997-2023 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2024 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -2318,8 +2318,30 @@ extern DECLSPEC int SDLCALL Mix_PausedMusic(void);
  */
 extern DECLSPEC int SDLCALL Mix_ModMusicJumpToOrder(int order);
 
-/* Tracks */
+/**
+ * Start a track in music object.
+ *
+ * This only applies to GME music formats.
+ *
+ * \param music the music object.
+ * \param track the track number to play. 0 is the first track.
+ * \returns 0 if successful, or -1 if failed or isn't implemented.
+ *
+ * \since This function is available since SDL_mixer 3.0.0.
+ */
 extern DECLSPEC int SDLCALL Mix_StartTrack(Mix_Music *music, int track);
+
+/**
+ * Get number of tracks in music object.
+ *
+ * This only applies to GME music formats.
+ *
+ * \param music the music object.
+ * \returns number of tracks if successful, or -1 if failed or isn't
+ *          implemented.
+ *
+ * \since This function is available since SDL_mixer 3.0.0.
+ */
 extern DECLSPEC int SDLCALL Mix_GetNumTracks(Mix_Music *music);
 
 /**
