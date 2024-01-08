@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2023 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2024 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -54,14 +54,12 @@ SDL_HashTable *SDL_CreateHashTable(void *data, const Uint32 num_buckets, const S
 
     table = (SDL_HashTable *) SDL_calloc(1, sizeof (SDL_HashTable));
     if (!table) {
-        SDL_OutOfMemory();
         return NULL;
     }
 
     table->table = (SDL_HashItem **) SDL_calloc(num_buckets, sizeof (SDL_HashItem *));
     if (!table->table) {
         SDL_free(table);
-        SDL_OutOfMemory();
         return NULL;
     }
 
@@ -92,7 +90,6 @@ SDL_bool SDL_InsertIntoHashTable(SDL_HashTable *table, const void *key, const vo
     // !!! FIXME: grow and rehash table if it gets too saturated.
     item = (SDL_HashItem *) SDL_malloc(sizeof (SDL_HashItem));
     if (!item) {
-        SDL_OutOfMemory();
         return SDL_FALSE;
     }
 

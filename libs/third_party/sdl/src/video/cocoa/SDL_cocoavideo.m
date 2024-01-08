@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2023 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2024 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -68,7 +68,6 @@ static SDL_VideoDevice *Cocoa_CreateDevice(void)
             data = nil;
         }
         if (!data) {
-            SDL_OutOfMemory();
             SDL_free(device);
             return NULL;
         }
@@ -117,6 +116,7 @@ static SDL_VideoDevice *Cocoa_CreateDevice(void)
         device->AcceptDragAndDrop = Cocoa_AcceptDragAndDrop;
         device->FlashWindow = Cocoa_FlashWindow;
         device->SetWindowFocusable = Cocoa_SetWindowFocusable;
+        device->SyncWindow = Cocoa_SyncWindow;
 
 #ifdef SDL_VIDEO_OPENGL_CGL
         device->GL_LoadLibrary = Cocoa_GL_LoadLibrary;
@@ -172,8 +172,8 @@ static SDL_VideoDevice *Cocoa_CreateDevice(void)
 
         device->free = Cocoa_DeleteDevice;
 
-        device->quirk_flags = VIDEO_DEVICE_QUIRK_HAS_POPUP_WINDOW_SUPPORT;
-
+        device->device_caps = VIDEO_DEVICE_CAPS_HAS_POPUP_WINDOW_SUPPORT |
+                              VIDEO_DEVICE_CAPS_SENDS_FULLSCREEN_DIMENSIONS;
         return device;
     }
 }

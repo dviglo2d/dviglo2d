@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2023 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2024 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -370,7 +370,7 @@ SDL_Surface *SDL_LoadBMP_RW(SDL_RWops *src, SDL_bool freesrc)
     case 5:
     case 6:
     case 7:
-        SDL_SetError("%d-bpp BMP images are not supported", biBitCount);
+        SDL_SetError("%u bpp BMP images are not supported", biBitCount);
         goto done;
     default:
         break;
@@ -650,7 +650,7 @@ int SDL_SaveBMP_RW(SDL_Surface *surface, SDL_RWops *dst, SDL_bool freedst)
             if (surface->format->BitsPerPixel == 8) {
                 intermediate_surface = surface;
             } else {
-                SDL_SetError("%d bpp BMP files not supported",
+                SDL_SetError("%u bpp BMP files not supported",
                              surface->format->BitsPerPixel);
                 goto done;
             }

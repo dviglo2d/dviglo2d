@@ -1,6 +1,6 @@
 /*
  *  Simple DirectMedia Layer
- *  Copyright (C) 1997-2023 Sam Lantinga <slouken@libsdl.org>
+ *  Copyright (C) 1997-2024 Sam Lantinga <slouken@libsdl.org>
  *
  *  This software is provided 'as-is', without any express or implied
  *  warranty.  In no event will the authors be held liable for any damages
@@ -476,7 +476,7 @@ int SDL_EGL_LoadLibraryOnly(SDL_VideoDevice *_this, const char *egl_path)
 
     _this->egl_data = (struct SDL_EGL_VideoData *)SDL_calloc(1, sizeof(SDL_EGL_VideoData));
     if (!_this->egl_data) {
-        return SDL_OutOfMemory();
+        return -1;
     }
 
     if (SDL_EGL_LoadLibraryInternal(_this, egl_path) < 0) {

@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2023 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2024 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -136,14 +136,12 @@ SDL_Surface *SDL_CreateSurface(int width, int height, Uint32 format)
 
     if (SDL_CalculateSize(format, width, height, &size, &pitch, SDL_FALSE /* not minimal pitch */) < 0) {
         /* Overflow... */
-        SDL_OutOfMemory();
         return NULL;
     }
 
     /* Allocate the surface */
     surface = (SDL_Surface *)SDL_calloc(1, sizeof(*surface));
     if (!surface) {
-        SDL_OutOfMemory();
         return NULL;
     }
 
@@ -182,7 +180,6 @@ SDL_Surface *SDL_CreateSurface(int width, int height, Uint32 format)
         surface->pixels = SDL_aligned_alloc(SDL_SIMDGetAlignment(), size);
         if (!surface->pixels) {
             SDL_DestroySurface(surface);
-            SDL_OutOfMemory();
             return NULL;
         }
         surface->flags |= SDL_SIMD_ALIGNED;
@@ -232,7 +229,6 @@ SDL_Surface *SDL_CreateSurfaceFrom(void *pixels, int width, int height, int pitc
 
         if (SDL_CalculateSize(format, width, height, NULL, &minimalPitch, SDL_TRUE /* minimal pitch */) < 0) {
             /* Overflow... */
-            SDL_OutOfMemory();
             return NULL;
         }
 
@@ -256,15 +252,28 @@ SDL_Surface *SDL_CreateSurfaceFrom(void *pixels, int width, int height, int pitc
 
 SDL_PropertiesID SDL_GetSurfaceProperties(SDL_Surface *surface)
 {
+    SDL_PropertiesID props;
+
     if (!surface) {
         SDL_InvalidParamError("surface");
         return 0;
     }
 
-    if (surface->props == 0) {
-        surface->props = SDL_CreateProperties();
+    if (surface->flags & SDL_SURFACE_USES_PROPERTIES) {
+        props = (SDL_PropertiesID)(uintptr_t)surface->reserved;
+    } else {
+        if (surface->reserved != NULL) {
+            SDL_SetError("Surface has userdata, incompatible with properties");
+            return 0;
+        }
+
+        props = SDL_CreateProperties();
+        if (props) {
+            surface->reserved = (void *)(uintptr_t)props;
+            surface->flags |= SDL_SURFACE_USES_PROPERTIES;
+        }
     }
-    return surface->props;
+    return props;
 }
 
 int SDL_SetSurfacePalette(SDL_Surface *surface, SDL_Palette *palette)
@@ -778,13 +787,8 @@ int SDL_BlitSurface(SDL_Surface *src, const SDL_Rect *srcrect,
 }
 
 int SDL_BlitSurfaceScaled(SDL_Surface *src, const SDL_Rect *srcrect,
-                        SDL_Surface *dst, SDL_Rect *dstrect)
-{
-    return SDL_PrivateBlitSurfaceScaled(src, srcrect, dst, dstrect, SDL_SCALEMODE_NEAREST);
-}
-
-int SDL_PrivateBlitSurfaceScaled(SDL_Surface *src, const SDL_Rect *srcrect,
-                               SDL_Surface *dst, SDL_Rect *dstrect, SDL_ScaleMode scaleMode)
+                          SDL_Surface *dst, SDL_Rect *dstrect,
+                          SDL_ScaleMode scaleMode)
 {
     double src_x0, src_y0, src_x1, src_y1;
     double dst_x0, dst_y0, dst_x1, dst_y1;
@@ -938,7 +942,7 @@ int SDL_PrivateBlitSurfaceScaled(SDL_Surface *src, const SDL_Rect *srcrect,
         return 0;
     }
 
-    return SDL_PrivateBlitSurfaceUncheckedScaled(src, &final_src, dst, &final_dst, scaleMode);
+    return SDL_BlitSurfaceUncheckedScaled(src, &final_src, dst, &final_dst, scaleMode);
 }
 
 /**
@@ -946,17 +950,20 @@ int SDL_PrivateBlitSurfaceScaled(SDL_Surface *src, const SDL_Rect *srcrect,
  *  scaled blitting only.
  */
 int SDL_BlitSurfaceUncheckedScaled(SDL_Surface *src, const SDL_Rect *srcrect,
-                                   SDL_Surface *dst, const SDL_Rect *dstrect)
-{
-    return SDL_PrivateBlitSurfaceUncheckedScaled(src, srcrect, dst, dstrect, SDL_SCALEMODE_NEAREST);
-}
-
-int SDL_PrivateBlitSurfaceUncheckedScaled(SDL_Surface *src, const SDL_Rect *srcrect,
-                                          SDL_Surface *dst, const SDL_Rect *dstrect, SDL_ScaleMode scaleMode)
+                                   SDL_Surface *dst, const SDL_Rect *dstrect,
+                                   SDL_ScaleMode scaleMode)
 {
     static const Uint32 complex_copy_flags = (SDL_COPY_MODULATE_COLOR | SDL_COPY_MODULATE_ALPHA |
                                               SDL_COPY_BLEND | SDL_COPY_ADD | SDL_COPY_MOD | SDL_COPY_MUL |
                                               SDL_COPY_COLORKEY);
+
+    if (scaleMode != SDL_SCALEMODE_NEAREST && scaleMode != SDL_SCALEMODE_LINEAR && scaleMode != SDL_SCALEMODE_BEST) {
+        return SDL_InvalidParamError("scaleMode");
+    }
+
+    if (scaleMode != SDL_SCALEMODE_NEAREST) {
+        scaleMode = SDL_SCALEMODE_LINEAR;
+    }
 
     if (srcrect->w > SDL_MAX_UINT16 || srcrect->h > SDL_MAX_UINT16 ||
         dstrect->w > SDL_MAX_UINT16 || dstrect->h > SDL_MAX_UINT16) {
@@ -972,7 +979,7 @@ int SDL_PrivateBlitSurfaceUncheckedScaled(SDL_Surface *src, const SDL_Rect *srcr
         if (!(src->map->info.flags & complex_copy_flags) &&
             src->format->format == dst->format->format &&
             !SDL_ISPIXELFORMAT_INDEXED(src->format->format)) {
-            return SDL_SoftStretch(src, srcrect, dst, dstrect);
+            return SDL_SoftStretch(src, srcrect, dst, dstrect, SDL_SCALEMODE_NEAREST);
         } else {
             return SDL_BlitSurfaceUnchecked(src, srcrect, dst, dstrect);
         }
@@ -983,7 +990,7 @@ int SDL_PrivateBlitSurfaceUncheckedScaled(SDL_Surface *src, const SDL_Rect *srcr
             src->format->BytesPerPixel == 4 &&
             src->format->format != SDL_PIXELFORMAT_ARGB2101010) {
             /* fast path */
-            return SDL_SoftStretchLinear(src, srcrect, dst, dstrect);
+            return SDL_SoftStretch(src, srcrect, dst, dstrect, SDL_SCALEMODE_LINEAR);
         } else {
             /* Use intermediate surface(s) */
             SDL_Surface *tmp1 = NULL;
@@ -1033,7 +1040,7 @@ int SDL_PrivateBlitSurfaceUncheckedScaled(SDL_Surface *src, const SDL_Rect *srcr
             if (is_complex_copy_flags || src->format->format != dst->format->format) {
                 SDL_Rect tmprect;
                 SDL_Surface *tmp2 = SDL_CreateSurface(dstrect->w, dstrect->h, src->format->format);
-                SDL_SoftStretchLinear(src, &srcrect2, tmp2, NULL);
+                SDL_SoftStretch(src, &srcrect2, tmp2, NULL, SDL_SCALEMODE_LINEAR);
 
                 SDL_SetSurfaceColorMod(tmp2, r, g, b);
                 SDL_SetSurfaceAlphaMod(tmp2, alpha);
@@ -1046,7 +1053,7 @@ int SDL_PrivateBlitSurfaceUncheckedScaled(SDL_Surface *src, const SDL_Rect *srcr
                 ret = SDL_BlitSurfaceUnchecked(tmp2, &tmprect, dst, dstrect);
                 SDL_DestroySurface(tmp2);
             } else {
-                ret = SDL_SoftStretchLinear(src, &srcrect2, dst, dstrect);
+                ret = SDL_SoftStretch(src, &srcrect2, dst, dstrect, SDL_SCALEMODE_LINEAR);
             }
 
             SDL_DestroySurface(tmp1);
@@ -1214,10 +1221,12 @@ SDL_Surface *SDL_ConvertSurface(SDL_Surface *surface, const SDL_PixelFormat *for
         if (set_opaque) {
             int i;
             palette_saved_alpha_ncolors = surface->format->palette->ncolors;
-            palette_saved_alpha = SDL_stack_alloc(Uint8, palette_saved_alpha_ncolors);
-            for (i = 0; i < palette_saved_alpha_ncolors; i++) {
-                palette_saved_alpha[i] = surface->format->palette->colors[i].a;
-                surface->format->palette->colors[i].a = SDL_ALPHA_OPAQUE;
+            if (palette_saved_alpha_ncolors > 0) {
+                palette_saved_alpha = SDL_stack_alloc(Uint8, palette_saved_alpha_ncolors);
+                for (i = 0; i < palette_saved_alpha_ncolors; i++) {
+                    palette_saved_alpha[i] = surface->format->palette->colors[i].a;
+                    surface->format->palette->colors[i].a = SDL_ALPHA_OPAQUE;
+                }
             }
         }
     }
@@ -1565,7 +1574,11 @@ void SDL_DestroySurface(SDL_Surface *surface)
         return;
     }
 
-    SDL_DestroyProperties(surface->props);
+    if (surface->flags & SDL_SURFACE_USES_PROPERTIES) {
+        SDL_PropertiesID props = (SDL_PropertiesID)(uintptr_t)surface->reserved;
+        SDL_DestroyProperties(props);
+    }
+
     SDL_InvalidateMap(surface->map);
     SDL_InvalidateAllBlitMap(surface);
 

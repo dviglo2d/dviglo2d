@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2023 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2024 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -72,7 +72,7 @@ int SDL_SYS_GetPreferredLocales(char *buf, size_t buflen)
     SDL_assert(buflen > 0);
     tmp = SDL_small_alloc(char, buflen, &isstack);
     if (!tmp) {
-        return SDL_OutOfMemory();
+        return -1;
     }
 
     *tmp = '\0';

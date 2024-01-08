@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2023 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2024 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -117,7 +117,6 @@ static SDL_VideoDevice *WIN_CreateDevice(void)
     }
     if (!data) {
         SDL_free(device);
-        SDL_OutOfMemory();
         return NULL;
     }
     device->driverdata = data;
@@ -278,7 +277,8 @@ static SDL_VideoDevice *WIN_CreateDevice(void)
 
     device->free = WIN_DeleteDevice;
 
-    device->quirk_flags = VIDEO_DEVICE_QUIRK_HAS_POPUP_WINDOW_SUPPORT;
+    device->device_caps = VIDEO_DEVICE_CAPS_HAS_POPUP_WINDOW_SUPPORT |
+                          VIDEO_DEVICE_CAPS_SENDS_FULLSCREEN_DIMENSIONS;
 
     return device;
 }

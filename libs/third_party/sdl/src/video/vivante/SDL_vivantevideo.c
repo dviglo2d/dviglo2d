@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2023 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2024 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -49,14 +49,12 @@ static SDL_VideoDevice *VIVANTE_Create()
     /* Initialize SDL_VideoDevice structure */
     device = (SDL_VideoDevice *)SDL_calloc(1, sizeof(SDL_VideoDevice));
     if (!device) {
-        SDL_OutOfMemory();
         return NULL;
     }
 
     /* Initialize internal data */
     data = (SDL_VideoData *)SDL_calloc(1, sizeof(SDL_VideoData));
     if (!data) {
-        SDL_OutOfMemory();
         SDL_free(device);
         return NULL;
     }
@@ -125,7 +123,7 @@ static int VIVANTE_AddVideoDisplays(SDL_VideoDevice *_this)
 
     data = (SDL_DisplayData *)SDL_calloc(1, sizeof(SDL_DisplayData));
     if (!data) {
-        return SDL_OutOfMemory();
+        return -1;
     }
 
     SDL_zero(mode);
@@ -249,14 +247,14 @@ int VIVANTE_CreateWindow(SDL_VideoDevice *_this, SDL_Window *window, SDL_Propert
     /* Allocate window internal data */
     data = (SDL_WindowData *)SDL_calloc(1, sizeof(SDL_WindowData));
     if (!data) {
-        return SDL_OutOfMemory();
+        return -1;
     }
 
     /* Setup driver data for this window */
     window->driverdata = data;
 
     SDL_PropertiesID props = SDL_GetWindowProperties(window);
-    SDL_SetProperty(props, "SDL.window.vivante.display", displaydata->native_display);
+    SDL_SetProperty(props, SDL_PROPERTY_WINDOW_VIVANTE_DISPLAY_POINTER, displaydata->native_display);
 
 #ifdef SDL_VIDEO_DRIVER_VIVANTE_VDK
     data->native_window = vdkCreateWindow(displaydata->native_display, window->x, window->y, window->w, window->h);
@@ -266,7 +264,7 @@ int VIVANTE_CreateWindow(SDL_VideoDevice *_this, SDL_Window *window, SDL_Propert
     if (!data->native_window) {
         return SDL_SetError("VIVANTE: Can't create native window");
     }
-    SDL_SetProperty(props, "SDL.window.vivante.window", data->native_window);
+    SDL_SetProperty(props, SDL_PROPERTY_WINDOW_VIVANTE_WINDOW_POINTER, data->native_window);
 
 #ifdef SDL_VIDEO_OPENGL_EGL
     if (window->flags & SDL_WINDOW_OPENGL) {
@@ -277,7 +275,7 @@ int VIVANTE_CreateWindow(SDL_VideoDevice *_this, SDL_Window *window, SDL_Propert
     } else {
         data->egl_surface = EGL_NO_SURFACE;
     }
-    SDL_SetProperty(props, "SDL.window.vivante.surface", data->egl_surface);
+    SDL_SetProperty(props, SDL_PROPERTY_WINDOW_VIVANTE_SURFACE_POINTER, data->egl_surface);
 #endif
 
     /* Window has been successfully created */

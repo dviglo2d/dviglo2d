@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2023 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2024 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -69,14 +69,10 @@ static void X11_DestroyEmptyCursor(void)
 
 static SDL_Cursor *X11_CreateDefaultCursor(void)
 {
-    SDL_Cursor *cursor;
-
-    cursor = SDL_calloc(1, sizeof(*cursor));
+    SDL_Cursor *cursor = SDL_calloc(1, sizeof(*cursor));
     if (cursor) {
         /* None is used to indicate the default cursor */
         cursor->driverdata = (void *)(uintptr_t)None;
-    } else {
-        SDL_OutOfMemory();
     }
 
     return cursor;
@@ -124,14 +120,12 @@ static Cursor X11_CreatePixmapCursor(SDL_Surface *surface, int hot_x, int hot_y)
 
     data_bits = SDL_calloc(1, surface->h * width_bytes);
     if (!data_bits) {
-        SDL_OutOfMemory();
         return None;
     }
 
     mask_bits = SDL_calloc(1, surface->h * width_bytes);
     if (!mask_bits) {
         SDL_free(data_bits);
-        SDL_OutOfMemory();
         return None;
     }
 
@@ -200,9 +194,7 @@ static Cursor X11_CreatePixmapCursor(SDL_Surface *surface, int hot_x, int hot_y)
 
 static SDL_Cursor *X11_CreateCursor(SDL_Surface *surface, int hot_x, int hot_y)
 {
-    SDL_Cursor *cursor;
-
-    cursor = SDL_calloc(1, sizeof(*cursor));
+    SDL_Cursor *cursor = SDL_calloc(1, sizeof(*cursor));
     if (cursor) {
         Cursor x11_cursor = None;
 
@@ -215,8 +207,6 @@ static SDL_Cursor *X11_CreateCursor(SDL_Surface *surface, int hot_x, int hot_y)
             x11_cursor = X11_CreatePixmapCursor(surface, hot_x, hot_y);
         }
         cursor->driverdata = (void *)(uintptr_t)x11_cursor;
-    } else {
-        SDL_OutOfMemory();
     }
 
     return cursor;
@@ -302,8 +292,6 @@ static SDL_Cursor *X11_CreateSystemCursor(SDL_SystemCursor id)
         x11_cursor = X11_XCreateFontCursor(GetDisplay(), shape);
 
         cursor->driverdata = (void *)(uintptr_t)x11_cursor;
-    } else {
-        SDL_OutOfMemory();
     }
 
     return cursor;
@@ -523,6 +511,12 @@ void X11_QuitMouse(SDL_VideoDevice *_this)
     SDL_VideoData *data = _this->driverdata;
     SDL_XInput2DeviceInfo *i;
     SDL_XInput2DeviceInfo *next;
+    int j;
+
+    for (j = 0; j < SDL_arraysize(sys_cursors); j++) {
+        X11_FreeCursor(sys_cursors[j]);
+        sys_cursors[j] = NULL;
+    }
 
     for (i = data->mouse_device_info; i; i = next) {
         next = i->next;

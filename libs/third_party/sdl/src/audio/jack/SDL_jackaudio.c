@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2023 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2024 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -297,7 +297,7 @@ static int JACK_OpenDevice(SDL_AudioDevice *device)
     // Initialize all variables that we clean on shutdown
     device->hidden = (struct SDL_PrivateAudioData *)SDL_calloc(1, sizeof(*device->hidden));
     if (!device->hidden) {
-        return SDL_OutOfMemory();
+        return -1;
     }
 
     client = JACK_jack_client_open(GetJackAppName(), JackNoStartServer, &status, NULL);
@@ -343,7 +343,7 @@ static int JACK_OpenDevice(SDL_AudioDevice *device)
         device->hidden->iobuffer = (float *)SDL_calloc(1, device->buffer_size);
         if (!device->hidden->iobuffer) {
             SDL_free(audio_ports);
-            return SDL_OutOfMemory();
+            return -1;
         }
     }
 
@@ -351,7 +351,7 @@ static int JACK_OpenDevice(SDL_AudioDevice *device)
     device->hidden->sdlports = (jack_port_t **)SDL_calloc(channels, sizeof(jack_port_t *));
     if (!device->hidden->sdlports) {
         SDL_free(audio_ports);
-        return SDL_OutOfMemory();
+        return -1;
     }
 
     for (i = 0; i < channels; i++) {

@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2023 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2024 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -345,7 +345,7 @@ static void SDL_TARGETING("mmx") BlitRGBtoRGBPixelAlphaMMX(SDL_BlitInfo *info)
     }
 
     multmask = 0x00FF;
-    multmask <<= (ashift * 2);
+    multmask <<= ((Uint64)ashift * 2);
     multmask2 = 0x00FF00FF00FF00FFULL;
 
     while (height--) {

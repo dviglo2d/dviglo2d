@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2023 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2024 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -128,7 +128,7 @@ int X11_CreateWindowFramebuffer(SDL_VideoDevice *_this, SDL_Window *window, Uint
 
     *pixels = SDL_malloc((size_t)h * (*pitch));
     if (!*pixels) {
-        return SDL_OutOfMemory();
+        return -1;
     }
 
     data->ximage = X11_XCreateImage(display, data->visual,

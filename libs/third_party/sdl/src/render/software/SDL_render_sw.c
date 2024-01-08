@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2023 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2024 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -302,7 +302,7 @@ static int Blit_to_Screen(SDL_Surface *src, SDL_Rect *srcrect, SDL_Surface *surf
         r.y = (int)((float)dstrect->y * scale_y);
         r.w = (int)((float)dstrect->w * scale_x);
         r.h = (int)((float)dstrect->h * scale_y);
-        retval = SDL_PrivateBlitSurfaceScaled(src, srcrect, surface, &r, scaleMode);
+        retval = SDL_BlitSurfaceScaled(src, srcrect, surface, &r, scaleMode);
     } else {
         retval = SDL_BlitSurface(src, srcrect, surface, dstrect);
     }
@@ -404,7 +404,7 @@ static int SW_RenderCopyEx(SDL_Renderer *renderer, SDL_Surface *surface, SDL_Tex
             retval = -1;
         } else {
             SDL_SetSurfaceBlendMode(src_clone, SDL_BLENDMODE_NONE);
-            retval = SDL_PrivateBlitSurfaceScaled(src_clone, srcrect, src_scaled, &scale_rect, texture->scaleMode);
+            retval = SDL_BlitSurfaceScaled(src_clone, srcrect, src_scaled, &scale_rect, texture->scaleMode);
             SDL_DestroySurface(src_clone);
             src_clone = src_scaled;
             src_scaled = NULL;
@@ -643,7 +643,7 @@ static void SetDrawState(SDL_Surface *surface, SW_DrawStateCache *drawstate)
         const SDL_Rect *cliprect = drawstate->cliprect;
         SDL_assert_release(viewport != NULL); /* the higher level should have forced a SDL_RENDERCMD_SETVIEWPORT */
 
-        if (cliprect) {
+        if (cliprect && viewport) {
             SDL_Rect clip_rect;
             clip_rect.x = cliprect->x + viewport->x;
             clip_rect.y = cliprect->y + viewport->y;
@@ -657,6 +657,12 @@ static void SetDrawState(SDL_Surface *surface, SW_DrawStateCache *drawstate)
         drawstate->surface_cliprect_dirty = SDL_FALSE;
     }
 }
+
+static void SW_InvalidateCachedState(SDL_Renderer *renderer)
+{
+    /* SW_DrawStateCache only lives during SW_RunCommandQueue, so nothing to do here! */
+}
+
 
 static int SW_RunCommandQueue(SDL_Renderer *renderer, SDL_RenderCommand *cmd, void *vertices, size_t vertsize)
 {
@@ -837,7 +843,7 @@ static int SW_RunCommandQueue(SDL_Renderer *renderer, SDL_RenderCommand *cmd, vo
                         SDL_SetSurfaceColorMod(src, 255, 255, 255);
                         SDL_SetSurfaceAlphaMod(src, 255);
 
-                        SDL_PrivateBlitSurfaceScaled(src, srcrect, tmp, &r, texture->scaleMode);
+                        SDL_BlitSurfaceScaled(src, srcrect, tmp, &r, texture->scaleMode);
 
                         SDL_SetSurfaceColorMod(tmp, rMod, gMod, bMod);
                         SDL_SetSurfaceAlphaMod(tmp, alphaMod);
@@ -848,7 +854,7 @@ static int SW_RunCommandQueue(SDL_Renderer *renderer, SDL_RenderCommand *cmd, vo
                         /* No need to set back r/g/b/a/blendmode to 'src' since it's done in PrepTextureForCopy() */
                     }
                 } else {
-                    SDL_PrivateBlitSurfaceScaled(src, srcrect, surface, dstrect, texture->scaleMode);
+                    SDL_BlitSurfaceScaled(src, srcrect, surface, dstrect, texture->scaleMode);
                 }
             }
             break;
@@ -1105,14 +1111,12 @@ SDL_Renderer *SW_CreateRendererForSurface(SDL_Surface *surface)
 
     renderer = (SDL_Renderer *)SDL_calloc(1, sizeof(*renderer));
     if (!renderer) {
-        SDL_OutOfMemory();
         return NULL;
     }
 
     data = (SW_RenderData *)SDL_calloc(1, sizeof(*data));
     if (!data) {
         SW_DestroyRenderer(renderer);
-        SDL_OutOfMemory();
         return NULL;
     }
     data->surface = surface;
@@ -1134,6 +1138,7 @@ SDL_Renderer *SW_CreateRendererForSurface(SDL_Surface *surface)
     renderer->QueueCopy = SW_QueueCopy;
     renderer->QueueCopyEx = SW_QueueCopyEx;
     renderer->QueueGeometry = SW_QueueGeometry;
+    renderer->InvalidateCachedState = SW_InvalidateCachedState;
     renderer->RunCommandQueue = SW_RunCommandQueue;
     renderer->RenderReadPixels = SW_RenderReadPixels;
     renderer->RenderPresent = SW_RenderPresent;
@@ -1141,6 +1146,7 @@ SDL_Renderer *SW_CreateRendererForSurface(SDL_Surface *surface)
     renderer->DestroyRenderer = SW_DestroyRenderer;
     renderer->info = SW_RenderDriver.info;
     renderer->driverdata = data;
+    SW_InvalidateCachedState(renderer);
 
     SW_SelectBestFormats(renderer, surface->format->format);
 
@@ -1162,7 +1168,7 @@ static SDL_Renderer *SW_CreateRenderer(SDL_Window *window, SDL_PropertiesID crea
     }
 
     if (no_hint_set) {
-        if (SDL_GetBooleanProperty(create_props, "present_vsync", SDL_FALSE)) {
+        if (SDL_GetBooleanProperty(create_props, SDL_PROPERTY_RENDERER_CREATE_PRESENT_VSYNC_BOOLEAN, SDL_FALSE)) {
             SDL_SetHint(SDL_HINT_RENDER_VSYNC, "1");
         } else {
             SDL_SetHint(SDL_HINT_RENDER_VSYNC, "0");

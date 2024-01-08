@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2023 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2024 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -111,7 +111,7 @@ static int PS2_CreateTexture(SDL_Renderer *renderer, SDL_Texture *texture, SDL_P
     GSTEXTURE *ps2_tex = (GSTEXTURE *)SDL_calloc(1, sizeof(GSTEXTURE));
 
     if (!ps2_tex) {
-        return SDL_OutOfMemory();
+        return -1;
     }
 
     ps2_tex->Width = texture->w;
@@ -121,7 +121,7 @@ static int PS2_CreateTexture(SDL_Renderer *renderer, SDL_Texture *texture, SDL_P
 
     if (!ps2_tex->Mem) {
         SDL_free(ps2_tex);
-        return SDL_OutOfMemory();
+        return -1;
     }
 
     texture->driverdata = ps2_tex;
@@ -446,6 +446,11 @@ int PS2_RenderPoints(SDL_Renderer *renderer, void *vertices, SDL_RenderCommand *
     return 0;
 }
 
+static void PS2_InvalidateCachedState(SDL_Renderer *renderer)
+{
+    /* currently this doesn't do anything. If this needs to do something (and someone is mixing their own rendering calls in!), update this. */
+}
+
 static int PS2_RunCommandQueue(SDL_Renderer *renderer, SDL_RenderCommand *cmd, void *vertices, size_t vertsize)
 {
     while (cmd) {
@@ -590,14 +595,12 @@ static SDL_Renderer *PS2_CreateRenderer(SDL_Window *window, SDL_PropertiesID cre
 
     renderer = (SDL_Renderer *)SDL_calloc(1, sizeof(*renderer));
     if (!renderer) {
-        SDL_OutOfMemory();
         return NULL;
     }
 
     data = (PS2_RenderData *)SDL_calloc(1, sizeof(*data));
     if (!data) {
         PS2_DestroyRenderer(renderer);
-        SDL_OutOfMemory();
         return NULL;
     }
 
@@ -640,7 +643,7 @@ static SDL_Renderer *PS2_CreateRenderer(SDL_Window *window, SDL_PropertiesID cre
 
     data->gsGlobal = gsGlobal;
     dynamicVsync = SDL_GetHintBoolean(SDL_HINT_PS2_DYNAMIC_VSYNC, SDL_FALSE);
-    if (SDL_GetBooleanProperty(create_props, "present_vsync", SDL_FALSE)) {
+    if (SDL_GetBooleanProperty(create_props, SDL_PROPERTY_RENDERER_CREATE_PRESENT_VSYNC_BOOLEAN, SDL_FALSE)) {
         data->vsync = (dynamicVsync ? 2 : 1);
     }
 
@@ -656,6 +659,7 @@ static SDL_Renderer *PS2_CreateRenderer(SDL_Window *window, SDL_PropertiesID cre
     renderer->QueueDrawPoints = PS2_QueueDrawPoints;
     renderer->QueueDrawLines = PS2_QueueDrawPoints;
     renderer->QueueGeometry = PS2_QueueGeometry;
+    renderer->InvalidateCachedState = PS2_InvalidateCachedState;
     renderer->RunCommandQueue = PS2_RunCommandQueue;
     renderer->RenderReadPixels = PS2_RenderReadPixels;
     renderer->RenderPresent = PS2_RenderPresent;
@@ -665,6 +669,7 @@ static SDL_Renderer *PS2_CreateRenderer(SDL_Window *window, SDL_PropertiesID cre
     renderer->info = PS2_RenderDriver.info;
     renderer->info.flags = SDL_RENDERER_ACCELERATED;
     renderer->driverdata = data;
+    PS2_InvalidateCachedState(renderer);
     renderer->window = window;
 
     if (data->vsync) {

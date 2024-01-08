@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2023 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2024 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -57,7 +57,7 @@ static int SDL_COREMOTION_SensorInit(void)
     if (sensors_count > 0) {
         SDL_sensors = (SDL_CoreMotionSensor *)SDL_calloc(sensors_count, sizeof(*SDL_sensors));
         if (!SDL_sensors) {
-            return SDL_OutOfMemory();
+            return -1;
         }
 
         i = 0;
@@ -118,7 +118,7 @@ static int SDL_COREMOTION_SensorOpen(SDL_Sensor *sensor, int device_index)
 
     hwdata = (struct sensor_hwdata *)SDL_calloc(1, sizeof(*hwdata));
     if (hwdata == NULL) {
-        return SDL_OutOfMemory();
+        return -1;
     }
     sensor->hwdata = hwdata;
 

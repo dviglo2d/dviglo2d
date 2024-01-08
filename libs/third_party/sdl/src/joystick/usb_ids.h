@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2023 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2024 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -39,6 +39,7 @@
 #define USB_VENDOR_MADCATZ      0x0738
 #define USB_VENDOR_MICROSOFT    0x045e
 #define USB_VENDOR_NACON        0x146b
+#define USB_VENDOR_NACON_ALT    0x3285
 #define USB_VENDOR_NINTENDO     0x057e
 #define USB_VENDOR_NVIDIA       0x0955
 #define USB_VENDOR_PDP          0x0e6f
@@ -72,6 +73,10 @@
 #define USB_PRODUCT_HORI_FIGHTING_STICK_ALPHA_PS5         0x0184
 #define USB_PRODUCT_LOGITECH_F310                         0xc216
 #define USB_PRODUCT_LOGITECH_CHILLSTREAM                  0xcad1
+#define USB_PRODUCT_NACON_REVOLUTION_5_PRO_PS4_WIRELESS   0x0d16
+#define USB_PRODUCT_NACON_REVOLUTION_5_PRO_PS4_WIRED      0x0d17
+#define USB_PRODUCT_NACON_REVOLUTION_5_PRO_PS5_WIRELESS   0x0d18
+#define USB_PRODUCT_NACON_REVOLUTION_5_PRO_PS5_WIRED      0x0d19
 #define USB_PRODUCT_NINTENDO_GAMECUBE_ADAPTER             0x0337
 #define USB_PRODUCT_NINTENDO_N64_CONTROLLER               0x2019
 #define USB_PRODUCT_NINTENDO_SEGA_GENESIS_CONTROLLER      0x201e
@@ -116,6 +121,8 @@
 #define USB_PRODUCT_XBOX360_XUSB_CONTROLLER               0x02a1 /* XUSB driver software PID */
 #define USB_PRODUCT_XBOX360_WIRED_CONTROLLER              0x028e
 #define USB_PRODUCT_XBOX360_WIRELESS_RECEIVER             0x0719
+#define USB_PRODUCT_XBOX360_WIRELESS_RECEIVER_THIRDPARTY1 0x02a9
+#define USB_PRODUCT_XBOX360_WIRELESS_RECEIVER_THIRDPARTY2 0x0291
 #define USB_PRODUCT_XBOX_ONE_ADAPTIVE                     0x0b0a
 #define USB_PRODUCT_XBOX_ONE_ADAPTIVE_BLUETOOTH           0x0b0c
 #define USB_PRODUCT_XBOX_ONE_ADAPTIVE_BLE                 0x0b21
@@ -138,7 +145,6 @@
 #define USB_PRODUCT_XBOX_SERIES_X_POWERA_SPECTRA          0x4002
 #define USB_PRODUCT_XBOX_SERIES_X_VICTRIX_GAMBIT          0x02d6
 #define USB_PRODUCT_XBOX_ONE_XBOXGIP_CONTROLLER           0x02ff /* XBOXGIP driver software PID */
-#define USB_PRODUCT_XBOX_ONE_XINPUT_CONTROLLER            0x02fe /* Made up product ID for XInput */
 #define USB_PRODUCT_STEAM_VIRTUAL_GAMEPAD                 0x11ff
 
 /* USB usage pages */

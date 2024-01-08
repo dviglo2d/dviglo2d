@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2023 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2024 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -525,7 +525,7 @@ static int D3D_CreateTexture(SDL_Renderer *renderer, SDL_Texture *texture, SDL_P
 
     texturedata = (D3D_TextureData *)SDL_calloc(1, sizeof(*texturedata));
     if (!texturedata) {
-        return SDL_OutOfMemory();
+        return -1;
     }
     texturedata->scaleMode = (texture->scaleMode == SDL_SCALEMODE_NEAREST) ? D3DTEXF_POINT : D3DTEXF_LINEAR;
 
@@ -661,7 +661,7 @@ static int D3D_LockTexture(SDL_Renderer *renderer, SDL_Texture *texture,
             texturedata->pitch = texture->w;
             texturedata->pixels = (Uint8 *)SDL_malloc((texture->h * texturedata->pitch * 3) / 2);
             if (!texturedata->pixels) {
-                return SDL_OutOfMemory();
+                return -1;
             }
         }
         *pixels =
@@ -1086,6 +1086,17 @@ static int SetDrawState(D3D_RenderData *data, const SDL_RenderCommand *cmd)
     return 0;
 }
 
+static void D3D_InvalidateCachedState(SDL_Renderer *renderer)
+{
+    D3D_RenderData *data = (D3D_RenderData *)renderer->driverdata;
+    data->drawstate.viewport_dirty = SDL_TRUE;
+    data->drawstate.cliprect_enabled_dirty = SDL_TRUE;
+    data->drawstate.cliprect_dirty = SDL_TRUE;
+    data->drawstate.blend = SDL_BLENDMODE_INVALID;
+    data->drawstate.texture = NULL;
+    data->drawstate.shader = NULL;
+}
+
 static int D3D_RunCommandQueue(SDL_Renderer *renderer, SDL_RenderCommand *cmd, void *vertices, size_t vertsize)
 {
     D3D_RenderData *data = (D3D_RenderData *)renderer->driverdata;
@@ -1500,12 +1511,9 @@ static int D3D_Reset(SDL_Renderer *renderer)
     IDirect3DDevice9_GetRenderTarget(data->device, 0, &data->defaultRenderTarget);
     D3D_InitRenderState(data);
     D3D_SetRenderTargetInternal(renderer, renderer->target);
-    data->drawstate.viewport_dirty = SDL_TRUE;
-    data->drawstate.cliprect_dirty = SDL_TRUE;
-    data->drawstate.cliprect_enabled_dirty = SDL_TRUE;
-    data->drawstate.texture = NULL;
-    data->drawstate.shader = NULL;
-    data->drawstate.blend = SDL_BLENDMODE_INVALID;
+
+    D3D_InvalidateCachedState(renderer);
+
     IDirect3DDevice9_SetTransform(data->device, D3DTS_VIEW, (D3DMATRIX *)&d3dmatrix);
 
     /* Let the application know that render targets were reset */
@@ -1551,7 +1559,6 @@ SDL_Renderer *D3D_CreateRenderer(SDL_Window *window, SDL_PropertiesID create_pro
 
     renderer = (SDL_Renderer *)SDL_calloc(1, sizeof(*renderer));
     if (!renderer) {
-        SDL_OutOfMemory();
         return NULL;
     }
     renderer->magic = &SDL_renderer_magic;
@@ -1559,7 +1566,6 @@ SDL_Renderer *D3D_CreateRenderer(SDL_Window *window, SDL_PropertiesID create_pro
     data = (D3D_RenderData *)SDL_calloc(1, sizeof(*data));
     if (!data) {
         SDL_free(renderer);
-        SDL_OutOfMemory();
         return NULL;
     }
 
@@ -1586,6 +1592,7 @@ SDL_Renderer *D3D_CreateRenderer(SDL_Window *window, SDL_PropertiesID create_pro
     renderer->QueueDrawPoints = D3D_QueueDrawPoints;
     renderer->QueueDrawLines = D3D_QueueDrawPoints; /* lines and points queue vertices the same way. */
     renderer->QueueGeometry = D3D_QueueGeometry;
+    renderer->InvalidateCachedState = D3D_InvalidateCachedState;
     renderer->RunCommandQueue = D3D_RunCommandQueue;
     renderer->RenderReadPixels = D3D_RenderReadPixels;
     renderer->RenderPresent = D3D_RenderPresent;
@@ -1595,6 +1602,7 @@ SDL_Renderer *D3D_CreateRenderer(SDL_Window *window, SDL_PropertiesID create_pro
     renderer->info = D3D_RenderDriver.info;
     renderer->info.flags = SDL_RENDERER_ACCELERATED;
     renderer->driverdata = data;
+    D3D_InvalidateCachedState(renderer);
 
     SDL_GetWindowSizeInPixels(window, &w, &h);
     if (SDL_GetWindowFlags(window) & SDL_WINDOW_FULLSCREEN) {
@@ -1602,7 +1610,7 @@ SDL_Renderer *D3D_CreateRenderer(SDL_Window *window, SDL_PropertiesID create_pro
     }
 
     SDL_zero(pparams);
-    pparams.hDeviceWindow = (HWND)SDL_GetProperty(SDL_GetWindowProperties(window), "SDL.window.win32.hwnd", NULL);
+    pparams.hDeviceWindow = (HWND)SDL_GetProperty(SDL_GetWindowProperties(window), SDL_PROPERTY_WINDOW_WIN32_HWND_POINTER, NULL);
     pparams.BackBufferWidth = w;
     pparams.BackBufferHeight = h;
     pparams.BackBufferCount = 1;
@@ -1617,7 +1625,7 @@ SDL_Renderer *D3D_CreateRenderer(SDL_Window *window, SDL_PropertiesID create_pro
         pparams.BackBufferFormat = D3DFMT_UNKNOWN;
         pparams.FullScreen_RefreshRateInHz = 0;
     }
-    if (SDL_GetBooleanProperty(create_props, "present_vsync", SDL_FALSE)) {
+    if (SDL_GetBooleanProperty(create_props, SDL_PROPERTY_RENDERER_CREATE_PRESENT_VSYNC_BOOLEAN, SDL_FALSE)) {
         pparams.PresentationInterval = D3DPRESENT_INTERVAL_ONE;
     } else {
         pparams.PresentationInterval = D3DPRESENT_INTERVAL_IMMEDIATE;
@@ -1700,12 +1708,8 @@ SDL_Renderer *D3D_CreateRenderer(SDL_Window *window, SDL_PropertiesID create_pro
         }
     }
 #endif
-    data->drawstate.viewport_dirty = SDL_TRUE;
-    data->drawstate.cliprect_dirty = SDL_TRUE;
-    data->drawstate.cliprect_enabled_dirty = SDL_TRUE;
-    data->drawstate.blend = SDL_BLENDMODE_INVALID;
 
-    SDL_SetProperty(SDL_GetRendererProperties(renderer), "SDL.renderer.d3d9.device", data->device);
+    SDL_SetProperty(SDL_GetRendererProperties(renderer), SDL_PROPERTY_RENDERER_D3D9_DEVICE_POINTER, data->device);
 
     return renderer;
 }

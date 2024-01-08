@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2023 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2024 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -54,7 +54,7 @@ int SDL_N3DS_CreateWindowFramebuffer(SDL_VideoDevice *_this, SDL_Window *window,
     framebuffer = SDL_CreateSurface(w, h, FRAMEBUFFER_FORMAT);
 
     if (!framebuffer) {
-        return SDL_OutOfMemory();
+        return -1;
     }
 
     SDL_SetPropertyWithCleanup(SDL_GetWindowProperties(window), N3DS_SURFACE, framebuffer, CleanupSurface, NULL);

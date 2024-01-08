@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2023 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2024 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -146,6 +146,19 @@ static void touch_del(SDL_TouchID id, wl_fixed_t *fx, wl_fixed_t *fy, struct wl_
             break;
         }
     }
+}
+
+static SDL_bool Wayland_SurfaceHasActiveTouches(struct wl_surface *surface)
+{
+    struct SDL_WaylandTouchPoint *tp;
+
+    wl_list_for_each (tp, &touch_points, link) {
+        if (tp->surface == surface) {
+            return SDL_TRUE;
+        }
+    }
+
+    return SDL_FALSE;
 }
 
 static Uint64 Wayland_GetEventTimestamp(Uint64 nsTimestamp)
@@ -581,7 +594,13 @@ static void pointer_handle_leave(void *data, struct wl_pointer *pointer,
             SDL_SendMouseButton(Wayland_GetPointerTimestamp(input, 0), wind->sdlwindow, 0, SDL_RELEASED, SDL_BUTTON_X2);
         }
 
-        SDL_SetMouseFocus(NULL);
+
+        /* A pointer leave event may be emitted if the compositor hides the pointer in response to receiving a touch event.
+         * Don't relinquish focus if the surface has active touches, as the compositor is just transitioning from mouse to touch mode.
+         */
+        if (!Wayland_SurfaceHasActiveTouches(surface)) {
+            SDL_SetMouseFocus(NULL);
+        }
         input->pointer_focus = NULL;
     }
 }
@@ -984,6 +1003,8 @@ static void touch_handler_down(void *data, struct wl_touch *touch, uint32_t seri
             y = wl_fixed_to_double(fy) / (window_data->wl_window_height - 1);
         }
 
+        SDL_SetMouseFocus(window_data->sdlwindow);
+
         SDL_SendTouch(Wayland_GetTouchTimestamp(input, timestamp), (SDL_TouchID)(intptr_t)touch,
                       (SDL_FingerID)id, window_data->sdlwindow, SDL_TRUE, x, y, 1.0f);
     }
@@ -1007,6 +1028,14 @@ static void touch_handler_up(void *data, struct wl_touch *touch, uint32_t serial
 
             SDL_SendTouch(Wayland_GetTouchTimestamp(input, timestamp), (SDL_TouchID)(intptr_t)touch,
                           (SDL_FingerID)id, window_data->sdlwindow, SDL_FALSE, x, y, 0.0f);
+
+            /* If the seat lacks pointer focus, the seat's keyboard focus is another window or NULL, this window curently
+             * has mouse focus, and the surface has no active touch events, consider mouse focus to be lost.
+             */
+            if (!input->pointer_focus && input->keyboard_focus != window_data &&
+                SDL_GetMouseFocus() == window_data->sdlwindow && !Wayland_SurfaceHasActiveTouches(surface)) {
+                SDL_SetMouseFocus(NULL);
+            }
         }
     }
 }
@@ -1447,15 +1476,18 @@ static void keyboard_handle_leave(void *data, struct wl_keyboard *keyboard,
                                   uint32_t serial, struct wl_surface *surface)
 {
     struct SDL_WaylandInput *input = data;
-    SDL_WindowData *window;
+    SDL_WindowData *wind;
+    SDL_Window *window = NULL;
 
     if (!surface || !SDL_WAYLAND_own_surface(surface)) {
         return;
     }
 
-    window = wl_surface_get_user_data(surface);
-    if (window) {
-        window->sdlwindow->flags &= ~SDL_WINDOW_MOUSE_CAPTURE;
+    wind = wl_surface_get_user_data(surface);
+    if (wind) {
+        wind->keyboard_device = NULL;
+        window = wind->sdlwindow;
+        window->flags &= ~SDL_WINDOW_MOUSE_CAPTURE;
     }
 
     /* Stop key repeat before clearing keyboard focus */
@@ -1463,6 +1495,7 @@ static void keyboard_handle_leave(void *data, struct wl_keyboard *keyboard,
 
     /* This will release any keys still pressed */
     SDL_SetKeyboardFocus(NULL);
+    input->keyboard_focus = NULL;
 
     /* Clear the pressed modifiers. */
     input->pressed_modifiers = SDL_KMOD_NONE;
@@ -1472,6 +1505,13 @@ static void keyboard_handle_leave(void *data, struct wl_keyboard *keyboard,
         SDL_IME_SetFocus(SDL_FALSE);
     }
 #endif
+
+    /* If the surface had a pointer leave event while still having active touch events, it retained mouse focus.
+     * Clear it now if all touch events are raised.
+     */
+    if (!input->pointer_focus && SDL_GetMouseFocus() == window && !Wayland_SurfaceHasActiveTouches(surface)) {
+        SDL_SetMouseFocus(NULL);
+    }
 }
 
 static SDL_bool keyboard_input_get_text(char text[8], const struct SDL_WaylandInput *input, uint32_t key, Uint8 state, SDL_bool *handled_by_ime)
@@ -1651,7 +1691,6 @@ static void seat_handle_capabilities(void *data, struct wl_seat *seat,
     }
 
     if ((caps & WL_SEAT_CAPABILITY_TOUCH) && !input->touch) {
-        WAYLAND_wl_list_init(&touch_points);
         input->touch = wl_seat_get_touch(seat);
         SDL_AddTouch((SDL_TouchID)(intptr_t)input->touch, SDL_TOUCH_DEVICE_DIRECT, "wayland_touch");
         wl_touch_set_user_data(input->touch, input);
@@ -1765,7 +1804,6 @@ SDL_WaylandDataSource *Wayland_data_source_create(SDL_VideoDevice *_this)
         } else {
             data_source = SDL_calloc(1, sizeof(*data_source));
             if (!data_source) {
-                SDL_OutOfMemory();
                 wl_data_source_destroy(id);
             } else {
                 data_source->source = id;
@@ -1799,7 +1837,6 @@ SDL_WaylandPrimarySelectionSource *Wayland_primary_selection_source_create(SDL_V
         } else {
             primary_selection_source = SDL_calloc(1, sizeof(*primary_selection_source));
             if (!primary_selection_source) {
-                SDL_OutOfMemory();
                 zwp_primary_selection_source_v1_destroy(id);
             } else {
                 primary_selection_source->source = id;
@@ -1848,12 +1885,8 @@ static const struct zwp_primary_selection_offer_v1_listener primary_selection_of
 static void data_device_handle_data_offer(void *data, struct wl_data_device *wl_data_device,
                                           struct wl_data_offer *id)
 {
-    SDL_WaylandDataOffer *data_offer = NULL;
-
-    data_offer = SDL_calloc(1, sizeof(*data_offer));
-    if (!data_offer) {
-        SDL_OutOfMemory();
-    } else {
+    SDL_WaylandDataOffer *data_offer = SDL_calloc(1, sizeof(*data_offer));
+    if (data_offer) {
         data_offer->offer = id;
         data_offer->data_device = data;
         WAYLAND_wl_list_init(&(data_offer->mimes));
@@ -2158,12 +2191,8 @@ static const struct wl_data_device_listener data_device_listener = {
 static void primary_selection_device_handle_offer(void *data, struct zwp_primary_selection_device_v1 *zwp_primary_selection_device_v1,
                                                   struct zwp_primary_selection_offer_v1 *id)
 {
-    SDL_WaylandPrimarySelectionOffer *primary_selection_offer = NULL;
-
-    primary_selection_offer = SDL_calloc(1, sizeof(*primary_selection_offer));
-    if (!primary_selection_offer) {
-        SDL_OutOfMemory();
-    } else {
+    SDL_WaylandPrimarySelectionOffer *primary_selection_offer = SDL_calloc(1, sizeof(*primary_selection_offer));
+    if (primary_selection_offer) {
         primary_selection_offer->offer = id;
         primary_selection_offer->primary_selection_device = data;
         WAYLAND_wl_list_init(&(primary_selection_offer->mimes));
@@ -2964,6 +2993,8 @@ void Wayland_display_add_input(SDL_VideoData *d, uint32_t id, uint32_t version)
     if (!input) {
         return;
     }
+
+    WAYLAND_wl_list_init(&touch_points);
 
     input->display = d;
     input->seat = wl_registry_bind(d->registry, id, &wl_seat_interface, SDL_min(SDL_WL_SEAT_VERSION, version));

@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2023 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2024 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -312,24 +312,19 @@ extern DECLSPEC int SDLCALL SDL_AddGamepadMappingsFromFile(const char *file);
 extern DECLSPEC int SDLCALL SDL_ReloadGamepadMappings(void);
 
 /**
- * Get the number of mappings installed.
- *
- * \returns the number of mappings.
- *
- * \since This function is available since SDL 3.0.0.
- */
-extern DECLSPEC int SDLCALL SDL_GetNumGamepadMappings(void);
-
-/**
  * Get the mapping at a particular index.
  *
- * \param mapping_index mapping index
- * \returns the mapping string. Must be freed with SDL_free(). Returns NULL if
- *          the index is out of range.
+ * You must free the returned pointer with SDL_free() when you are done with
+ * it, but you do _not_ free each string in the array.
+ *
+ * \param count a pointer filled in with the number of mappings returned, can
+ *              be NULL.
+ * \returns an array of the mapping strings, NULL-terminated. Must be freed
+ *          with SDL_free(). Returns NULL on error.
  *
  * \since This function is available since SDL 3.0.0.
  */
-extern DECLSPEC char * SDLCALL SDL_GetGamepadMappingForIndex(int mapping_index);
+extern DECLSPEC char ** SDLCALL SDL_GetGamepadMappings(int *count);
 
 /**
  * Get the gamepad mapping string for a given GUID.
@@ -762,6 +757,19 @@ extern DECLSPEC Uint16 SDLCALL SDL_GetGamepadFirmwareVersion(SDL_Gamepad *gamepa
  * \since This function is available since SDL 3.0.0.
  */
 extern DECLSPEC const char * SDLCALL SDL_GetGamepadSerial(SDL_Gamepad *gamepad);
+
+/**
+ * Get the Steam Input handle of an opened gamepad, if available.
+ *
+ * Returns an InputHandle_t for the gamepad that can be used with Steam Input
+ * API: https://partner.steamgames.com/doc/api/ISteamInput
+ *
+ * \param gamepad the gamepad object to query.
+ * \returns the gamepad handle, or 0 if unavailable.
+ *
+ * \since This function is available since SDL 3.0.0.
+ */
+extern DECLSPEC Uint64 SDLCALL SDL_GetGamepadSteamHandle(SDL_Gamepad *gamepad);
 
 /**
  * Get the battery level of a gamepad, if available.

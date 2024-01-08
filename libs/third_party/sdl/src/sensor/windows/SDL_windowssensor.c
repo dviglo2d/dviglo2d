@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2023 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2024 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -150,7 +150,7 @@ static HRESULT STDMETHODCALLTYPE ISensorEventsVtbl_OnDataUpdated(ISensorEvents *
         if (pSensor == SDL_sensors[i].sensor) {
             if (SDL_sensors[i].sensor_opened) {
                 HRESULT hrX, hrY, hrZ;
-                PROPVARIANT valueX, valueY, valueZ;
+                PROPVARIANT valueX = { 0 }, valueY = { 0 }, valueZ = { 0 };
                 SYSTEMTIME sensor_systemtime;
                 FILETIME sensor_filetime;
                 Uint64 sensor_timestamp;
@@ -296,7 +296,7 @@ static int ConnectSensor(ISensor *sensor)
         SysFreeString(bstr_name);
     }
     if (!name) {
-        return SDL_OutOfMemory();
+        return -1;
     }
 
     SDL_LockSensors();
@@ -304,7 +304,7 @@ static int ConnectSensor(ISensor *sensor)
     if (!new_sensors) {
         SDL_UnlockSensors();
         SDL_free(name);
-        return SDL_OutOfMemory();
+        return -1;
     }
 
     ISensor_AddRef(sensor);

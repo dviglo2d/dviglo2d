@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2023 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2024 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -26,6 +26,11 @@
 #include "edid.h"
 
 /* #define X11MODES_DEBUG */
+
+/* Timeout and revert mode switches if the timespan has elapsed without the window becoming fullscreen.
+ * 5 seconds seems good from testing.
+ */
+#define MODE_SWITCH_TIMEOUT_NS SDL_NS_PER_SECOND * 5
 
 /* I'm becoming more and more convinced that the application should never
  * use XRandR, and it's the window manager's responsibility to track and
@@ -565,13 +570,13 @@ static int X11_AddXRandRDisplay(SDL_VideoDevice *_this, Display *dpy, int screen
 
     displaydata = (SDL_DisplayData *)SDL_calloc(1, sizeof(*displaydata));
     if (!displaydata) {
-        return SDL_OutOfMemory();
+        return -1;
     }
 
     modedata = (SDL_DisplayModeData *)SDL_calloc(1, sizeof(SDL_DisplayModeData));
     if (!modedata) {
         SDL_free(displaydata);
-        return SDL_OutOfMemory();
+        return -1;
     }
 
     modedata->xrandr_mode = modeID;
@@ -768,13 +773,13 @@ static int X11_InitModes_StdXlib(SDL_VideoDevice *_this)
 
     displaydata = (SDL_DisplayData *)SDL_calloc(1, sizeof(*displaydata));
     if (!displaydata) {
-        return SDL_OutOfMemory();
+        return -1;
     }
 
     modedata = (SDL_DisplayModeData *)SDL_calloc(1, sizeof(SDL_DisplayModeData));
     if (!modedata) {
         SDL_free(displaydata);
-        return SDL_OutOfMemory();
+        return -1;
     }
     mode.driverdata = modedata;
 
@@ -902,6 +907,12 @@ int X11_SetDisplayMode(SDL_VideoDevice *_this, SDL_VideoDisplay *sdl_display, SD
     SDL_DisplayData *data = sdl_display->driverdata;
 
     viddata->last_mode_change_deadline = SDL_GetTicks() + (PENDING_FOCUS_TIME * 2);
+
+    if (mode != &sdl_display->desktop_mode) {
+        data->mode_switch_deadline_ns = SDL_GetTicksNS() + MODE_SWITCH_TIMEOUT_NS;
+    } else {
+        data->mode_switch_deadline_ns = 0;
+    }
 
 #ifdef SDL_VIDEO_DRIVER_X11_XRANDR
     if (data->use_xrandr) {

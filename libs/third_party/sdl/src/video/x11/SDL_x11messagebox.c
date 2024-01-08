@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2023 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2024 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -245,7 +245,7 @@ static int X11_MessageBoxInitPositions(SDL_MessageBoxDataX11 *data)
         TextLineData *plinedata = (TextLineData *)SDL_malloc(sizeof(TextLineData) * linecount);
 
         if (!plinedata) {
-            return SDL_OutOfMemory();
+            return -1;
         }
 
         data->linedata = plinedata;
@@ -763,7 +763,7 @@ static int X11_ShowMessageBoxImpl(const SDL_MessageBoxData *messageboxdata, int 
     if (origlocale) {
         origlocale = SDL_strdup(origlocale);
         if (!origlocale) {
-            return SDL_OutOfMemory();
+            return -1;
         }
         (void)setlocale(LC_ALL, "");
     }

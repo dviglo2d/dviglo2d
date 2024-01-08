@@ -26,15 +26,14 @@ del .clang-tidy
 del .editorconfig
 del .gitignore
 del .wikiheaders-options
+:: CREDITS.md
+del INSTALL.md
 del README.md
 del Android.mk
 del BUGS.txt
 :: CMakeLists.txt
-:: CREDITS.txt
-del INSTALL.txt
 :: LICENSE.txt
 :: README-SDL.txt
-del TODO.txt
 :: WhatsNew.txt
 
 :: Удаление всяких скриптов
@@ -48,7 +47,7 @@ del include\SDL3\SDL_test*.h
 rd /s /q src\test
 
 :: Удаляем все конфигурационные h-файлы, так как
-:: файл SDL_config.h генерируется с помощью SDL_config.h.cmake
+:: файл SDL_build_config.h.cmake генерируется с помощью SDL_build_config.h.cmake
 del include\build_config\*.h
 
 :: Удаляем файлы Visual Studio

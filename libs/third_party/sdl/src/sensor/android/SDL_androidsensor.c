@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2023 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2024 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -147,7 +147,7 @@ static int SDL_ANDROID_SensorInit(void)
     if (sensors_count > 0) {
         SDL_sensors = (SDL_AndroidSensor *)SDL_calloc(sensors_count, sizeof(*SDL_sensors));
         if (!SDL_sensors) {
-            return SDL_OutOfMemory();
+            return -1;
         }
 
         for (i = 0; i < sensors_count; ++i) {

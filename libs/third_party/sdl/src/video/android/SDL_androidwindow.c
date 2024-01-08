@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2023 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2024 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -62,7 +62,7 @@ int Android_CreateWindow(SDL_VideoDevice *_this, SDL_Window *window, SDL_Propert
 
     data = (SDL_WindowData *)SDL_calloc(1, sizeof(*data));
     if (!data) {
-        retval = SDL_OutOfMemory();
+        retval = -1;
         goto endfunction;
     }
 
@@ -72,7 +72,7 @@ int Android_CreateWindow(SDL_VideoDevice *_this, SDL_Window *window, SDL_Propert
         retval = SDL_SetError("Could not fetch native window");
         goto endfunction;
     }
-    SDL_SetProperty(SDL_GetWindowProperties(window), "SDL.window.android.window", data->native_window);
+    SDL_SetProperty(SDL_GetWindowProperties(window), SDL_PROPERTY_WINDOW_ANDROID_WINDOW_POINTER, data->native_window);
 
     /* Do not create EGLSurface for Vulkan window since it will then make the window
        incompatible with vkCreateAndroidSurfaceKHR */
@@ -87,7 +87,7 @@ int Android_CreateWindow(SDL_VideoDevice *_this, SDL_Window *window, SDL_Propert
             goto endfunction;
         }
     }
-    SDL_SetProperty(SDL_GetWindowProperties(window), "SDL.window.android.surface", data->egl_surface);
+    SDL_SetProperty(SDL_GetWindowProperties(window), SDL_PROPERTY_WINDOW_ANDROID_SURFACE_POINTER, data->egl_surface);
 #endif
 
     window->driverdata = data;
@@ -105,7 +105,7 @@ void Android_SetWindowTitle(SDL_VideoDevice *_this, SDL_Window *window)
     Android_JNI_SetActivityTitle(window->title);
 }
 
-void Android_SetWindowFullscreen(SDL_VideoDevice *_this, SDL_Window *window, SDL_VideoDisplay *display, SDL_bool fullscreen)
+int Android_SetWindowFullscreen(SDL_VideoDevice *_this, SDL_Window *window, SDL_VideoDisplay *display, SDL_bool fullscreen)
 {
     SDL_LockMutex(Android_ActivityMutex);
 
@@ -154,6 +154,7 @@ void Android_SetWindowFullscreen(SDL_VideoDevice *_this, SDL_Window *window, SDL
 endfunction:
 
     SDL_UnlockMutex(Android_ActivityMutex);
+    return 0;
 }
 
 void Android_MinimizeWindow(SDL_VideoDevice *_this, SDL_Window *window)

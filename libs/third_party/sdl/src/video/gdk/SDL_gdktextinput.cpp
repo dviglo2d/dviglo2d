@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2023 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2024 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -88,10 +88,7 @@ static void SDLCALL GDK_InternalHintCallback(
             *(char **)userdata = NULL;
         } else {
             char *newString = SDL_strdup(newValue);
-            if (!newString) {
-                /* couldn't strdup, oh well */
-                SDL_OutOfMemory();
-            } else {
+            if (newString) {
                 /* free previous value and write the new one */
                 SDL_free(*(char **)userdata);
                 *(char **)userdata = newString;
@@ -128,9 +125,7 @@ static void CALLBACK GDK_InternalTextEntryCallback(XAsyncBlock *asyncBlock)
     } else if (resultSize > 0) {
         /* +1 to be super sure that the buffer will be null terminated */
         resultBuffer = (char *)SDL_calloc(sizeof(*resultBuffer), 1 + (size_t)resultSize);
-        if (!resultBuffer) {
-            SDL_OutOfMemory();
-        } else {
+        if (resultBuffer) {
             /* still pass the original size that we got from ResultSize */
             if (FAILED(hR = XGameUiShowTextEntryResult(
                            asyncBlock,
@@ -263,7 +258,6 @@ void GDK_ShowScreenKeyboard(SDL_VideoDevice *_this, SDL_Window *window)
 
     g_TextBlock = (XAsyncBlock *)SDL_calloc(1, sizeof(*g_TextBlock));
     if (!g_TextBlock) {
-        SDL_OutOfMemory();
         return;
     }
 

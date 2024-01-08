@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2023 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2024 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -42,6 +42,9 @@ static SDL_UDEV_PrivateData *_this = NULL;
 static SDL_bool SDL_UDEV_load_sym(const char *fn, void **addr);
 static int SDL_UDEV_load_syms(void);
 static SDL_bool SDL_UDEV_hotplug_update_available(void);
+static void get_caps(struct udev_device *dev, struct udev_device *pdev, const char *attr, unsigned long *bitmask, size_t bitmask_len);
+static int guess_device_class(struct udev_device *dev);
+static int device_class(struct udev_device *dev);
 static void device_event(SDL_UDEV_deviceevent type, struct udev_device *dev);
 
 static SDL_bool SDL_UDEV_load_sym(const char *fn, void **addr)
@@ -112,7 +115,7 @@ int SDL_UDEV_Init(void)
     if (!_this) {
         _this = (SDL_UDEV_PrivateData *)SDL_calloc(1, sizeof(*_this));
         if (!_this) {
-            return SDL_OutOfMemory();
+            return -1;
         }
 
         retval = SDL_UDEV_LoadLibrary();
@@ -139,6 +142,7 @@ int SDL_UDEV_Init(void)
 
         _this->syms.udev_monitor_filter_add_match_subsystem_devtype(_this->udev_mon, "input", NULL);
         _this->syms.udev_monitor_filter_add_match_subsystem_devtype(_this->udev_mon, "sound", NULL);
+        _this->syms.udev_monitor_filter_add_match_subsystem_devtype(_this->udev_mon, "video4linux", NULL);
         _this->syms.udev_monitor_enable_receiving(_this->udev_mon);
 
         /* Do an initial scan of existing devices */
@@ -200,6 +204,7 @@ int SDL_UDEV_Scan(void)
 
     _this->syms.udev_enumerate_add_match_subsystem(enumerate, "input");
     _this->syms.udev_enumerate_add_match_subsystem(enumerate, "sound");
+    _this->syms.udev_enumerate_add_match_subsystem(enumerate, "video4linux");
 
     _this->syms.udev_enumerate_scan_devices(enumerate);
     devs = _this->syms.udev_enumerate_get_list_entry(enumerate);
@@ -216,7 +221,7 @@ int SDL_UDEV_Scan(void)
     return 0;
 }
 
-SDL_bool SDL_UDEV_GetProductInfo(const char *device_path, Uint16 *vendor, Uint16 *product, Uint16 *version)
+SDL_bool SDL_UDEV_GetProductInfo(const char *device_path, Uint16 *vendor, Uint16 *product, Uint16 *version, int *class)
 {
     struct udev_enumerate *enumerate = NULL;
     struct udev_list_entry *devs = NULL;
@@ -244,6 +249,7 @@ SDL_bool SDL_UDEV_GetProductInfo(const char *device_path, Uint16 *vendor, Uint16
 
             existing_path = _this->syms.udev_device_get_devnode(dev);
             if (existing_path && SDL_strcmp(device_path, existing_path) == 0) {
+                int class_temp;
                 found = SDL_TRUE;
 
                 val = _this->syms.udev_device_get_property_value(dev, "ID_VENDOR_ID");
@@ -259,6 +265,11 @@ SDL_bool SDL_UDEV_GetProductInfo(const char *device_path, Uint16 *vendor, Uint16
                 val = _this->syms.udev_device_get_property_value(dev, "ID_REVISION");
                 if (val) {
                     *version = (Uint16)SDL_strtol(val, NULL, 16);
+                }
+
+                class_temp = device_class(dev);
+                if (class_temp) {
+                    *class = class_temp;
                 }
             }
             _this->syms.udev_device_unref(dev);
@@ -391,22 +402,24 @@ static int guess_device_class(struct udev_device *dev)
                                       &bitmask_rel[0]);
 }
 
-static void device_event(SDL_UDEV_deviceevent type, struct udev_device *dev)
+static int device_class(struct udev_device *dev)
 {
     const char *subsystem;
     const char *val = NULL;
     int devclass = 0;
-    const char *path;
-    SDL_UDEV_CallbackList *item;
-
-    path = _this->syms.udev_device_get_devnode(dev);
-    if (!path) {
-        return;
-    }
 
     subsystem = _this->syms.udev_device_get_subsystem(dev);
+    if (!subsystem) {
+        return 0;
+    }
+
     if (SDL_strcmp(subsystem, "sound") == 0) {
         devclass = SDL_UDEV_DEVICE_SOUND;
+    } else if (SDL_strcmp(subsystem, "video4linux") == 0) {
+        val = _this->syms.udev_device_get_property_value(dev, "ID_V4L_CAPABILITIES");
+        if (val && SDL_strcasestr(val, "capture")) {
+            devclass = SDL_UDEV_DEVICE_VIDEO_CAPTURE;
+        }
     } else if (SDL_strcmp(subsystem, "input") == 0) {
         /* udev rules reference: http://cgit.freedesktop.org/systemd/systemd/tree/src/udev/udev-builtin-input_id.c */
 
@@ -457,16 +470,31 @@ static void device_event(SDL_UDEV_deviceevent type, struct udev_device *dev)
                     devclass = SDL_UDEV_DEVICE_MOUSE;
                 } else if (SDL_strcmp(val, "kbd") == 0) {
                     devclass = SDL_UDEV_DEVICE_HAS_KEYS | SDL_UDEV_DEVICE_KEYBOARD;
-                } else {
-                    return;
                 }
             } else {
                 /* We could be linked with libudev on a system that doesn't have udev running */
                 devclass = guess_device_class(dev);
             }
         }
-    } else {
+    }
+
+    return devclass;
+}
+
+static void device_event(SDL_UDEV_deviceevent type, struct udev_device *dev)
+{
+    int devclass = 0;
+    const char *path;
+    SDL_UDEV_CallbackList *item;
+
+    path = _this->syms.udev_device_get_devnode(dev);
+    if (!path) {
         return;
+    }
+
+    devclass = device_class(dev);
+    if (!devclass) {
+         return;
     }
 
     /* Process callbacks */
@@ -508,7 +536,7 @@ int SDL_UDEV_AddCallback(SDL_UDEV_Callback cb)
     SDL_UDEV_CallbackList *item;
     item = (SDL_UDEV_CallbackList *)SDL_calloc(1, sizeof(SDL_UDEV_CallbackList));
     if (!item) {
-        return SDL_OutOfMemory();
+        return -1;
     }
 
     item->callback = cb;
@@ -520,7 +548,7 @@ int SDL_UDEV_AddCallback(SDL_UDEV_Callback cb)
         _this->last = item;
     }
 
-    return 1;
+    return 0;
 }
 
 void SDL_UDEV_DelCallback(SDL_UDEV_Callback cb)

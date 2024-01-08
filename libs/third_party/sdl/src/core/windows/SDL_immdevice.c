@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2023 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2024 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -103,7 +103,7 @@ static void GetMMDeviceInfo(IMMDevice *device, char **utf8dev, WAVEFORMATEXTENSI
         }
         PropVariantClear(&var);
         if (SUCCEEDED(IPropertyStore_GetValue(props, &SDL_PKEY_AudioEndpoint_GUID, &var))) {
-            CLSIDFromString(var.pwszVal, guid);
+            (void)CLSIDFromString(var.pwszVal, guid);
         }
         PropVariantClear(&var);
         IPropertyStore_Release(props);
@@ -149,12 +149,10 @@ static SDL_AudioDevice *SDL_IMMDevice_Add(const SDL_bool iscapture, const char *
         // handle is freed by SDL_IMMDevice_FreeDeviceHandle!
         SDL_IMMDevice_HandleData *handle = SDL_malloc(sizeof(SDL_IMMDevice_HandleData));
         if (!handle) {
-            SDL_OutOfMemory();
             return NULL;
         }
         handle->immdevice_id = SDL_wcsdup(devid);
         if (!handle->immdevice_id) {
-            SDL_OutOfMemory();
             SDL_free(handle);
             return NULL;
         }

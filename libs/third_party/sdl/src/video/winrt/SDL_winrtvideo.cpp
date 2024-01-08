@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2023 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2024 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -76,7 +76,7 @@ static void WINRT_VideoQuit(SDL_VideoDevice *_this);
 /* Window functions */
 static int WINRT_CreateWindow(SDL_VideoDevice *_this, SDL_Window *window, SDL_PropertiesID create_props);
 static void WINRT_SetWindowSize(SDL_VideoDevice *_this, SDL_Window *window);
-static void WINRT_SetWindowFullscreen(SDL_VideoDevice *_this, SDL_Window *window, SDL_VideoDisplay *display, SDL_bool fullscreen);
+static int WINRT_SetWindowFullscreen(SDL_VideoDevice *_this, SDL_Window *window, SDL_VideoDisplay *display, SDL_bool fullscreen);
 static void WINRT_DestroyWindow(SDL_VideoDevice *_this, SDL_Window *window);
 
 /* Misc functions */
@@ -109,13 +109,11 @@ static SDL_VideoDevice *WINRT_CreateDevice(void)
     /* Initialize all variables that we clean on shutdown */
     device = (SDL_VideoDevice *)SDL_calloc(1, sizeof(SDL_VideoDevice));
     if (!device) {
-        SDL_OutOfMemory();
         return 0;
     }
 
     data = (SDL_VideoData *)SDL_calloc(1, sizeof(SDL_VideoData));
     if (!data) {
-        SDL_OutOfMemory();
         SDL_free(device);
         return 0;
     }
@@ -321,7 +319,6 @@ static int WINRT_AddDisplaysForOutput(SDL_VideoDevice *_this, IDXGIAdapter1 *dxg
 
         dxgiModes = (DXGI_MODE_DESC *)SDL_calloc(numModes, sizeof(DXGI_MODE_DESC));
         if (!dxgiModes) {
-            SDL_OutOfMemory();
             goto done;
         }
 
@@ -595,6 +592,7 @@ int WINRT_CreateWindow(SDL_VideoDevice *_this, SDL_Window *window, SDL_Propertie
     }
     window->driverdata = data;
     data->sdlWindow = window;
+    data->high_surrogate = L'\0';
 
     /* To note, when XAML support is enabled, access to the CoreWindow will not
        be possible, at least not via the SDL/XAML thread.  Attempts to access it
@@ -608,7 +606,7 @@ int WINRT_CreateWindow(SDL_VideoDevice *_this, SDL_Window *window, SDL_Propertie
         data->appView = ApplicationView::GetForCurrentView();
 #endif
     }
-    SDL_SetProperty(SDL_GetWindowProperties(window), "SDL.window.winrt.window", reinterpret_cast<IInspectable *>(data->coreWindow.Get()));
+    SDL_SetProperty(SDL_GetWindowProperties(window), SDL_PROPERTY_WINDOW_WINRT_WINDOW_POINTER, reinterpret_cast<IInspectable *>(data->coreWindow.Get()));
 
     /* Make note of the requested window flags, before they start getting changed. */
     const Uint32 requestedFlags = window->flags;
@@ -736,12 +734,14 @@ void WINRT_SetWindowSize(SDL_VideoDevice *_this, SDL_Window *window)
 {
 #if NTDDI_VERSION >= NTDDI_WIN10
     SDL_WindowData *data = window->driverdata;
-    const Windows::Foundation::Size size((float)window->w, (float)window->h);
-    data->appView->TryResizeView(size); // TODO, WinRT: return failure (to caller?) from TryResizeView()
+    const Windows::Foundation::Size size((float)window->floating.w, (float)window->floating.h);
+    if (data->appView->TryResizeView(size)) {
+        SDL_SendWindowEvent(window, SDL_EVENT_WINDOW_RESIZED, window->floating.w, window->floating.h);
+    }
 #endif
 }
 
-void WINRT_SetWindowFullscreen(SDL_VideoDevice *_this, SDL_Window *window, SDL_VideoDisplay *display, SDL_bool fullscreen)
+int WINRT_SetWindowFullscreen(SDL_VideoDevice *_this, SDL_Window *window, SDL_VideoDisplay *display, SDL_bool fullscreen)
 {
 #if NTDDI_VERSION >= NTDDI_WIN10
     SDL_WindowData *data = window->driverdata;
@@ -749,7 +749,7 @@ void WINRT_SetWindowFullscreen(SDL_VideoDevice *_this, SDL_Window *window, SDL_V
     if (isWindowActive) {
         if (fullscreen) {
             if (!data->appView->IsFullScreenMode) {
-                data->appView->TryEnterFullScreenMode(); // TODO, WinRT: return failure (to caller?) from TryEnterFullScreenMode()
+                return data->appView->TryEnterFullScreenMode() ? 0 : -1;
             }
         } else {
             if (data->appView->IsFullScreenMode) {
@@ -758,6 +758,8 @@ void WINRT_SetWindowFullscreen(SDL_VideoDevice *_this, SDL_Window *window, SDL_V
         }
     }
 #endif
+
+    return 0;
 }
 
 void WINRT_DestroyWindow(SDL_VideoDevice *_this, SDL_Window *window)

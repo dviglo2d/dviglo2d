@@ -236,6 +236,12 @@ if(VITA OR PSP OR PS2 OR N3DS OR RISCOS)
   set(SDL_LOADSO_DEFAULT OFF)
 endif()
 
+if((RISCOS OR UNIX_SYS) AND NOT (LINUX OR NETBSD OR OPENBSD))
+  set(SDL_OSS_DEFAULT ON)
+else()
+  set(SDL_OSS_DEFAULT OFF)
+endif()
+
 if(SDL_SHARED_DEFAULT AND SDL_STATIC_DEFAULT AND SDL_SHARED_AVAILABLE)
   if(DEFINED BUILD_SHARED_LIBS)
     # When defined, use BUILD_SHARED_LIBS as default
@@ -322,7 +328,7 @@ dep_option(SDL_OPENGL              "Include OpenGL support" ON "NOT VISIONOS" OF
 dep_option(SDL_OPENGLES            "Include OpenGL ES support" ON "NOT VISIONOS" OFF)
 set_option(SDL_PTHREADS            "Use POSIX threads for multi-threading" ${SDL_PTHREADS_DEFAULT})
 dep_option(SDL_PTHREADS_SEM        "Use pthread semaphores" ON "SDL_PTHREADS" OFF)
-dep_option(SDL_OSS                 "Support the OSS audio API" ON "UNIX_SYS OR RISCOS" OFF)
+dep_option(SDL_OSS                 "Support the OSS audio API" ${SDL_OSS_DEFAULT} "UNIX_SYS OR RISCOS" OFF)
 set_option(SDL_ALSA                "Support the ALSA audio API" ${UNIX_SYS})
 dep_option(SDL_ALSA_SHARED         "Dynamically load ALSA audio support" ON "SDL_ALSA" OFF)
 set_option(SDL_JACK                "Support the JACK audio API" ${UNIX_SYS})
@@ -507,7 +513,7 @@ sdl_glob_sources(
 if(MSVC AND TARGET SDL3-shared)
   if(SDL_CPU_X64)
     enable_language(ASM_MASM)
-    set(asm_src "${SDL3_SOURCE_DIR}/src/stdlib/SDL_mslibc_x64.asm")
+    set(asm_src "${SDL3_SOURCE_DIR}/src/stdlib/SDL_mslibc_x64.masm")
     target_compile_options(SDL3-shared PRIVATE "$<$<COMPILE_LANGUAGE:ASM_MASM>:/nologo>")
     set_property(SOURCE "${asm_src}" PROPERTY LANGUAGE "ASM_MASM")
     target_sources(SDL3-shared PRIVATE "${asm_src}")
@@ -1075,7 +1081,7 @@ if(SDL_LIBC)
     realloc rindex round roundf
     scalbn scalbnf setenv sin sinf sqr sqrt sqrtf sscanf strchr
     strcmp strlcat strlcpy strlen strncmp strnlen
-    strrchr strstr strtod strtok_r strtol strtoll strtoul strtoull
+    strrchr strstr strnstr strtod strtok_r strtol strtoll strtoul strtoull
     tan tanf trunc truncf
     unsetenv
     vsnprintf vsscanf
@@ -1121,7 +1127,7 @@ if(SDL_LIBC)
         #include <stddef.h>
         #include <iconv.h>
         int main(int argc, char **argv) {
-            return iconv_open(NULL,NULL);
+            return !iconv_open(NULL,NULL);
         }" ICONV_IN_LIBC)
 
       cmake_push_check_state()
@@ -1130,7 +1136,7 @@ if(SDL_LIBC)
         #include <stddef.h>
         #include <iconv.h>
         int main(int argc, char **argv) {
-            return iconv_open(NULL,NULL);
+            return !iconv_open(NULL,NULL);
         }" ICONV_IN_LIBICONV)
       cmake_pop_check_state()
 
@@ -1606,7 +1612,7 @@ elseif(UNIX AND NOT APPLE AND NOT RISCOS AND NOT HAIKU)
         set(SDL_USE_IME 1)
       endif()
 
-      if(FREEBSD AND NOT HAVE_INOTIFY)
+      if((FREEBSD OR NETBSD) AND NOT HAVE_INOTIFY)
         set(LibInotify_PKG_CONFIG_SPEC libinotify)
         pkg_check_modules(PC_LIBINOTIFY IMPORTED_TARGET ${LibInotify_PKG_CONFIG_SPEC})
         if(PC_LIBINOTIFY_FOUND)
@@ -2480,7 +2486,7 @@ elseif(VITA)
       "${SDL3_SOURCE_DIR}/src/thread/vita/SDL_sysmutex.c"
       "${SDL3_SOURCE_DIR}/src/thread/vita/SDL_syssem.c"
       "${SDL3_SOURCE_DIR}/src/thread/vita/SDL_systhread.c"
-      "${SDL3_SOURCE_DIR}/src/thread/vita/SDL_syscond.c"
+      "${SDL3_SOURCE_DIR}/src/thread/generic/SDL_syscond.c"
       "${SDL3_SOURCE_DIR}/src/thread/generic/SDL_sysrwlock.c"
       "${SDL3_SOURCE_DIR}/src/thread/generic/SDL_systls.c"
     )
@@ -2611,6 +2617,7 @@ elseif(PSP)
   if(SDL_THREADS)
     set(SDL_THREAD_PSP 1)
     sdl_glob_sources(
+      "${SDL3_SOURCE_DIR}/src/thread/generic/SDL_syscond.c"
       "${SDL3_SOURCE_DIR}/src/thread/generic/SDL_systls.c"
       "${SDL3_SOURCE_DIR}/src/thread/generic/SDL_sysrwlock.c"
       "${SDL3_SOURCE_DIR}/src/thread/psp/*.c"

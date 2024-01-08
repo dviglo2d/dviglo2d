@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2023 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2024 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -126,8 +126,6 @@ static SDL_Cursor *WINRT_CreateSystemCursor(SDL_SystemCursor id)
         CoreCursor ^ *theCursor = new CoreCursor ^ (nullptr);
         *theCursor = ref new CoreCursor(cursorType, 0);
         cursor->driverdata = (void *)theCursor;
-    } else {
-        SDL_OutOfMemory();
     }
 
     return cursor;

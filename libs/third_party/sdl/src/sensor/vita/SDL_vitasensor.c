@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2023 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2024 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -52,7 +52,7 @@ static int SDL_VITA_SensorInit(void)
 
     SDL_sensors = (SDL_VitaSensor *)SDL_calloc(SDL_sensors_count, sizeof(*SDL_sensors));
     if (!SDL_sensors) {
-        return SDL_OutOfMemory();
+        return -1;
     }
 
     SDL_sensors[0].type = SDL_SENSOR_ACCEL;
@@ -119,7 +119,7 @@ static int SDL_VITA_SensorOpen(SDL_Sensor *sensor, int device_index)
 
     hwdata = (struct sensor_hwdata *)SDL_calloc(1, sizeof(*hwdata));
     if (!hwdata) {
-        return SDL_OutOfMemory();
+        return -1;
     }
     sensor->hwdata = hwdata;
 

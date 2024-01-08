@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2023 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2024 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -512,14 +512,12 @@ static SDL_AudioDevice *CreatePhysicalAudioDevice(const char *name, SDL_bool isc
 
     SDL_AudioDevice *device = (SDL_AudioDevice *)SDL_calloc(1, sizeof(SDL_AudioDevice));
     if (!device) {
-        SDL_OutOfMemory();
         return NULL;
     }
 
     device->name = SDL_strdup(name);
     if (!device->name) {
         SDL_free(device);
-        SDL_OutOfMemory();
         return NULL;
     }
 
@@ -553,6 +551,8 @@ static SDL_AudioDevice *CreatePhysicalAudioDevice(const char *name, SDL_bool isc
     if (SDL_InsertIntoHashTable(current_audio.device_hash, (const void *) (uintptr_t) device->instance_id, device)) {
         SDL_AtomicAdd(device_count, 1);
     } else {
+        SDL_DestroyCondition(device->close_cond);
+        SDL_DestroyMutex(device->lock);
         SDL_free(device->name);
         SDL_free(device);
         device = NULL;
@@ -840,7 +840,7 @@ int SDL_InitAudio(const char *driver_name)
         if (!driver_name_copy) {
             SDL_DestroyRWLock(device_hash_lock);
             SDL_DestroyHashTable(device_hash);
-            return SDL_OutOfMemory();
+            return -1;
         }
 
         while (driver_attempt && *driver_attempt != 0 && !initialized) {
@@ -1272,7 +1272,6 @@ static SDL_AudioDeviceID *GetAudioDevices(int *reqcount, SDL_bool iscapture)
         retval = (SDL_AudioDeviceID *) SDL_malloc((num_devices + 1) * sizeof (SDL_AudioDeviceID));
         if (!retval) {
             num_devices = 0;
-            SDL_OutOfMemory();
         } else {
             int devs_seen = 0;
             const void *key;
@@ -1360,9 +1359,6 @@ char *SDL_GetAudioDeviceName(SDL_AudioDeviceID devid)
     SDL_AudioDevice *device = ObtainPhysicalAudioDevice(devid);
     if (device) {
         retval = SDL_strdup(device->name);
-        if (!retval) {
-            SDL_OutOfMemory();
-        }
     }
     ReleaseAudioDevice(device);
 
@@ -1574,14 +1570,14 @@ static int OpenPhysicalAudioDevice(SDL_AudioDevice *device, const SDL_AudioSpec 
     device->work_buffer = (Uint8 *)SDL_aligned_alloc(SDL_SIMDGetAlignment(), device->work_buffer_size);
     if (!device->work_buffer) {
         ClosePhysicalAudioDevice(device);
-        return SDL_OutOfMemory();
+        return -1;
     }
 
     if (device->spec.format != SDL_AUDIO_F32) {
         device->mix_buffer = (Uint8 *)SDL_aligned_alloc(SDL_SIMDGetAlignment(), device->work_buffer_size);
         if (!device->mix_buffer) {
             ClosePhysicalAudioDevice(device);
-            return SDL_OutOfMemory();
+            return -1;
         }
     }
 
@@ -1630,7 +1626,7 @@ SDL_AudioDeviceID SDL_OpenAudioDevice(SDL_AudioDeviceID devid, const SDL_AudioSp
             // uhoh, this device is undead, and just waiting to be cleaned up. Refuse explicit opens.
             SDL_SetError("Device was already lost and can't accept new opens");
         } else if ((logdev = (SDL_LogicalAudioDevice *) SDL_calloc(1, sizeof (SDL_LogicalAudioDevice))) == NULL) {
-            SDL_OutOfMemory();
+            /* SDL_calloc already called SDL_OutOfMemory */
         } else if (OpenPhysicalAudioDevice(device, spec) == -1) {  // if this is the first thing using this physical device, open at the OS level if necessary...
             SDL_free(logdev);
         } else {
@@ -1704,7 +1700,7 @@ int SDL_SetAudioPostmixCallback(SDL_AudioDeviceID devid, SDL_AudioPostmixCallbac
         if (callback && !device->postmix_buffer) {
             device->postmix_buffer = (float *)SDL_aligned_alloc(SDL_SIMDGetAlignment(), device->work_buffer_size);
             if (!device->postmix_buffer) {
-                retval = SDL_OutOfMemory();
+                retval = -1;
             }
         }
 
@@ -1777,7 +1773,14 @@ int SDL_BindAudioStreams(SDL_AudioDeviceID devid, SDL_AudioStream **streams, int
             if (retval != 0) {
                 int j;
                 for (j = 0; j <= i; j++) {
+#ifdef _MSC_VER /* Visual Studio analyzer can't tell that we've already verified streams[j] isn't NULL */
+#pragma warning(push)
+#pragma warning(disable : 28182)
+#endif
                     SDL_UnlockMutex(streams[j]->lock);
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
                 }
                 break;
             }
@@ -1788,6 +1791,10 @@ int SDL_BindAudioStreams(SDL_AudioDeviceID devid, SDL_AudioStream **streams, int
         // Now that everything is verified, chain everything together.
         const SDL_bool iscapture = device->iscapture;
         for (int i = 0; i < num_streams; i++) {
+#ifdef _MSC_VER /* Visual Studio analyzer can't tell that streams[i] isn't NULL if retval is 0 */
+#pragma warning(push)
+#pragma warning(disable : 28182)
+#endif
             SDL_AudioStream *stream = streams[i];
 
             stream->bound_device = logdev;
@@ -1806,6 +1813,9 @@ int SDL_BindAudioStreams(SDL_AudioDeviceID devid, SDL_AudioStream **streams, int
             }
 
             SDL_UnlockMutex(stream->lock);
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
         }
     }
 

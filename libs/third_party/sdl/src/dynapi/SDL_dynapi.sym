@@ -107,9 +107,9 @@ SDL3_0.0.0 {
     SDL_FlashWindow;
     SDL_FlushEvent;
     SDL_FlushEvents;
+    SDL_FlushRenderer;
     SDL_GDKGetTaskQueue;
     SDL_GDKSuspendComplete;
-    SDL_GL_BindTexture;
     SDL_GL_CreateContext;
     SDL_GL_DeleteContext;
     SDL_GL_ExtensionSupported;
@@ -124,7 +124,6 @@ SDL3_0.0.0 {
     SDL_GL_SetAttribute;
     SDL_GL_SetSwapInterval;
     SDL_GL_SwapWindow;
-    SDL_GL_UnbindTexture;
     SDL_GL_UnloadLibrary;
     SDL_GUIDFromString;
     SDL_GUIDToString;
@@ -163,7 +162,6 @@ SDL3_0.0.0 {
     SDL_GetDisplayUsableBounds;
     SDL_GetDisplays;
     SDL_GetError;
-    SDL_GetErrorMsg;
     SDL_GetEventFilter;
     SDL_GetFullscreenDisplayModes;
     SDL_GetGamepadAppleSFSymbolsNameForAxis;
@@ -188,7 +186,6 @@ SDL3_0.0.0 {
     SDL_GetGamepadJoystick;
     SDL_GetGamepadMapping;
     SDL_GetGamepadMappingForGUID;
-    SDL_GetGamepadMappingForIndex;
     SDL_GetGamepadName;
     SDL_GetGamepadPath;
     SDL_GetGamepadPlayerIndex;
@@ -249,14 +246,12 @@ SDL3_0.0.0 {
     SDL_GetMouseState;
     SDL_GetNaturalDisplayOrientation;
     SDL_GetNumAllocations;
-    SDL_GetNumGamepadMappings;
     SDL_GetNumGamepadTouchpadFingers;
     SDL_GetNumGamepadTouchpads;
     SDL_GetNumJoystickAxes;
     SDL_GetNumJoystickButtons;
     SDL_GetNumJoystickHats;
     SDL_GetNumRenderDrivers;
-    SDL_GetNumTouchDevices;
     SDL_GetNumTouchFingers;
     SDL_GetNumVideoDrivers;
     SDL_GetOriginalMemoryFunctions;
@@ -329,10 +324,8 @@ SDL3_0.0.0 {
     SDL_GetThreadName;
     SDL_GetTicks;
     SDL_GetTicksNS;
-    SDL_GetTouchDevice;
     SDL_GetTouchDeviceType;
     SDL_GetTouchFinger;
-    SDL_GetTouchName;
     SDL_GetVersion;
     SDL_GetVideoDriver;
     SDL_GetWindowBordersSize;
@@ -512,7 +505,6 @@ SDL3_0.0.0 {
     SDL_RenderCoordinatesToWindow;
     SDL_RenderFillRect;
     SDL_RenderFillRects;
-    SDL_RenderFlush;
     SDL_RenderGeometry;
     SDL_RenderGeometryRaw;
     SDL_RenderLine;
@@ -619,7 +611,6 @@ SDL3_0.0.0 {
     SDL_ShowWindow;
     SDL_SignalCondition;
     SDL_SoftStretch;
-    SDL_SoftStretchLinear;
     SDL_StartTextInput;
     SDL_StopTextInput;
     SDL_SurfaceHasColorKey;
@@ -963,6 +954,13 @@ SDL3_0.0.0 {
     SDL_GetBooleanProperty;
     SDL_CreateTextureWithProperties;
     SDL_CreateRendererWithProperties;
+    SDL_GetGamepadMappings;
+    SDL_GetTouchDevices;
+    SDL_GetTouchDeviceName;
+    SDL_strnstr;
+    SDL_wcsnstr;
+    SDL_SyncWindow;
+    SDL_GetGamepadSteamHandle;
     # extra symbols go here (don't modify this line)
   local: *;
 };

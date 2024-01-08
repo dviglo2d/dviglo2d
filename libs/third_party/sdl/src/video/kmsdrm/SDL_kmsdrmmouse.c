@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2023 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2024 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -159,7 +159,7 @@ static int KMSDRM_DumpCursorToBO(SDL_VideoDisplay *display, SDL_Cursor *cursor)
     ready_buffer = (uint8_t *)SDL_calloc(1, bufsize);
 
     if (!ready_buffer) {
-        ret = SDL_OutOfMemory();
+        ret = -1;
         goto cleanup;
     }
 
@@ -237,12 +237,10 @@ static SDL_Cursor *KMSDRM_CreateCursor(SDL_Surface *surface, int hot_x, int hot_
 
     cursor = (SDL_Cursor *)SDL_calloc(1, sizeof(*cursor));
     if (!cursor) {
-        SDL_OutOfMemory();
         goto cleanup;
     }
     curdata = (KMSDRM_CursorData *)SDL_calloc(1, sizeof(*curdata));
     if (!curdata) {
-        SDL_OutOfMemory();
         goto cleanup;
     }
 
@@ -260,7 +258,6 @@ static SDL_Cursor *KMSDRM_CreateCursor(SDL_Surface *surface, int hot_x, int hot_
     curdata->buffer = (uint32_t *)SDL_malloc(curdata->buffer_size);
 
     if (!curdata->buffer) {
-        SDL_OutOfMemory();
         goto cleanup;
     }
 
