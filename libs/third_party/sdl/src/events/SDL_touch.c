@@ -158,6 +158,8 @@ int SDL_AddTouch(SDL_TouchID touchID, SDL_TouchDeviceType type, const char *name
     SDL_Touch **touchDevices;
     int index;
 
+    SDL_assert(touchID != 0);
+
     index = SDL_GetTouchIndex(touchID);
     if (index >= 0) {
         return index;
@@ -195,6 +197,8 @@ int SDL_AddTouch(SDL_TouchID touchID, SDL_TouchDeviceType type, const char *name
 static int SDL_AddFinger(SDL_Touch *touch, SDL_FingerID fingerid, float x, float y, float pressure)
 {
     SDL_Finger *finger;
+
+    SDL_assert(fingerid != 0);
 
     if (touch->num_fingers == touch->max_fingers) {
         SDL_Finger **new_fingers;
@@ -251,7 +255,7 @@ int SDL_SendTouch(Uint64 timestamp, SDL_TouchID id, SDL_FingerID fingerid, SDL_W
     /* SDL_HINT_TOUCH_MOUSE_EVENTS: controlling whether touch events should generate synthetic mouse events */
     /* SDL_HINT_VITA_TOUCH_MOUSE_DEVICE: controlling which touchpad should generate synthetic mouse events, PSVita-only */
     {
-#ifdef __vita__
+#ifdef SDL_PLATFORM_VITA
         if (mouse->touch_mouse_events && ((mouse->vita_touch_mouse_device == id) || (mouse->vita_touch_mouse_device == 2))) {
 #else
         if (mouse->touch_mouse_events) {

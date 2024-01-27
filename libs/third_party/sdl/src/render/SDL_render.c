@@ -27,7 +27,7 @@
 #include "../video/SDL_pixels_c.h"
 #include "../video/SDL_video_c.h"
 
-#ifdef __ANDROID__
+#ifdef SDL_PLATFORM_ANDROID
 #include "../core/android/SDL_android.h"
 #endif
 
@@ -37,7 +37,7 @@ SDL_AddEventWatch to catch SDL_EVENT_WILL_ENTER_BACKGROUND events and stopped
 drawing themselves. Other platforms still draw, as the compositor can use it,
 and more importantly: drawing to render targets isn't lost. But I still think
 this should probably be removed at some point in the future.  --ryan. */
-#if defined(__IOS__) || defined(__TVOS__) || defined(__ANDROID__)
+#if defined(SDL_PLATFORM_IOS) || defined(SDL_PLATFORM_TVOS) || defined(SDL_PLATFORM_ANDROID)
 #define DONT_DRAW_WHILE_HIDDEN 1
 #else
 #define DONT_DRAW_WHILE_HIDDEN 0
@@ -611,7 +611,7 @@ static int QueueCmdCopy(SDL_Renderer *renderer, SDL_Texture *texture, const SDL_
 
 static int QueueCmdCopyEx(SDL_Renderer *renderer, SDL_Texture *texture,
                           const SDL_FRect *srcquad, const SDL_FRect *dstrect,
-                          const double angle, const SDL_FPoint *center, const SDL_RendererFlip flip, float scale_x, float scale_y)
+                          const double angle, const SDL_FPoint *center, const SDL_FlipMode flip, float scale_x, float scale_y)
 {
     SDL_RenderCommand *cmd = PrepQueueCmdDraw(renderer, SDL_RENDERCMD_COPY_EX, texture);
     int retval = -1;
@@ -817,7 +817,7 @@ SDL_Renderer *SDL_CreateRendererWithProperties(SDL_PropertiesID props)
         return SDL_CreateSoftwareRenderer(surface);
     }
 
-#ifdef __ANDROID__
+#ifdef SDL_PLATFORM_ANDROID
     Android_ActivityMutex_Lock_Running();
 #endif
 
@@ -925,14 +925,14 @@ SDL_Renderer *SDL_CreateRendererWithProperties(SDL_PropertiesID props)
     SDL_LogInfo(SDL_LOG_CATEGORY_RENDER,
                 "Created renderer: %s", renderer->info.name);
 
-#ifdef __ANDROID__
+#ifdef SDL_PLATFORM_ANDROID
     Android_ActivityMutex_Unlock();
 #endif
     return renderer;
 
 error:
 
-#ifdef __ANDROID__
+#ifdef SDL_PLATFORM_ANDROID
     Android_ActivityMutex_Unlock();
 #endif
     return NULL;
@@ -1035,7 +1035,7 @@ int SDL_GetRenderOutputSize(SDL_Renderer *renderer, int *w, int *h)
     } else if (renderer->window) {
         return SDL_GetWindowSizeInPixels(renderer->window, w, h);
     } else {
-        SDL_assert(0 && "This should never happen");
+        SDL_assert(!"This should never happen");
         return SDL_SetError("Renderer doesn't support querying output size");
     }
 }
@@ -1394,6 +1394,12 @@ SDL_Texture *SDL_CreateTextureFromSurface(SDL_Renderer *renderer, SDL_Surface *s
         }
     }
     return texture;
+}
+
+SDL_Renderer *SDL_GetRendererFromTexture(SDL_Texture *texture)
+{
+    CHECK_TEXTURE_MAGIC(texture, NULL);
+    return texture->renderer;
 }
 
 SDL_PropertiesID SDL_GetTextureProperties(SDL_Texture *texture)
@@ -2484,6 +2490,14 @@ int SDL_ConvertEventToRenderCoordinates(SDL_Renderer *renderer, SDL_Event *event
             }
             SDL_RenderCoordinatesFromWindow(renderer, event->tfinger.x * w, event->tfinger.y * h, &event->tfinger.x, &event->tfinger.y);
         }
+    } else if (event->type == SDL_EVENT_DROP_POSITION ||
+               event->type == SDL_EVENT_DROP_FILE ||
+               event->type == SDL_EVENT_DROP_TEXT ||
+               event->type == SDL_EVENT_DROP_COMPLETE) {
+        SDL_Window *window = SDL_GetWindowFromID(event->drop.windowID);
+        if (window == renderer->window) {
+            SDL_RenderCoordinatesFromWindow(renderer, event->drop.x, event->drop.y, &event->drop.x, &event->drop.y);
+        }
     }
     return 0;
 }
@@ -2762,6 +2776,8 @@ static int RenderLineBresenham(SDL_Renderer *renderer, int x1, int y1, int x2, i
        just want a basic safety against generating millions of points for
        massive lines. */
     GetRenderViewportInPixels(renderer, &viewport);
+    viewport.x = 0;
+    viewport.y = 0;
     if (!SDL_GetRectAndLineIntersection(&viewport, &x1, &y1, &x2, &y2)) {
         return 0;
     }
@@ -3280,7 +3296,7 @@ int SDL_RenderTexture(SDL_Renderer *renderer, SDL_Texture *texture, const SDL_FR
 
 int SDL_RenderTextureRotated(SDL_Renderer *renderer, SDL_Texture *texture,
                       const SDL_FRect *srcrect, const SDL_FRect *dstrect,
-                      const double angle, const SDL_FPoint *center, const SDL_RendererFlip flip)
+                      const double angle, const SDL_FPoint *center, const SDL_FlipMode flip)
 {
     SDL_FRect real_srcrect;
     SDL_FRect real_dstrect;

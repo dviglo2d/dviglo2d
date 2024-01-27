@@ -27,7 +27,7 @@
 #include "SDL_hidapi_rumble.h"
 #include "../../SDL_hints_c.h"
 
-#if defined(__WIN32__) || defined(__WINGDK__)
+#if defined(SDL_PLATFORM_WIN32) || defined(SDL_PLATFORM_WINGDK)
 #include "../windows/SDL_rawinputjoystick_c.h"
 #endif
 
@@ -163,6 +163,8 @@ SDL_bool HIDAPI_SupportsPlaystationDetection(Uint16 vendor, Uint16 product)
         }
         return SDL_TRUE;
     case USB_VENDOR_MADCATZ:
+        return SDL_TRUE;
+    case USB_VENDOR_MAYFLASH:
         return SDL_TRUE;
     case USB_VENDOR_NACON:
     case USB_VENDOR_NACON_ALT:
@@ -451,7 +453,7 @@ static void HIDAPI_SetupDeviceDriver(SDL_HIDAPI_Device *device, SDL_bool *remove
             /* Wait a little bit for the device to initialize */
             SDL_Delay(10);
 
-#ifdef __ANDROID__
+#ifdef SDL_PLATFORM_ANDROID
             /* On Android we need to leave joysticks unlocked because it calls
              * out to the main thread for permissions and the main thread can
              * be in the process of handling controller input.
@@ -1206,9 +1208,9 @@ SDL_bool HIDAPI_IsDeviceTypePresent(SDL_GamepadType type)
         return SDL_FALSE;
     }
 
-    if (SDL_AtomicTryLock(&SDL_HIDAPI_spinlock)) {
+    if (SDL_TryLockSpinlock(&SDL_HIDAPI_spinlock)) {
         HIDAPI_UpdateDeviceList();
-        SDL_AtomicUnlock(&SDL_HIDAPI_spinlock);
+        SDL_UnlockSpinlock(&SDL_HIDAPI_spinlock);
     }
 
     SDL_LockJoysticks();
@@ -1251,9 +1253,9 @@ SDL_bool HIDAPI_IsDevicePresent(Uint16 vendor_id, Uint16 product_id, Uint16 vers
     }
 #endif /* SDL_JOYSTICK_HIDAPI_XBOX360 || SDL_JOYSTICK_HIDAPI_XBOXONE */
     if (supported) {
-        if (SDL_AtomicTryLock(&SDL_HIDAPI_spinlock)) {
+        if (SDL_TryLockSpinlock(&SDL_HIDAPI_spinlock)) {
             HIDAPI_UpdateDeviceList();
-            SDL_AtomicUnlock(&SDL_HIDAPI_spinlock);
+            SDL_UnlockSpinlock(&SDL_HIDAPI_spinlock);
         }
     }
 
@@ -1313,13 +1315,13 @@ SDL_GamepadType HIDAPI_GetGamepadTypeFromGUID(SDL_JoystickGUID guid)
 
 static void HIDAPI_JoystickDetect(void)
 {
-    if (SDL_AtomicTryLock(&SDL_HIDAPI_spinlock)) {
+    if (SDL_TryLockSpinlock(&SDL_HIDAPI_spinlock)) {
         Uint32 count = SDL_hid_device_change_count();
         if (SDL_HIDAPI_change_count != count) {
             SDL_HIDAPI_change_count = count;
             HIDAPI_UpdateDeviceList();
         }
-        SDL_AtomicUnlock(&SDL_HIDAPI_spinlock);
+        SDL_UnlockSpinlock(&SDL_HIDAPI_spinlock);
     }
 }
 
@@ -1332,7 +1334,7 @@ void HIDAPI_UpdateDevices(void)
     /* Update the devices, which may change connected joysticks and send events */
 
     /* Prepare the existing device list */
-    if (SDL_AtomicTryLock(&SDL_HIDAPI_spinlock)) {
+    if (SDL_TryLockSpinlock(&SDL_HIDAPI_spinlock)) {
         for (device = SDL_HIDAPI_devices; device; device = device->next) {
             if (device->parent) {
                 continue;
@@ -1346,7 +1348,7 @@ void HIDAPI_UpdateDevices(void)
                 }
             }
         }
-        SDL_AtomicUnlock(&SDL_HIDAPI_spinlock);
+        SDL_UnlockSpinlock(&SDL_HIDAPI_spinlock);
     }
 }
 

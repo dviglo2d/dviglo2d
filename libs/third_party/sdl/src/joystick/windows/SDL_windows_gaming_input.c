@@ -61,7 +61,7 @@ typedef struct WindowsGamingInputControllerState
     int steam_virtual_gamepad_slot;
 } WindowsGamingInputControllerState;
 
-typedef HRESULT(WINAPI *CoIncrementMTAUsage_t)(PVOID *pCookie);
+typedef HRESULT(WINAPI *CoIncrementMTAUsage_t)(CO_MTA_USAGE_COOKIE *pCookie);
 typedef HRESULT(WINAPI *RoGetActivationFactory_t)(HSTRING activatableClassId, REFIID iid, void **factory);
 typedef HRESULT(WINAPI *WindowsCreateStringReference_t)(PCWSTR sourceString, UINT32 length, HSTRING_HEADER *hstringHeader, HSTRING *string);
 typedef HRESULT(WINAPI *WindowsDeleteString_t)(HSTRING string);
@@ -603,7 +603,7 @@ static int WGI_JoystickInit(void)
         return SDL_SetError("RoInitialize() failed");
     }
 
-#ifdef __WINRT__
+#ifdef SDL_PLATFORM_WINRT
     wgi.CoIncrementMTAUsage = CoIncrementMTAUsage;
     wgi.RoGetActivationFactory = RoGetActivationFactory;
     wgi.WindowsCreateStringReference = WindowsCreateStringReference;
@@ -617,16 +617,16 @@ static int WGI_JoystickInit(void)
     RESOLVE(WindowsDeleteString);
     RESOLVE(WindowsGetStringRawBuffer);
 #undef RESOLVE
-#endif /* __WINRT__ */
+#endif /* SDL_PLATFORM_WINRT */
 
-#ifndef __WINRT__
+#ifndef SDL_PLATFORM_WINRT
     {
         /* There seems to be a bug in Windows where a dependency of WGI can be unloaded from memory prior to WGI itself.
          * This results in Windows_Gaming_Input!GameController::~GameController() invoking an unloaded DLL and crashing.
          * As a workaround, we will keep a reference to the MTA to prevent COM from unloading DLLs later.
          * See https://github.com/libsdl-org/SDL/issues/5552 for more details.
          */
-        static PVOID cookie = NULL;
+        static CO_MTA_USAGE_COOKIE cookie = NULL;
         if (!cookie) {
             hr = wgi.CoIncrementMTAUsage(&cookie);
             if (FAILED(hr)) {
@@ -800,7 +800,7 @@ static Uint32 WGI_JoystickGetCapabilities(SDL_Joystick *joystick)
 
     if (hwdata->gamepad) {
         /* FIXME: Can WGI even tell us if trigger rumble is supported? */
-        return SDL_JOYCAP_RUMBLE | SDL_JOYCAP_RUMBLE_TRIGGERS;
+        return (SDL_JOYSTICK_CAP_RUMBLE | SDL_JOYSTICK_CAP_TRIGGER_RUMBLE);
     } else {
         return 0;
     }

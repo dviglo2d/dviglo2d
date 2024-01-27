@@ -34,7 +34,7 @@ del BUGS.txt
 :: CMakeLists.txt
 :: LICENSE.txt
 :: README-SDL.txt
-:: WhatsNew.txt
+del WhatsNew.txt
 
 :: Удаление всяких скриптов
 del /s *.pl

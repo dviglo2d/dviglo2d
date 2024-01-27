@@ -686,7 +686,7 @@ static void RAWINPUT_InitWindowsGamingInput(RAWINPUT_DeviceContext *ctx)
             typedef HRESULT(WINAPI * WindowsCreateStringReference_t)(PCWSTR sourceString, UINT32 length, HSTRING_HEADER * hstringHeader, HSTRING * string);
             typedef HRESULT(WINAPI * RoGetActivationFactory_t)(HSTRING activatableClassId, REFIID iid, void **factory);
 
-#ifdef __WINRT__
+#ifdef SDL_PLATFORM_WINRT
             WindowsCreateStringReference_t WindowsCreateStringReferenceFunc = WindowsCreateStringReference;
             RoGetActivationFactory_t RoGetActivationFactoryFunc = RoGetActivationFactory;
 #else
@@ -1514,15 +1514,15 @@ static Uint32 RAWINPUT_JoystickGetCapabilities(SDL_Joystick *joystick)
 
 #ifdef SDL_JOYSTICK_RAWINPUT_XINPUT
     if (ctx->is_xinput) {
-        result |= SDL_JOYCAP_RUMBLE;
+        result |= SDL_JOYSTICK_CAP_RUMBLE;
     }
 #endif
 #ifdef SDL_JOYSTICK_RAWINPUT_WGI
     if (ctx->is_xinput) {
-        result |= SDL_JOYCAP_RUMBLE;
+        result |= SDL_JOYSTICK_CAP_RUMBLE;
 
         if (ctx->is_xboxone) {
-            result |= SDL_JOYCAP_RUMBLE_TRIGGERS;
+            result |= SDL_JOYSTICK_CAP_TRIGGER_RUMBLE;
         }
     }
 #endif

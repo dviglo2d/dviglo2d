@@ -546,15 +546,22 @@ static void Cocoa_UpdateClipCursor(SDL_Window *window)
     }
 }
 
-static void Cocoa_SetKeyboardFocus(SDL_Window *window)
+static SDL_Window *GetTopmostWindow(SDL_Window *window)
 {
     SDL_Window *topmost = window;
-    SDL_CocoaWindowData *topmost_data;
 
     /* Find the topmost parent */
     while (topmost->parent != NULL) {
         topmost = topmost->parent;
     }
+
+    return topmost;
+}
+
+static void Cocoa_SetKeyboardFocus(SDL_Window *window)
+{
+    SDL_Window *topmost = GetTopmostWindow(window);
+    SDL_CocoaWindowData *topmost_data;
 
     topmost_data = (__bridge SDL_CocoaWindowData *)topmost->driverdata;
     topmost_data.keyboard_focus = window;
@@ -1231,7 +1238,7 @@ static SDL_bool Cocoa_IsZoomed(SDL_Window *window)
     if (window->is_destroying) {
         return;
     }
-    
+
     SetWindowStyle(window, flags);
 
     isFullscreenSpace = YES;
@@ -1680,7 +1687,7 @@ static int Cocoa_SendMouseButtonClicks(SDL_Mouse *mouse, NSEvent *theEvent, SDL_
     float x, y;
 
     for (NSTouch *touch in touches) {
-        const SDL_TouchID touchId = istrackpad ? SDL_MOUSE_TOUCHID : (SDL_TouchID)(intptr_t)[touch device];
+        const SDL_TouchID touchId = istrackpad ? SDL_MOUSE_TOUCHID : (SDL_TouchID)(uintptr_t)[touch device];
         SDL_TouchDeviceType devtype = SDL_TOUCH_DEVICE_INDIRECT_ABSOLUTE;
 
         /* trackpad touches have no window. If we really wanted one we could
@@ -1709,7 +1716,7 @@ static int Cocoa_SendMouseButtonClicks(SDL_Mouse *mouse, NSEvent *theEvent, SDL_
             return;
         }
 
-        fingerId = (SDL_FingerID)(intptr_t)[touch identity];
+        fingerId = (SDL_FingerID)(uintptr_t)[touch identity];
         x = [touch normalizedPosition].x;
         y = [touch normalizedPosition].y;
         /* Make the origin the upper left instead of the lower left */
@@ -2360,6 +2367,9 @@ void Cocoa_RaiseWindow(SDL_VideoDevice *_this, SDL_Window *window)
             if (SDL_WINDOW_IS_POPUP(window)) {
                 NSWindow *nsparent = ((__bridge SDL_CocoaWindowData *)window->parent->driverdata).nswindow;
                 [nsparent addChildWindow:nswindow ordered:NSWindowAbove];
+                if (bActivate) {
+                    [nswindow makeKeyWindow];
+                }
             } else {
                 if (bActivate) {
                     [NSApp activateIgnoringOtherApps:YES];
@@ -2729,6 +2739,22 @@ void Cocoa_DestroyWindow(SDL_VideoDevice *_this, SDL_Window *window)
             NSArray *contexts;
 
 #endif /* SDL_VIDEO_OPENGL */
+            SDL_Window *topmost = GetTopmostWindow(window);
+            SDL_CocoaWindowData *topmost_data = (__bridge SDL_CocoaWindowData *)topmost->driverdata;
+
+            /* Reset the input focus of the root window if this window is still set as keyboard focus.
+             * SDL_DestroyWindow will have already taken care of reassigning focus if this is the SDL
+             * keyboard focus, this ensures that an inactive window with this window set as input focus
+             * does not try to reference it the next time it gains focus.
+             */
+            if (topmost_data.keyboard_focus == window) {
+                SDL_Window *new_focus = window;
+                while(new_focus->parent && (new_focus->is_hiding || new_focus->is_destroying)) {
+                    new_focus = new_focus->parent;
+                }
+
+                topmost_data.keyboard_focus = new_focus;
+            }
 
             if ([data.listener isInFullscreenSpace]) {
                 [NSMenu setMenuBarVisible:YES];

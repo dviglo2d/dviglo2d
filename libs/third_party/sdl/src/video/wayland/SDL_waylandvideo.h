@@ -41,6 +41,12 @@ typedef struct
     int size;
 } SDL_WaylandCursorTheme;
 
+typedef struct
+{
+    struct wl_list link;
+    char wl_output_name[];
+} SDL_WaylandConnectorName;
+
 struct SDL_VideoData
 {
     SDL_bool initializing;
@@ -72,13 +78,18 @@ struct SDL_VideoData
     struct wp_viewporter *viewporter;
     struct wp_fractional_scale_manager_v1 *fractional_scale_manager;
     struct zwp_input_timestamps_manager_v1 *input_timestamps_manager;
+    struct kde_output_order_v1 *kde_output_order;
 
     struct xkb_context *xkb_context;
     struct SDL_WaylandInput *input;
     struct SDL_WaylandTabletManager *tablet_manager;
     struct wl_list output_list;
+    struct wl_list output_order;
+
+    SDL_bool output_order_finalized;
 
     int relative_mouse_mode;
+    SDL_bool display_externally_owned;
 };
 
 struct SDL_DisplayData
@@ -86,6 +97,7 @@ struct SDL_DisplayData
     SDL_VideoData *videodata;
     struct wl_output *output;
     struct zxdg_output_v1 *xdg_output;
+    char *wl_output_name;
     uint32_t registry_id;
     float scale_factor;
     int pixel_width, pixel_height;
@@ -106,6 +118,10 @@ extern void SDL_WAYLAND_register_surface(struct wl_surface *surface);
 extern void SDL_WAYLAND_register_output(struct wl_output *output);
 extern SDL_bool SDL_WAYLAND_own_surface(struct wl_surface *surface);
 extern SDL_bool SDL_WAYLAND_own_output(struct wl_output *output);
+
+extern SDL_WindowData *Wayland_GetWindowDataForOwnedSurface(struct wl_surface *surface);
+void Wayland_AddWindowDataToExternalList(SDL_WindowData *data);
+void Wayland_RemoveWindowDataFromExternalList(SDL_WindowData *data);
 
 extern SDL_bool Wayland_LoadLibdecor(SDL_VideoData *data, SDL_bool ignore_xdg);
 

@@ -33,7 +33,7 @@
    In all other cases, attempt to use client-side arrays, as they tend to
    be dramatically faster when not batching, and about the same when
    we are. */
-#ifdef __EMSCRIPTEN__
+#ifdef SDL_PLATFORM_EMSCRIPTEN
 #define USE_VERTEX_BUFFER_OBJECTS 1
 #else
 #define USE_VERTEX_BUFFER_OBJECTS 0
@@ -1594,6 +1594,7 @@ static int GLES2_CreateTexture(SDL_Renderer *renderer, SDL_Texture *texture, SDL
         }
     }
     SDL_SetNumberProperty(SDL_GetTextureProperties(texture), SDL_PROPERTY_TEXTURE_OPENGLES2_TEXTURE_NUMBER, data->texture);
+    SDL_SetNumberProperty(SDL_GetTextureProperties(texture), SDL_PROPERTY_TEXTURE_OPENGLES2_TEXTURE_TARGET, data->texture_type);
 
     if (texture->access == SDL_TEXTUREACCESS_TARGET) {
         data->fbo = GLES2_GetFBO(renderer->driverdata, texture->w, texture->h);
@@ -2099,7 +2100,7 @@ static SDL_Renderer *GLES2_CreateRenderer(SDL_Window *window, SDL_PropertiesID c
         goto error;
     }
 
-#ifdef __WINRT__
+#ifdef SDL_PLATFORM_WINRT
     /* DLudwig, 2013-11-29: ANGLE for WinRT doesn't seem to work unless VSync
      * is turned on.  Not doing so will freeze the screen's contents to that
      * of the first drawn frame.

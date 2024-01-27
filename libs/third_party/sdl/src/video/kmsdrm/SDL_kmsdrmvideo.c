@@ -23,6 +23,8 @@
 
 #ifdef SDL_VIDEO_DRIVER_KMSDRM
 
+#include "SDL_kmsdrmvulkan.h"
+
 /* SDL internals */
 #include "../../events/SDL_events_c.h"
 #include "../../events/SDL_keyboard_c.h"
@@ -41,7 +43,7 @@
 #include "SDL_kmsdrmmouse.h"
 #include "SDL_kmsdrmvideo.h"
 #include "SDL_kmsdrmopengles.h"
-#include "SDL_kmsdrmvulkan.h"
+/*#include "SDL_kmsdrmvulkan.h"*/
 #include <dirent.h>
 #include <errno.h>
 #include <poll.h>
@@ -49,7 +51,7 @@
 #include <sys/stat.h>
 #include <sys/utsname.h>
 
-#ifdef __OpenBSD__
+#ifdef SDL_PLATFORM_OPENBSD
 static SDL_bool moderndri = SDL_FALSE;
 #else
 static SDL_bool moderndri = SDL_TRUE;
@@ -191,13 +193,13 @@ static float CalculateRefreshRate(drmModeModeInfo *mode)
 
 static int KMSDRM_Available(void)
 {
-#ifdef __OpenBSD__
+#ifdef SDL_PLATFORM_OPENBSD
     struct utsname nameofsystem;
     double releaseversion;
 #endif
     int ret = -ENOENT;
 
-#ifdef __OpenBSD__
+#ifdef SDL_PLATFORM_OPENBSD
     if (!(uname(&nameofsystem) < 0)) {
         releaseversion = SDL_atof(nameofsystem.release);
         if (releaseversion >= 6.9) {
@@ -326,9 +328,10 @@ cleanup:
 }
 
 VideoBootStrap KMSDRM_bootstrap = {
-    "KMSDRM",
+    "kmsdrm",
     "KMS/DRM Video Driver",
-    KMSDRM_CreateDevice
+    KMSDRM_CreateDevice,
+    NULL /* no ShowMessageBox implementation */
 };
 
 static void KMSDRM_FBDestroyCallback(struct gbm_bo *bo, void *data)

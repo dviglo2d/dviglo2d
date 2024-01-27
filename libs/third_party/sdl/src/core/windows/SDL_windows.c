@@ -20,7 +20,7 @@
 */
 #include "SDL_internal.h"
 
-#if defined(__WIN32__) || defined(__WINRT__) || defined(__GDK__)
+#if defined(SDL_PLATFORM_WIN32) || defined(SDL_PLATFORM_WINRT) || defined(SDL_PLATFORM_GDK)
 
 #include "SDL_windows.h"
 
@@ -86,14 +86,14 @@ WIN_CoInitialize(void)
 
        If you need multi-threaded mode, call CoInitializeEx() before SDL_Init()
     */
-#ifdef __WINRT__
+#ifdef SDL_PLATFORM_WINRT
     /* DLudwig: On WinRT, it is assumed that COM was initialized in main().
        CoInitializeEx is available (not CoInitialize though), however
        on WinRT, main() is typically declared with the [MTAThread]
        attribute, which, AFAIK, should initialize COM.
     */
     return S_OK;
-#elif defined(__XBOXONE__) || defined(__XBOXSERIES__)
+#elif defined(SDL_PLATFORM_XBOXONE) || defined(SDL_PLATFORM_XBOXSERIES)
     /* On Xbox, there's no need to call CoInitializeEx (and it's not implemented) */
     return S_OK;
 #else
@@ -114,13 +114,13 @@ WIN_CoInitialize(void)
 
 void WIN_CoUninitialize(void)
 {
-#ifndef __WINRT__
+#ifndef SDL_PLATFORM_WINRT
     CoUninitialize();
 #endif
 }
 
-#ifndef __WINRT__
-void *WIN_LoadComBaseFunction(const char *name)
+#ifndef SDL_PLATFORM_WINRT
+FARPROC WIN_LoadComBaseFunction(const char *name)
 {
     static SDL_bool s_bLoaded;
     static HMODULE s_hComBase;
@@ -140,7 +140,7 @@ void *WIN_LoadComBaseFunction(const char *name)
 HRESULT
 WIN_RoInitialize(void)
 {
-#ifdef __WINRT__
+#ifdef SDL_PLATFORM_WINRT
     return S_OK;
 #else
     typedef HRESULT(WINAPI * RoInitialize_t)(RO_INIT_TYPE initType);
@@ -167,7 +167,7 @@ WIN_RoInitialize(void)
 
 void WIN_RoUninitialize(void)
 {
-#ifndef __WINRT__
+#ifndef SDL_PLATFORM_WINRT
     typedef void(WINAPI * RoUninitialize_t)(void);
     RoUninitialize_t RoUninitializeFunc = (RoUninitialize_t)WIN_LoadComBaseFunction("RoUninitialize");
     if (RoUninitializeFunc) {
@@ -176,7 +176,7 @@ void WIN_RoUninitialize(void)
 #endif
 }
 
-#if !defined(__WINRT__) && !defined(__XBOXONE__) && !defined(__XBOXSERIES__)
+#if !defined(SDL_PLATFORM_WINRT) && !defined(SDL_PLATFORM_XBOXONE) && !defined(SDL_PLATFORM_XBOXSERIES)
 static BOOL IsWindowsVersionOrGreater(WORD wMajorVersion, WORD wMinorVersion, WORD wServicePackMajor)
 {
     OSVERSIONINFOEXW osvi;
@@ -199,7 +199,7 @@ static BOOL IsWindowsVersionOrGreater(WORD wMajorVersion, WORD wMinorVersion, WO
 
 BOOL WIN_IsWindowsVistaOrGreater(void)
 {
-#if defined(__WINRT__) || defined(__XBOXONE__) || defined(__XBOXSERIES__)
+#if defined(SDL_PLATFORM_WINRT) || defined(SDL_PLATFORM_XBOXONE) || defined(SDL_PLATFORM_XBOXSERIES)
     return TRUE;
 #else
     return IsWindowsVersionOrGreater(HIBYTE(_WIN32_WINNT_VISTA), LOBYTE(_WIN32_WINNT_VISTA), 0);
@@ -208,7 +208,7 @@ BOOL WIN_IsWindowsVistaOrGreater(void)
 
 BOOL WIN_IsWindows7OrGreater(void)
 {
-#if defined(__WINRT__) || defined(__XBOXONE__) || defined(__XBOXSERIES__)
+#if defined(SDL_PLATFORM_WINRT) || defined(SDL_PLATFORM_XBOXONE) || defined(SDL_PLATFORM_XBOXSERIES)
     return TRUE;
 #else
     return IsWindowsVersionOrGreater(HIBYTE(_WIN32_WINNT_WIN7), LOBYTE(_WIN32_WINNT_WIN7), 0);
@@ -217,7 +217,7 @@ BOOL WIN_IsWindows7OrGreater(void)
 
 BOOL WIN_IsWindows8OrGreater(void)
 {
-#if defined(__WINRT__) || defined(__XBOXONE__) || defined(__XBOXSERIES__)
+#if defined(SDL_PLATFORM_WINRT) || defined(SDL_PLATFORM_XBOXONE) || defined(SDL_PLATFORM_XBOXSERIES)
     return TRUE;
 #else
     return IsWindowsVersionOrGreater(HIBYTE(_WIN32_WINNT_WIN8), LOBYTE(_WIN32_WINNT_WIN8), 0);
@@ -247,7 +247,7 @@ WASAPI doesn't need this. This is just for DirectSound/WinMM.
 */
 char *WIN_LookupAudioDeviceName(const WCHAR *name, const GUID *guid)
 {
-#if defined(__WINRT__) || defined(__XBOXONE__) || defined(__XBOXSERIES__)
+#if defined(SDL_PLATFORM_WINRT) || defined(SDL_PLATFORM_XBOXONE) || defined(SDL_PLATFORM_XBOXSERIES)
     return WIN_StringToUTF8(name); /* No registry access on WinRT/UWP and Xbox, go with what we've got. */
 #else
     static const GUID nullguid = { 0 };
@@ -300,7 +300,7 @@ char *WIN_LookupAudioDeviceName(const WCHAR *name, const GUID *guid)
     retval = WIN_StringToUTF8(strw);
     SDL_free(strw);
     return retval ? retval : WIN_StringToUTF8(name);
-#endif /* if __WINRT__ / else */
+#endif /* if SDL_PLATFORM_WINRT / else */
 }
 
 BOOL WIN_IsEqualGUID(const GUID *a, const GUID *b)
@@ -364,7 +364,7 @@ SDL_AudioFormat SDL_WaveFormatExToSDLFormat(WAVEFORMATEX *waveformat)
 
 /* Win32-specific SDL_RunApp(), which does most of the SDL_main work,
   based on SDL_windows_main.c, placed in the public domain by Sam Lantinga  4/13/98 */
-#ifdef __WIN32__
+#ifdef SDL_PLATFORM_WIN32
 
 #include <shellapi.h> /* CommandLineToArgvW() */
 
@@ -433,51 +433,6 @@ DECLSPEC int MINGW32_FORCEALIGN SDL_RunApp(int _argc, char* _argv[], SDL_main_fu
     return result;
 }
 
-#endif /* __WIN32__ */
+#endif /* SDL_PLATFORM_WIN32 */
 
-#endif /* defined(__WIN32__) || defined(__WINRT__) || defined(__GDK__) */
-
-/*
- * Public APIs
- */
-#ifndef SDL_VIDEO_DRIVER_WINDOWS
-
-#if defined(__WIN32__) || defined(__GDK__)
-int SDL_RegisterApp(const char *name, Uint32 style, void *hInst)
-{
-    (void)name;
-    (void)style;
-    (void)hInst;
-    return 0;
-}
-
-void SDL_UnregisterApp(void)
-{
-}
-
-void SDL_SetWindowsMessageHook(SDL_WindowsMessageHook callback, void *userdata)
-{
-}
-#endif /* __WIN32__ || __GDK__ */
-
-#if defined(__WIN32__) || defined(__WINGDK__)
-int SDL_Direct3D9GetAdapterIndex(SDL_DisplayID displayID)
-{
-    (void)displayID;
-    return 0; /* D3DADAPTER_DEFAULT */
-}
-
-SDL_bool SDL_DXGIGetOutputInfo(SDL_DisplayID displayID, int *adapterIndex, int *outputIndex)
-{
-    (void)displayID;
-    if (adapterIndex) {
-        *adapterIndex = -1;
-    }
-    if (outputIndex) {
-        *outputIndex = -1;
-    }
-    return SDL_FALSE;
-}
-#endif /* __WIN32__ || __WINGDK__ */
-
-#endif /* !SDL_VIDEO_DRIVER_WINDOWS */
+#endif /* defined(SDL_PLATFORM_WIN32) || defined(SDL_PLATFORM_WINRT) || defined(SDL_PLATFORM_GDK) */

@@ -20,22 +20,36 @@
 */
 #include "SDL_internal.h"
 
-#if defined(SDL_TIMER_DUMMY) || defined(SDL_TIMERS_DISABLED)
 
-Uint64 SDL_GetPerformanceCounter(void)
+#ifdef SDL_memmove
+#undef SDL_memmove
+#endif
+#if SDL_DYNAMIC_API
+#define SDL_memmove SDL_memmove_REAL
+#endif
+void *SDL_memmove(SDL_OUT_BYTECAP(len) void *dst, SDL_IN_BYTECAP(len) const void *src, size_t len)
 {
-    SDL_Unsupported();
-    return 0;
+#ifdef __GNUC__
+    /* Presumably this is well tuned for speed. */
+    return __builtin_memmove(dst, src, len);
+#elif defined(HAVE_MEMMOVE)
+    return memmove(dst, src, len);
+#else
+    char *srcp = (char *)src;
+    char *dstp = (char *)dst;
+
+    if (src < dst) {
+        srcp += len - 1;
+        dstp += len - 1;
+        while (len--) {
+            *dstp-- = *srcp--;
+        }
+    } else {
+        while (len--) {
+            *dstp++ = *srcp++;
+        }
+    }
+    return dst;
+#endif /* HAVE_MEMMOVE */
 }
 
-Uint64 SDL_GetPerformanceFrequency(void)
-{
-    return 1;
-}
-
-void SDL_DelayNS(Uint64 ns)
-{
-    SDL_Unsupported();
-}
-
-#endif /* SDL_TIMER_DUMMY || SDL_TIMERS_DISABLED */

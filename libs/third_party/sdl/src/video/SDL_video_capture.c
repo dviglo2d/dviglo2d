@@ -27,7 +27,7 @@
 #include "SDL_pixels_c.h"
 #include "../thread/SDL_systhread.h"
 
-#define DEBUG_VIDEO_CAPTURE_CAPTURE 1
+#define DEBUG_VIDEO_CAPTURE_CAPTURE 0
 
 
 #ifdef SDL_VIDEO_CAPTURE
@@ -396,7 +396,7 @@ SDL_CaptureVideoThread(void *devicep)
 #endif
 
     /* Perform any thread setup */
-    device->threadid = SDL_ThreadID();
+    device->threadid = SDL_GetCurrentThreadID();
 
     /* Init state */
     while (!SDL_AtomicGet(&device->enabled)) {
@@ -853,15 +853,15 @@ SDL_QuitVideoCapture(void)
 
 #ifdef SDL_VIDEO_CAPTURE
 
-#if defined(__linux__) && !defined(__ANDROID__)
+#if defined(SDL_PLATFORM_LINUX) && !defined(SDL_PLATFORM_ANDROID)
 
 /* See SDL_video_capture_v4l2.c */
 
-#elif defined(__ANDROID__) && __ANDROID_API__ >= 24
+#elif defined(SDL_PLATFORM_ANDROID) && __ANDROID_API__ >= 24
 
 /* See SDL_android_video_capture.c */
 
-#elif defined(__IPHONEOS__) || defined(__MACOS__)
+#elif defined(SDL_PLATFORM_IOS) || defined(SDL_PLATFORM_MACOS)
 
 /* See SDL_video_capture_apple.m */
 #else

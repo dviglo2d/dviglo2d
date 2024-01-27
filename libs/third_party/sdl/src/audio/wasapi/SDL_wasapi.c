@@ -93,7 +93,7 @@ static void ManagementThreadMainloop(void)
 int WASAPI_ProxyToManagementThread(ManagementThreadTask task, void *userdata, int *wait_on_result)
 {
     // We want to block for a result, but we are already running from the management thread! Just run the task now so we don't deadlock.
-    if ((wait_on_result) && (SDL_ThreadID() == SDL_GetThreadID(ManagementThread))) {
+    if ((wait_on_result) && (SDL_GetCurrentThreadID() == SDL_GetThreadID(ManagementThread))) {
         *wait_on_result = task(userdata);
         return 0;  // completed!
     }
@@ -564,7 +564,7 @@ static int mgmtthrtask_PrepDevice(void *userdata)
     IAudioClient *client = device->hidden->client;
     SDL_assert(client != NULL);
 
-#if defined(__WINRT__) || defined(__GDK__) // CreateEventEx() arrived in Vista, so we need an #ifdef for XP.
+#if defined(SDL_PLATFORM_WINRT) || defined(SDL_PLATFORM_GDK) // CreateEventEx() arrived in Vista, so we need an #ifdef for XP.
     device->hidden->event = CreateEventEx(NULL, NULL, 0, EVENT_ALL_ACCESS);
 #else
     device->hidden->event = CreateEventW(NULL, 0, 0, NULL);
