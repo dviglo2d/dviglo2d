@@ -143,8 +143,9 @@ public:
 
     SpriteBatch();
 
-    /// Настраивает OpenGL для работы со SpriteBatch
-    void prepare_ogl();
+    /// Настраивает OpenGL для работы со SpriteBatch.
+    /// Для корректного рендеринга текста альфа-смешение должно быть включено
+    void prepare_ogl(bool alpha_blending = true);
 
     /// Рендерит накопленную геометрию (то есть текущую порцию)
     void flush();

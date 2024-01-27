@@ -61,17 +61,26 @@ void SpriteBatch::add_quad()
         flush();
 }
 
-void SpriteBatch::prepare_ogl()
+void SpriteBatch::prepare_ogl(bool alpha_blending)
 {
+    flush(); // На случай, если параметры меняются посередине рендеринга
+
     // Задаём треугольники по часовой стрелке
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
     glFrontFace(GL_CW);
 
-    // Включаем альфа-смешение
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glBlendEquation(GL_FUNC_ADD);
+    // Включаем альфа-смешение, если нужно
+    if (alpha_blending)
+    {
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glBlendEquation(GL_FUNC_ADD);
+    }
+    else
+    {
+        glDisable(GL_BLEND);
+    }
 }
 
 SpriteBatch::SpriteBatch()
