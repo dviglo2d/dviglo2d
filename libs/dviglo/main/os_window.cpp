@@ -36,6 +36,12 @@ OsWindow::OsWindow()
     SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
     SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
 
+    if (engine_params::msaa_samples > 1)
+    {
+        SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
+        SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, engine_params::msaa_samples);
+    }
+
     SDL_PropertiesID props = SDL_CreateProperties();
     SDL_SetStringProperty(props, SDL_PROPERTY_WINDOW_CREATE_TITLE_STRING, engine_params::window_title.c_str());
     SDL_SetNumberProperty(props, SDL_PROPERTY_WINDOW_CREATE_X_NUMBER, SDL_WINDOWPOS_UNDEFINED);
