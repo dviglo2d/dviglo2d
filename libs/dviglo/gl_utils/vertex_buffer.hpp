@@ -17,7 +17,7 @@ enum class VertexAttributes
 {
     none     = 0,
     position = 1 << 0,
-    color    = 1 << 1, // 0xAABBGGRR
+    color    = 1 << 1, ///< 0xAABBGGRR
     uv       = 1 << 2,
 };
 DV_FLAGS(VertexAttributes);
