@@ -19,7 +19,7 @@ class App : public Application
     //entt::registry ecs_;
     //STest s_test_;
 
-    Texture* texture_;
+    Texture* texture_ = nullptr;
     unique_ptr<SpriteBatch> sprite_batch_;
     unique_ptr<SpriteFont> font_;
 
