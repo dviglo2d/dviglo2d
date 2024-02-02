@@ -24,6 +24,9 @@ struct Rect
         , max(max)
     {
     }
+
+    float get_width() const { return max.x - min.x; }
+    float get_height() const { return max.y - min.y; }
 };
 
 struct IntRect
@@ -41,6 +44,9 @@ struct IntRect
         , max(max)
     {
     }
+
+    i32 get_width() const { return max.x - min.x; }
+    i32 get_height() const { return max.y - min.y; }
 };
 
 } // namespace dviglo
