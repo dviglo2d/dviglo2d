@@ -8,7 +8,7 @@ set(target_name hello)
 file(GLOB_RECURSE source_files *.cpp *.hpp)
 
 # Создаём приложение
-add_executable(${target_name} ${source_files} ${common_source_files})
+add_executable(${target_name} ${source_files})
 
 if(NOT DV_WIN32_CONSOLE)
     # Используем точку входа WinMain()
