@@ -172,7 +172,7 @@ static SDL_Scancode WindowsScanCodeToSDLScanCode(LPARAM lParam, WPARAM wParam)
 #if !defined(SDL_PLATFORM_XBOXONE) && !defined(SDL_PLATFORM_XBOXSERIES)
         /* Windows may not report scan codes for some buttons (multimedia buttons etc).
          * Get scan code from the VK code.*/
-        scanCode = LOWORD(MapVirtualKey(vkCode, MAPVK_VK_TO_VSC_EX));
+        scanCode = LOWORD(MapVirtualKey(vkCode, WIN_IsWindowsXP() ? MAPVK_VK_TO_VSC : MAPVK_VK_TO_VSC_EX));
 #endif /*!defined(SDL_PLATFORM_XBOXONE) && !defined(SDL_PLATFORM_XBOXSERIES)*/
 
         /* Pause/Break key have a special scan code with 0xe1 prefix.
@@ -402,7 +402,7 @@ static void WIN_UpdateFocus(SDL_Window *window, SDL_bool expect_focus)
 
 static SDL_bool ShouldGenerateWindowCloseOnAltF4(void)
 {
-    return !SDL_GetHintBoolean(SDL_HINT_WINDOWS_NO_CLOSE_ON_ALT_F4, SDL_FALSE);
+    return SDL_GetHintBoolean(SDL_HINT_WINDOWS_CLOSE_ON_ALT_F4, SDL_TRUE);
 }
 
 #if !defined(SDL_PLATFORM_XBOXONE) && !defined(SDL_PLATFORM_XBOXSERIES)
@@ -966,14 +966,14 @@ WIN_WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         if (IS_HIGH_SURROGATE(wParam)) {
             data->high_surrogate = (WCHAR)wParam;
         } else {
-            WCHAR utf16[] = {
-                data->high_surrogate ? data->high_surrogate : (WCHAR)wParam,
-                data->high_surrogate ? (WCHAR)wParam : L'\0',
-                L'\0'
-            };
+            WCHAR utf16[3];
+
+            utf16[0] = data->high_surrogate ? data->high_surrogate : (WCHAR)wParam;
+            utf16[1] = data->high_surrogate ? (WCHAR)wParam : L'\0';
+            utf16[2] = L'\0';
 
             char utf8[5];
-            int result = WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, utf16, -1, utf8, sizeof(utf8), NULL, NULL);
+            int result = WIN_WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, utf16, -1, utf8, sizeof(utf8), NULL, NULL);
             if (result > 0) {
                 SDL_SendKeyboardText(utf8);
             }
@@ -1687,7 +1687,10 @@ void SDL_SetWindowsMessageHook(SDL_WindowsMessageHook callback, void *userdata)
 int WIN_WaitEventTimeout(SDL_VideoDevice *_this, Sint64 timeoutNS)
 {
     if (g_WindowsEnableMessageLoop) {
-        if (MsgWaitForMultipleObjects(0, NULL, FALSE, (DWORD)SDL_NS_TO_MS(timeoutNS), QS_ALLINPUT)) {
+        DWORD timeout, ret;
+        timeout = timeoutNS < 0 ? INFINITE : (DWORD)SDL_NS_TO_MS(timeoutNS);
+        ret = MsgWaitForMultipleObjects(0, NULL, FALSE, timeout, QS_ALLINPUT);
+        if (ret == WAIT_OBJECT_0) {
             return 1;
         } else {
             return 0;

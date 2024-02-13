@@ -57,7 +57,7 @@ static gme_loader gme;
 #else
 #define FUNCTION_LOADER(FUNC, SIG) \
     gme.FUNC = FUNC; \
-    if (gme.FUNC == NULL) { Mix_SetError("Missing GME.framework"); return -1; }
+    if (gme.FUNC == NULL) { Mix_SetError("Missing gme.framework"); return -1; }
 #endif
 
 static int GME_Load(void)
@@ -161,8 +161,7 @@ static int initialize_from_track_info(GME_Music *music, int track)
 
     err = gme.gme_track_info(music->game_emu, &musInfo, track);
     if (err != 0) {
-        Mix_SetError("GME: %s", err);
-        return -1;
+        return Mix_SetError("GME: %s", err);
     }
 
     music->track_length = musInfo->length;
@@ -239,7 +238,7 @@ static void *GME_CreateFromRW(struct SDL_RWops *src, SDL_bool freesrc)
     SDL_RWseek(src, 0, SDL_RW_SEEK_SET);
     mem = SDL_LoadFile_RW(src, &size, SDL_FALSE);
     if (mem) {
-        err = gme.gme_open_data(mem, size, &music->game_emu, music_spec.freq);
+        err = gme.gme_open_data(mem, (long)size, &music->game_emu, music_spec.freq);
         SDL_free(mem);
         if (err != 0) {
             GME_Delete(music);
@@ -269,7 +268,7 @@ static void *GME_CreateFromRW(struct SDL_RWops *src, SDL_bool freesrc)
     music->volume = MIX_MAX_VOLUME;
 
     meta_tags_init(&music->tags);
-    if (initialize_from_track_info(music, 0) == -1) {
+    if (initialize_from_track_info(music, 0) < 0) {
         GME_Delete(music);
         return NULL;
     }
@@ -313,13 +312,13 @@ static int GME_GetSome(void *context, void *data, int bytes, SDL_bool *done)
         return 0;
     }
 
-    err = gme.gme_play(music->game_emu, (music->buffer_size / 2), (short*)music->buffer);
+    err = gme.gme_play(music->game_emu, (int)(music->buffer_size / 2), (short*)music->buffer);
     if (err != NULL) {
         Mix_SetError("GME: %s", err);
         return 0;
     }
 
-    if (SDL_PutAudioStreamData(music->stream, music->buffer, music->buffer_size) < 0) {
+    if (SDL_PutAudioStreamData(music->stream, music->buffer, (int)music->buffer_size) < 0) {
         return -1;
     }
     return 0;
@@ -399,17 +398,12 @@ static int GME_StartTrack(void *music_p, int track)
 
     err = gme.gme_start_track(music->game_emu, track);
     if (err != 0) {
-        Mix_SetError("GME: %s", err);
-        return -1;
+        return Mix_SetError("GME: %s", err);
     }
 
     GME_Play(music, music->play_count);
 
-    if (initialize_from_track_info(music, track) == -1) {
-        return -1;
-    }
-
-    return 0;
+    return initialize_from_track_info(music, track);
 }
 
 

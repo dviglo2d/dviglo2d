@@ -1,5 +1,5 @@
 /*
-  SDL_mixer:  An audio mixer library based on the SDL library
+  Simple DirectMedia Layer
   Copyright (C) 1997-2024 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
@@ -18,11 +18,11 @@
      misrepresented as being the original software.
   3. This notice may not be removed or altered from any source distribution.
 */
+#include "SDL_internal.h"
 
-/* This file supports playing MP3 files with dr_mp3 */
+#ifndef SDL_windowsshape_h_
+#define SDL_windowsshape_h_
 
-#include "music.h"
+extern int WIN_UpdateWindowShape(SDL_VideoDevice *_this, SDL_Window *window, SDL_Surface *shape);
 
-extern Mix_MusicInterface Mix_MusicInterface_DRMP3;
-
-/* vi: set ts=4 sw=4 expandtab: */
+#endif /* SDL_windowsshape_h_ */

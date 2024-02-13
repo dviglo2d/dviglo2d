@@ -49,6 +49,7 @@ struct SDL_Window
     Uint32 flags;
     Uint32 pending_flags;
     float display_scale;
+    SDL_bool external_graphics_context;
     SDL_bool fullscreen_exclusive;  /* The window is currently fullscreen exclusive */
     SDL_DisplayID last_fullscreen_exclusive_display;  /* The last fullscreen_exclusive display */
     SDL_DisplayID last_displayID;
@@ -117,6 +118,12 @@ struct SDL_Window
 #define SDL_WINDOW_IS_POPUP(W) \
     (((W)->flags & (SDL_WINDOW_TOOLTIP | SDL_WINDOW_POPUP_MENU)) != 0)
 
+typedef struct
+{
+    SDL_bool enabled;
+    float SDR_whitelevel;
+} SDL_HDRDisplayProperties;
+
 /*
  * Define the SDL display structure.
  * This corresponds to physical monitors attached to the system.
@@ -133,6 +140,7 @@ struct SDL_VideoDisplay
     SDL_DisplayOrientation natural_orientation;
     SDL_DisplayOrientation current_orientation;
     float content_scale;
+    SDL_HDRDisplayProperties HDR;
 
     SDL_Window *fullscreen_window;
 
@@ -246,6 +254,7 @@ struct SDL_VideoDevice
     int (*UpdateWindowFramebuffer)(SDL_VideoDevice *_this, SDL_Window *window, const SDL_Rect *rects, int numrects);
     void (*DestroyWindowFramebuffer)(SDL_VideoDevice *_this, SDL_Window *window);
     void (*OnWindowEnter)(SDL_VideoDevice *_this, SDL_Window *window);
+    int (*UpdateWindowShape)(SDL_VideoDevice *_this, SDL_Window *window, SDL_Surface *shape);
     int (*FlashWindow)(SDL_VideoDevice *_this, SDL_Window *window, SDL_FlashOperation operation);
     int (*SetWindowFocusable)(SDL_VideoDevice *_this, SDL_Window *window, SDL_bool focusable);
     int (*SyncWindow)(SDL_VideoDevice *_this, SDL_Window *window);
@@ -322,7 +331,7 @@ struct SDL_VideoDevice
     SDL_bool (*HasPrimarySelectionText)(SDL_VideoDevice *_this);
 
     /* MessageBox */
-    int (*ShowMessageBox)(SDL_VideoDevice *_this, const SDL_MessageBoxData *messageboxdata, int *buttonid);
+    int (*ShowMessageBox)(SDL_VideoDevice *_this, const SDL_MessageBoxData *messageboxdata, int *buttonID);
 
     /* Hit-testing */
     int (*SetWindowHitTest)(SDL_Window *window, SDL_bool enabled);
@@ -447,7 +456,7 @@ typedef struct VideoBootStrap
     const char *name;
     const char *desc;
     SDL_VideoDevice *(*create)(void);
-    int (*ShowMessageBox)(const SDL_MessageBoxData *messageboxdata, int *buttonid);  /* can be done without initializing backend! */
+    int (*ShowMessageBox)(const SDL_MessageBoxData *messageboxdata, int *buttonID);  /* can be done without initializing backend! */
 } VideoBootStrap;
 
 /* Not all of these are available in a given build. Use #ifdefs, etc. */
@@ -479,7 +488,6 @@ extern VideoBootStrap QNX_bootstrap;
 /* Use SDL_OnVideoThread() sparingly, to avoid regressions in use cases that currently happen to work */
 extern SDL_bool SDL_OnVideoThread(void);
 extern SDL_VideoDevice *SDL_GetVideoDevice(void);
-extern SDL_bool SDL_IsVideoContextExternal(void);
 extern void SDL_SetSystemTheme(SDL_SystemTheme theme);
 extern SDL_DisplayID SDL_AddBasicVideoDisplay(const SDL_DisplayMode *desktop_mode);
 extern SDL_DisplayID SDL_AddVideoDisplay(const SDL_VideoDisplay *display, SDL_bool send_event);
@@ -489,6 +497,7 @@ extern void SDL_ResetFullscreenDisplayModes(SDL_VideoDisplay *display);
 extern void SDL_SetDesktopDisplayMode(SDL_VideoDisplay *display, const SDL_DisplayMode *mode);
 extern void SDL_SetCurrentDisplayMode(SDL_VideoDisplay *display, const SDL_DisplayMode *mode);
 extern void SDL_SetDisplayContentScale(SDL_VideoDisplay *display, float scale);
+extern void SDL_SetDisplayHDRProperties(SDL_VideoDisplay *display, const SDL_HDRDisplayProperties *HDR);
 extern int SDL_SetDisplayModeForDisplay(SDL_VideoDisplay *display, SDL_DisplayMode *mode);
 extern SDL_VideoDisplay *SDL_GetVideoDisplay(SDL_DisplayID display);
 extern SDL_VideoDisplay *SDL_GetVideoDisplayForWindow(SDL_Window *window);

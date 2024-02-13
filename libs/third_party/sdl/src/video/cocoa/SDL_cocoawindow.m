@@ -834,6 +834,28 @@ static SDL_bool Cocoa_IsZoomed(SDL_Window *window)
     }
 }
 
+- (void)updateIgnoreMouseState:(NSEvent *)theEvent
+{
+    SDL_Window *window = _data.window;
+    SDL_Surface *shape = (SDL_Surface *)SDL_GetProperty(SDL_GetWindowProperties(window), SDL_PROP_WINDOW_SHAPE_POINTER, NULL);
+    BOOL ignoresMouseEvents = NO;
+
+    if (shape) {
+        NSPoint point = [theEvent locationInWindow];
+		NSRect windowRect = [[_data.nswindow contentView] frame];
+		if (NSMouseInRect(point, windowRect, NO)) {
+			int x = (int)SDL_roundf((point.x / (window->w - 1)) * (shape->w - 1));
+			int y = (int)SDL_roundf(((window->h - point.y) / (window->h - 1)) * (shape->h - 1));
+			Uint8 a;
+
+			if (SDL_ReadSurfacePixel(shape, x, y, NULL, NULL, NULL, &a) < 0 || a == SDL_ALPHA_TRANSPARENT) {
+				ignoresMouseEvents = YES;
+			}
+		}
+    }
+    _data.nswindow.ignoresMouseEvents = ignoresMouseEvents;
+}
+
 - (void)setPendingMoveX:(float)x Y:(float)y
 {
     pendingWindowWarpX = x;
@@ -1555,6 +1577,10 @@ static int Cocoa_SendMouseButtonClicks(SDL_Mouse *mouse, NSEvent *theEvent, SDL_
     mouseID = mouse->mouseID;
     window = _data.window;
 
+    if (window->flags & SDL_WINDOW_TRANSPARENT) {
+        [self updateIgnoreMouseState:theEvent];
+    }
+
     if ([self processHitTest:theEvent]) {
         SDL_SendWindowEvent(window, SDL_EVENT_WINDOW_HIT_TEST, 0, 0);
         return; /* dragging, drop event. */
@@ -1971,8 +1997,8 @@ static int SetupWindowData(SDL_VideoDevice *_this, SDL_Window *window, NSWindow 
         }
 
         SDL_PropertiesID props = SDL_GetWindowProperties(window);
-        SDL_SetProperty(props, SDL_PROPERTY_WINDOW_COCOA_WINDOW_POINTER, (__bridge void *)data.nswindow);
-        SDL_SetNumberProperty(props, SDL_PROPERTY_WINDOW_COCOA_METAL_VIEW_TAG_NUMBER, SDL_METALVIEW_TAG);
+        SDL_SetProperty(props, SDL_PROP_WINDOW_COCOA_WINDOW_POINTER, (__bridge void *)data.nswindow);
+        SDL_SetNumberProperty(props, SDL_PROP_WINDOW_COCOA_METAL_VIEW_TAG_NUMBER, SDL_METALVIEW_TAG);
 
         /* All done! */
         window->driverdata = (SDL_WindowData *)CFBridgingRetain(data);
@@ -1997,8 +2023,8 @@ int Cocoa_CreateWindow(SDL_VideoDevice *_this, SDL_Window *window, SDL_Propertie
                 SDL_assert(false);
             }
         } else {
-            nswindow = (__bridge NSWindow *)SDL_GetProperty(create_props, SDL_PROPERTY_WINDOW_CREATE_COCOA_WINDOW_POINTER, NULL);
-            nsview = (__bridge NSView *)SDL_GetProperty(create_props, SDL_PROPERTY_WINDOW_CREATE_COCOA_VIEW_POINTER, NULL);
+            nswindow = (__bridge NSWindow *)SDL_GetProperty(create_props, SDL_PROP_WINDOW_CREATE_COCOA_WINDOW_POINTER, NULL);
+            nsview = (__bridge NSView *)SDL_GetProperty(create_props, SDL_PROP_WINDOW_CREATE_COCOA_VIEW_POINTER, NULL);
         }
         if (nswindow && !nsview) {
             nsview = [nswindow contentView];

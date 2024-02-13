@@ -101,6 +101,9 @@ static SDL_bool Wayland_GetGNOMEPrimaryDisplayCoordinates(int *x, int *y)
 {
 #ifdef SDL_USE_LIBDBUS
     SDL_DBusContext *dbus = SDL_DBus_GetContext();
+    if (dbus == NULL) {
+        return SDL_FALSE;
+    }
     DBusMessage *reply = NULL;
     DBusMessageIter iter[3];
     DBusMessage *msg = dbus->message_new_method_call(DISPLAY_INFO_NODE,
@@ -354,7 +357,7 @@ static void Wayland_DeleteDevice(SDL_VideoDevice *device)
     if (data->display && !data->display_externally_owned) {
         WAYLAND_wl_display_flush(data->display);
         WAYLAND_wl_display_disconnect(data->display);
-        SDL_ClearProperty(SDL_GetGlobalProperties(), SDL_PROPERTY_GLOBAL_VIDEO_WAYLAND_WL_DISPLAY_POINTER);
+        SDL_ClearProperty(SDL_GetGlobalProperties(), SDL_PROP_GLOBAL_VIDEO_WAYLAND_WL_DISPLAY_POINTER);
     }
     if (device->wakeup_lock) {
         SDL_DestroyMutex(device->wakeup_lock);
@@ -370,7 +373,7 @@ static SDL_VideoDevice *Wayland_CreateDevice(void)
     SDL_VideoData *data;
     struct SDL_WaylandInput *input;
     struct wl_display *display = SDL_GetProperty(SDL_GetGlobalProperties(),
-                                                 SDL_PROPERTY_GLOBAL_VIDEO_WAYLAND_WL_DISPLAY_POINTER, NULL);
+                                                 SDL_PROP_GLOBAL_VIDEO_WAYLAND_WL_DISPLAY_POINTER, NULL);
     SDL_bool display_is_external = !!display;
 
     /* Are we trying to connect to or are currently in a Wayland session? */
@@ -433,7 +436,7 @@ static SDL_VideoDevice *Wayland_CreateDevice(void)
 
     if (!display_is_external) {
         SDL_SetProperty(SDL_GetGlobalProperties(),
-                        SDL_PROPERTY_GLOBAL_VIDEO_WAYLAND_WL_DISPLAY_POINTER, display);
+                        SDL_PROP_GLOBAL_VIDEO_WAYLAND_WL_DISPLAY_POINTER, display);
     }
 
     device->driverdata = data;
@@ -1204,8 +1207,24 @@ static int Wayland_GetDisplayBounds(SDL_VideoDevice *_this, SDL_VideoDisplay *di
         rect->w = display->fullscreen_window->current_fullscreen_mode.w;
         rect->h = display->fullscreen_window->current_fullscreen_mode.h;
     } else {
-        rect->w = display->current_mode->w;
-        rect->h = display->current_mode->h;
+        /* If the focused window is on the requested display and requires display scaling,
+         * return the physical dimensions in pixels.
+         */
+        SDL_Window *kb = SDL_GetKeyboardFocus();
+        SDL_Window *m = SDL_GetMouseFocus();
+        SDL_bool scale_output = (kb && kb->driverdata->scale_to_display && (kb->last_displayID == display->id)) ||
+                                (m && m->driverdata->scale_to_display && (m->last_displayID == display->id));
+
+        if (!scale_output) {
+            rect->w = display->current_mode->w;
+            rect->h = display->current_mode->h;
+        } else if (driverdata->transform & WL_OUTPUT_TRANSFORM_90) {
+            rect->w = driverdata->pixel_height;
+            rect->h = driverdata->pixel_width;
+        } else {
+            rect->w = driverdata->pixel_width;
+            rect->h = driverdata->pixel_height;
+        }
     }
     return 0;
 }

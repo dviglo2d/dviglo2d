@@ -991,7 +991,7 @@ static int LINUX_JoystickInit(void)
 {
     const char *devices = SDL_GetHint(SDL_HINT_JOYSTICK_DEVICE);
 
-    SDL_classic_joysticks = SDL_GetHintBoolean(SDL_HINT_LINUX_JOYSTICK_CLASSIC, SDL_FALSE);
+    SDL_classic_joysticks = SDL_GetHintBoolean(SDL_HINT_JOYSTICK_LINUX_CLASSIC, SDL_FALSE);
 
     enumeration_method = ENUMERATION_UNSET;
 
@@ -1178,7 +1178,7 @@ static SDL_bool GuessIfAxesAreDigitalHat(struct input_absinfo *absinfo_x, struct
     }
 
     /* If the hint says so, treat all hats as digital. */
-    if (SDL_GetHintBoolean(SDL_HINT_LINUX_DIGITAL_HATS, SDL_FALSE)) {
+    if (SDL_GetHintBoolean(SDL_HINT_JOYSTICK_LINUX_DIGITAL_HATS, SDL_FALSE)) {
         return SDL_TRUE;
     }
 
@@ -1204,8 +1204,8 @@ static void ConfigJoystick(SDL_Joystick *joystick, int fd, int fd_sensor)
     unsigned long relbit[NBITS(REL_MAX)] = { 0 };
     unsigned long ffbit[NBITS(FF_MAX)] = { 0 };
     Uint8 key_pam_size, abs_pam_size;
-    SDL_bool use_deadzones = SDL_GetHintBoolean(SDL_HINT_LINUX_JOYSTICK_DEADZONES, SDL_FALSE);
-    SDL_bool use_hat_deadzones = SDL_GetHintBoolean(SDL_HINT_LINUX_HAT_DEADZONES, SDL_TRUE);
+    SDL_bool use_deadzones = SDL_GetHintBoolean(SDL_HINT_JOYSTICK_LINUX_DEADZONES, SDL_FALSE);
+    SDL_bool use_hat_deadzones = SDL_GetHintBoolean(SDL_HINT_JOYSTICK_LINUX_HAT_DEADZONES, SDL_TRUE);
 
     SDL_AssertJoysticksLocked();
 
@@ -1609,6 +1609,9 @@ static int LINUX_JoystickOpen(SDL_Joystick *joystick, int device_index)
         joystick->hwdata->fd_sensor = -1;
     }
 
+    if (joystick->hwdata->ff_rumble || joystick->hwdata->ff_sine) {
+        SDL_SetBooleanProperty(SDL_GetJoystickProperties(joystick), SDL_PROP_JOYSTICK_CAP_RUMBLE_BOOLEAN, SDL_TRUE);
+    }
     return 0;
 }
 
@@ -1658,19 +1661,6 @@ static int LINUX_JoystickRumble(SDL_Joystick *joystick, Uint16 low_frequency_rum
 static int LINUX_JoystickRumbleTriggers(SDL_Joystick *joystick, Uint16 left_rumble, Uint16 right_rumble)
 {
     return SDL_Unsupported();
-}
-
-static Uint32 LINUX_JoystickGetCapabilities(SDL_Joystick *joystick)
-{
-    Uint32 result = 0;
-
-    SDL_AssertJoysticksLocked();
-
-    if (joystick->hwdata->ff_rumble || joystick->hwdata->ff_sine) {
-        result |= SDL_JOYSTICK_CAP_RUMBLE;
-    }
-
-    return result;
 }
 
 static int LINUX_JoystickSetLED(SDL_Joystick *joystick, Uint8 red, Uint8 green, Uint8 blue)
@@ -2706,7 +2696,6 @@ SDL_JoystickDriver SDL_LINUX_JoystickDriver = {
     LINUX_JoystickOpen,
     LINUX_JoystickRumble,
     LINUX_JoystickRumbleTriggers,
-    LINUX_JoystickGetCapabilities,
     LINUX_JoystickSetLED,
     LINUX_JoystickSendEffect,
     LINUX_JoystickSetSensorsEnabled,

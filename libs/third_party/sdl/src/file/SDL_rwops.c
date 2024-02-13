@@ -26,6 +26,7 @@
 
 #ifdef HAVE_STDIO_H
 #include <stdio.h>
+#include <sys/stat.h>
 #endif
 #ifdef HAVE_LIMITS_H
 #include <limits.h>
@@ -459,6 +460,24 @@ static size_t SDLCALL mem_write(SDL_RWops *context, const void *ptr, size_t size
 
 /* Functions to create SDL_RWops structures from various data sources */
 
+#if defined(HAVE_STDIO_H) && !defined(SDL_PLATFORM_WINDOWS)
+static SDL_bool SDL_IsRegularFile(FILE *f)
+{
+    #ifdef SDL_PLATFORM_WINRT
+    struct __stat64 st;
+    if (_fstat64(_fileno(f), &st) < 0 || (st.st_mode & _S_IFMT) != _S_IFREG) {
+        return SDL_FALSE;
+    }
+    #else
+    struct stat st;
+    if (fstat(fileno(f), &st) < 0 || !S_ISREG(st.st_mode)) {
+        return SDL_FALSE;
+    }
+    #endif
+    return SDL_TRUE;
+}
+#endif
+
 SDL_RWops *SDL_RWFromFile(const char *file, const char *mode)
 {
     SDL_RWops *rwops = NULL;
@@ -472,6 +491,11 @@ SDL_RWops *SDL_RWFromFile(const char *file, const char *mode)
     if (*file == '/') {
         FILE *fp = fopen(file, mode);
         if (fp) {
+            if (!SDL_IsRegularFile(fp)) {
+                fclose(fp);
+                SDL_SetError("%s is not a regular file", file);
+                return NULL;
+            }
             return SDL_RWFromFP(fp, 1);
         }
     } else {
@@ -487,6 +511,11 @@ SDL_RWops *SDL_RWFromFile(const char *file, const char *mode)
             fp = fopen(path, mode);
             SDL_stack_free(path);
             if (fp) {
+                if (!SDL_IsRegularFile(fp)) {
+                    fclose(fp);
+                    SDL_SetError("%s is not a regular file", path);
+                    return NULL;
+                }
                 return SDL_RWFromFP(fp, 1);
             }
         }
@@ -540,6 +569,10 @@ SDL_RWops *SDL_RWFromFile(const char *file, const char *mode)
 #endif
         if (!fp) {
             SDL_SetError("Couldn't open %s", file);
+        } else if (!SDL_IsRegularFile(fp)) {
+            fclose(fp);
+            fp = NULL;
+            SDL_SetError("%s is not a regular file", file);
         } else {
             rwops = SDL_RWFromFP(fp, SDL_TRUE);
         }
@@ -625,14 +658,14 @@ void SDL_DestroyRW(SDL_RWops *context)
 void *SDL_LoadFile_RW(SDL_RWops *src, size_t *datasize, SDL_bool freesrc)
 {
     const int FILE_CHUNK_SIZE = 1024;
-    Sint64 size, size_total;
+    Sint64 size, size_total = 0;
     size_t size_read;
     char *data = NULL, *newdata;
     SDL_bool loading_chunks = SDL_FALSE;
 
     if (!src) {
         SDL_InvalidParamError("src");
-        return NULL;
+        goto done;
     }
 
     size = SDL_RWsize(src);
@@ -677,12 +710,12 @@ void *SDL_LoadFile_RW(SDL_RWops *src, size_t *datasize, SDL_bool freesrc)
         break;
     }
 
-    if (datasize) {
-        *datasize = (size_t)size_total;
-    }
     data[size_total] = '\0';
 
 done:
+    if (datasize) {
+        *datasize = (size_t)size_total;
+    }
     if (freesrc && src) {
         SDL_RWclose(src);
     }

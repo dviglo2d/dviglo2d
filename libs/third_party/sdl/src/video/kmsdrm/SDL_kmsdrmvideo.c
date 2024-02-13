@@ -23,13 +23,14 @@
 
 #ifdef SDL_VIDEO_DRIVER_KMSDRM
 
+/* include this here before SDL_sysvideo.h to avoid vulkan type
+ * redefinition errors.  it already includes SDL_sysvideo.h.  */
 #include "SDL_kmsdrmvulkan.h"
 
 /* SDL internals */
 #include "../../events/SDL_events_c.h"
 #include "../../events/SDL_keyboard_c.h"
 #include "../../events/SDL_mouse_c.h"
-#include "../SDL_sysvideo.h"
 
 #ifdef SDL_INPUT_LINUXEV
 #include "../../core/linux/SDL_evdev.h"
@@ -43,7 +44,6 @@
 #include "SDL_kmsdrmmouse.h"
 #include "SDL_kmsdrmvideo.h"
 #include "SDL_kmsdrmopengles.h"
-/*#include "SDL_kmsdrmvulkan.h"*/
 #include <dirent.h>
 #include <errno.h>
 #include <poll.h>
@@ -1468,9 +1468,9 @@ int KMSDRM_CreateWindow(SDL_VideoDevice *_this, SDL_Window *window, SDL_Properti
     window->driverdata = windata;
 
     SDL_PropertiesID props = SDL_GetWindowProperties(window);
-    SDL_SetNumberProperty(props, SDL_PROPERTY_WINDOW_KMSDRM_DEVICE_INDEX_NUMBER, viddata->devindex);
-    SDL_SetNumberProperty(props, SDL_PROPERTY_WINDOW_KMSDRM_DRM_FD_NUMBER, viddata->drm_fd);
-    SDL_SetProperty(props, SDL_PROPERTY_WINDOW_KMSDRM_GBM_DEVICE_POINTER, viddata->gbm_dev);
+    SDL_SetNumberProperty(props, SDL_PROP_WINDOW_KMSDRM_DEVICE_INDEX_NUMBER, viddata->devindex);
+    SDL_SetNumberProperty(props, SDL_PROP_WINDOW_KMSDRM_DRM_FD_NUMBER, viddata->drm_fd);
+    SDL_SetProperty(props, SDL_PROP_WINDOW_KMSDRM_GBM_DEVICE_POINTER, viddata->gbm_dev);
 
     if (!is_vulkan && !vulkan_mode) { /* NON-Vulkan block. */
 

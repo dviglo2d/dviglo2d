@@ -43,12 +43,12 @@ OsWindow::OsWindow()
     }
 
     SDL_PropertiesID props = SDL_CreateProperties();
-    SDL_SetStringProperty(props, SDL_PROPERTY_WINDOW_CREATE_TITLE_STRING, engine_params::window_title.c_str());
-    SDL_SetNumberProperty(props, SDL_PROPERTY_WINDOW_CREATE_X_NUMBER, SDL_WINDOWPOS_UNDEFINED);
-    SDL_SetNumberProperty(props, SDL_PROPERTY_WINDOW_CREATE_Y_NUMBER, SDL_WINDOWPOS_UNDEFINED);
-    SDL_SetNumberProperty(props, SDL_PROPERTY_WINDOW_CREATE_WIDTH_NUMBER, engine_params::window_size.x);
-    SDL_SetNumberProperty(props, SDL_PROPERTY_WINDOW_CREATE_HEIGHT_NUMBER, engine_params::window_size.y);
-    SDL_SetBooleanProperty(props, SDL_PROPERTY_WINDOW_CREATE_OPENGL_BOOLEAN, SDL_TRUE);
+    SDL_SetStringProperty(props, SDL_PROP_WINDOW_CREATE_TITLE_STRING, engine_params::window_title.c_str());
+    SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_X_NUMBER, SDL_WINDOWPOS_UNDEFINED);
+    SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_Y_NUMBER, SDL_WINDOWPOS_UNDEFINED);
+    SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_WIDTH_NUMBER, engine_params::window_size.x);
+    SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_HEIGHT_NUMBER, engine_params::window_size.y);
+    SDL_SetBooleanProperty(props, SDL_PROP_WINDOW_CREATE_OPENGL_BOOLEAN, SDL_TRUE);
     window_ = SDL_CreateWindowWithProperties(props);
     SDL_DestroyProperties(props);
 

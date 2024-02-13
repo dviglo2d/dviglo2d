@@ -66,7 +66,6 @@ typedef struct {
     uint32_t libversion;
     uint32_t (*WavpackGetLibraryVersion)(void);
     char *(*WavpackGetErrorMessage)(WavpackContext*);
-    WavpackContext *(*WavpackOpenFileInput)(const char *infilename, char *error, int flags, int norm_offset);
     WavpackContext *(*WavpackOpenFileInputEx)(WavpackStreamReader *reader, void *wv_id, void *wvc_id, char *error, int flags, int norm_offset);
     WavpackContext *(*WavpackCloseFile)(WavpackContext*);
     int (*WavpackGetMode)(WavpackContext*);
@@ -94,7 +93,7 @@ static wavpack_loader wvpk;
 #else
 #define FUNCTION_LOADER(FUNC, SIG) \
     wvpk.FUNC = FUNC; \
-    if (wvpk.FUNC == NULL) { Mix_SetError("Missing WavPack.framework"); return -1; }
+    if (wvpk.FUNC == NULL) { Mix_SetError("Missing wavpack.framework"); return -1; }
 #endif
 
 static int WAVPACK_Load(void)
@@ -112,7 +111,6 @@ static int WAVPACK_Load(void)
 #endif
         FUNCTION_LOADER(WavpackGetLibraryVersion, uint32_t (*)(void));
         FUNCTION_LOADER(WavpackGetErrorMessage, char *(*)(WavpackContext*));
-        FUNCTION_LOADER(WavpackOpenFileInput, WavpackContext *(*)(const char*, char*, int, int));
         FUNCTION_LOADER(WavpackOpenFileInputEx, WavpackContext *(*)(WavpackStreamReader*, void*, void*, char*, int, int));
         FUNCTION_LOADER(WavpackCloseFile, WavpackContext *(*)(WavpackContext*));
         FUNCTION_LOADER(WavpackGetMode, int (*)(WavpackContext*));
@@ -590,7 +588,7 @@ static int WAVPACK_Seek(void *context, double time)
     int64_t sample = (int64_t)(time * music->samplerate);
     int success = (wvpk.WavpackSeekSample64 != NULL) ?
                    wvpk.WavpackSeekSample64(music->ctx, sample) :
-                   wvpk.WavpackSeekSample(music->ctx, sample);
+                   wvpk.WavpackSeekSample(music->ctx, (uint32_t)sample);
     if (!success) {
         return Mix_SetError("%s", wvpk.WavpackGetErrorMessage(music->ctx));
     }

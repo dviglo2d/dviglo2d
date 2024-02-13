@@ -49,6 +49,10 @@ typedef enum RO_INIT_TYPE
 #define LOAD_LIBRARY_SEARCH_SYSTEM32 0x00000800
 #endif
 
+#ifndef WC_ERR_INVALID_CHARS
+#define WC_ERR_INVALID_CHARS 0x00000080
+#endif
+
 /* Sets an error message based on an HRESULT */
 int WIN_SetErrorFromHRESULT(const char *prefix, HRESULT hr)
 {
@@ -197,32 +201,46 @@ static BOOL IsWindowsVersionOrGreater(WORD wMajorVersion, WORD wMinorVersion, WO
 }
 #endif
 
+// apply some static variables so we only call into the Win32 API once per process for each check.
+#if defined(SDL_PLATFORM_WINRT) || defined(SDL_PLATFORM_XBOXONE) || defined(SDL_PLATFORM_XBOXSERIES)
+    #define CHECKWINVER(notdesktop_platform_result, test) return (notdesktop_platform_result);
+#else
+    #define CHECKWINVER(notdesktop_platform_result, test) \
+        static SDL_bool checked = SDL_FALSE; \
+        static BOOL retval = FALSE; \
+        if (!checked) { \
+            retval = (test); \
+            checked = SDL_TRUE; \
+        } \
+        return retval;
+#endif
+
+// this is the oldest thing we run on (and we may lose support for this in SDL3 at any time!),
+//  so there's no "OrGreater" as that would always be TRUE. The other functions are here to
+//  ask "can we support a specific feature?" but this function is here to ask "do we need to do
+//  something different for an OS version we probably should abandon?"  :)
+BOOL WIN_IsWindowsXP(void)
+{
+    CHECKWINVER(FALSE, !WIN_IsWindowsVistaOrGreater() && IsWindowsVersionOrGreater(HIBYTE(_WIN32_WINNT_WINXP), LOBYTE(_WIN32_WINNT_WINXP), 0));
+}
+
 BOOL WIN_IsWindowsVistaOrGreater(void)
 {
-#if defined(SDL_PLATFORM_WINRT) || defined(SDL_PLATFORM_XBOXONE) || defined(SDL_PLATFORM_XBOXSERIES)
-    return TRUE;
-#else
-    return IsWindowsVersionOrGreater(HIBYTE(_WIN32_WINNT_VISTA), LOBYTE(_WIN32_WINNT_VISTA), 0);
-#endif
+    CHECKWINVER(TRUE, IsWindowsVersionOrGreater(HIBYTE(_WIN32_WINNT_VISTA), LOBYTE(_WIN32_WINNT_VISTA), 0));
 }
 
 BOOL WIN_IsWindows7OrGreater(void)
 {
-#if defined(SDL_PLATFORM_WINRT) || defined(SDL_PLATFORM_XBOXONE) || defined(SDL_PLATFORM_XBOXSERIES)
-    return TRUE;
-#else
-    return IsWindowsVersionOrGreater(HIBYTE(_WIN32_WINNT_WIN7), LOBYTE(_WIN32_WINNT_WIN7), 0);
-#endif
+    CHECKWINVER(TRUE, IsWindowsVersionOrGreater(HIBYTE(_WIN32_WINNT_WIN7), LOBYTE(_WIN32_WINNT_WIN7), 0));
 }
 
 BOOL WIN_IsWindows8OrGreater(void)
 {
-#if defined(SDL_PLATFORM_WINRT) || defined(SDL_PLATFORM_XBOXONE) || defined(SDL_PLATFORM_XBOXSERIES)
-    return TRUE;
-#else
-    return IsWindowsVersionOrGreater(HIBYTE(_WIN32_WINNT_WIN8), LOBYTE(_WIN32_WINNT_WIN8), 0);
-#endif
+    CHECKWINVER(TRUE, IsWindowsVersionOrGreater(HIBYTE(_WIN32_WINNT_WIN8), LOBYTE(_WIN32_WINNT_WIN8), 0));
 }
+
+#undef CHECKWINVER
+
 
 /*
 WAVExxxCAPS gives you 31 bytes for the device name, and just truncates if it's
@@ -361,6 +379,16 @@ SDL_AudioFormat SDL_WaveFormatExToSDLFormat(WAVEFORMATEX *waveformat)
     }
     return 0;
 }
+
+
+int WIN_WideCharToMultiByte(UINT CodePage, DWORD dwFlags, LPCWCH lpWideCharStr, int cchWideChar, LPSTR lpMultiByteStr, int cbMultiByte, LPCCH lpDefaultChar, LPBOOL lpUsedDefaultChar)
+{
+    if (WIN_IsWindowsXP()) {
+        dwFlags &= ~WC_ERR_INVALID_CHARS;  // not supported before Vista. Without this flag, it will just replace bogus chars with U+FFFD. You're on your own, WinXP.
+    }
+    return WideCharToMultiByte(CodePage, dwFlags, lpWideCharStr, cchWideChar, lpMultiByteStr, cbMultiByte, lpDefaultChar, lpUsedDefaultChar);
+}
+
 
 /* Win32-specific SDL_RunApp(), which does most of the SDL_main work,
   based on SDL_windows_main.c, placed in the public domain by Sam Lantinga  4/13/98 */
