@@ -59,13 +59,13 @@ jobs:
 
     - name: Скачиваем репозиторий
       # https://github.com/actions/checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
         path: repo # Папка, в которую будет скачан репозиторий
 
     - name: Скачиваем кэш
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: build
         key: windows-${{ matrix.COMPILER }}-${{ matrix.BUILD_TYPE }}-${{ github.sha }}
@@ -192,7 +192,7 @@ jobs:
 
     steps:
     - name: Скачиваем репозиторий
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with: { path: "engine_repo" }
 
     - name: Устанавливаем зависимости
@@ -208,7 +208,7 @@ jobs:
         echo "$HOME/programs" >> $GITHUB_PATH
 
     - name: Скачиваем кэш
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: engine_build
         key: linux-${{ matrix.COMPILER.ID }}-${{ matrix.BUILD_TYPE.ID }}-${{ github.sha }}
