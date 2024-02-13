@@ -3,9 +3,9 @@
 
 #include "sprite_font.hpp"
 
+#include "../fs/log.hpp"
+#include "../fs/path.hpp"
 #include "../gl_utils/texture_cache.hpp"
-#include "../io/log.hpp"
-#include "../io/path.hpp"
 
 #include <pugixml.hpp>
 

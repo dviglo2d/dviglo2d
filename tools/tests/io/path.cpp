@@ -3,7 +3,7 @@
 
 #include "../force_assert.hpp"
 
-#include <dviglo/io/path.hpp>
+#include <dviglo/fs/path.hpp>
 
 using namespace dviglo;
 using namespace std;

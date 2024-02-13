@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "../io/log.hpp"
+#include "../fs/log.hpp"
 
 #include <entt/entt.hpp>
 #include <SDL3/SDL.h>

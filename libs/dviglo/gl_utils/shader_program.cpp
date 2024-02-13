@@ -3,8 +3,8 @@
 
 #include "shader_program.hpp"
 
-#include "../io/file.hpp"
-#include "../io/log.hpp"
+#include "../fs/file.hpp"
+#include "../fs/log.hpp"
 
 
 namespace dviglo

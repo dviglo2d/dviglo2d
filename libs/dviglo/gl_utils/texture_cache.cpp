@@ -3,7 +3,7 @@
 
 #include "texture_cache.hpp"
 
-#include "../io/log.hpp"
+#include "../fs/log.hpp"
 
 #include <cassert>
 

@@ -3,7 +3,7 @@
 
 #include "audio.hpp"
 
-#include "../io/log.hpp"
+#include "../fs/log.hpp"
 
 #include <SDL3/SDL.h>
 #include <SDL3_mixer/SDL_mixer.h>

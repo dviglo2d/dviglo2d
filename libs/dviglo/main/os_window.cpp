@@ -5,7 +5,7 @@
 
 #include "engine_params.hpp"
 
-#include "../io/log.hpp"
+#include "../fs/log.hpp"
 
 #include <glad/gl.h>
 

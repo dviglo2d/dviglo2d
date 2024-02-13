@@ -7,9 +7,9 @@
 #include "os_window.hpp"
 
 #include "../audio/audio.hpp"
+#include "../fs/log.hpp"
 #include "../gl_utils/shader_cache.hpp"
 #include "../gl_utils/texture_cache.hpp"
-#include "../io/log.hpp"
 #include "../std_utils/scope_guard.hpp"
 
 #include <glad/gl.h>

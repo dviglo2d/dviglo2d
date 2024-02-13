@@ -3,7 +3,7 @@
 
 #include "shader_cache.hpp"
 
-#include "../io/log.hpp"
+#include "../fs/log.hpp"
 
 
 namespace dviglo
