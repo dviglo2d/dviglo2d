@@ -5,6 +5,7 @@
 #include "sprite_batch.hpp"
 
 #include "../fs/fs_base.hpp"
+#include "../gl_utils/gl_utils.hpp"
 #include "../gl_utils/shader_cache.hpp"
 #include "../math/math.hpp"
 
@@ -122,13 +123,10 @@ void SpriteBatch::flush()
 {
     if (t_num_vertices_ > 0)
     {
-        GLint viewport[4]; // x, y, width, height
-        glGetIntegerv(GL_VIEWPORT, viewport);
-        const i32 viewport_width = viewport[2];
-        const i32 viewport_height = viewport[3];
+        ivec2 viewport_size = get_viewport_size();
 
         t_shader_program_->use();
-        t_shader_program_->set("u_scale", vec2(2.f / viewport_width, -2.f / viewport_height));
+        t_shader_program_->set("u_scale", vec2(2.f / viewport_size.x, -2.f / viewport_size.y));
 
         t_vertex_buffer_->set_data(t_num_vertices_, t_vertices_);
 
@@ -140,13 +138,10 @@ void SpriteBatch::flush()
     }
     else if (q_num_vertices_ > 0)
     {
-        GLint viewport[4]; // x, y, width, height
-        glGetIntegerv(GL_VIEWPORT, viewport);
-        const i32 viewport_width = viewport[2];
-        const i32 viewport_height = viewport[3];
+        ivec2 viewport_size = get_viewport_size();
 
         q_current_shader_program_->use();
-        q_current_shader_program_->set("u_scale", vec2(2.f / viewport_width, -2.f / viewport_height));
+        q_current_shader_program_->set("u_scale", vec2(2.f / viewport_size.x, -2.f / viewport_size.y));
 
         glActiveTexture(GL_TEXTURE0);
         q_current_texture_->bind();
