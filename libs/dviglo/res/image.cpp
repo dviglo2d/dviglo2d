@@ -13,7 +13,7 @@ namespace dviglo
 
 Image::Image(const StrUtf8& path)
 {
-    data_ = reinterpret_cast<byte*>(stbi_load(path.c_str(), &width_, &height_, &num_components_, 0));
+    data_ = reinterpret_cast<byte*>(stbi_load(path.c_str(), &size_.x, &size_.y, &num_components_, 0));
 }
 
 Image::~Image()

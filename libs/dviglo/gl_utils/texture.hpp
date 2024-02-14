@@ -6,6 +6,7 @@
 #include "../std_utils/str.hpp"
 
 #include <glad/gl.h>
+#include <glm/glm_wrapped.hpp>
 
 #include <utility> // std::exchange()
 
@@ -17,14 +18,12 @@ class Texture
 {
 private:
     GLuint gpu_object_name_; ///< Идентификатор объекта OpenGL
-    i32 width_;
-    i32 height_;
+    glm::ivec2 size_;
 
 public:
     Texture()
         : gpu_object_name_(0)
-        , width_(0)
-        , height_(0)
+        , size_({})
     {
     }
 
@@ -44,8 +43,7 @@ public:
 
     Texture(Texture&& other) noexcept
         : gpu_object_name_(std::exchange(other.gpu_object_name_, 0))
-        , width_(std::exchange(other.width_, 0))
-        , height_(std::exchange(other.height_, 0))
+        , size_(std::exchange(other.size_, {}))
     {
     }
 
@@ -54,15 +52,15 @@ public:
         if (this != &other)
         {
             gpu_object_name_ = std::exchange(other.gpu_object_name_, 0);
-            width_ = std::exchange(other.width_, 0);
-            height_ = std::exchange(other.height_, 0);
+            size_ = std::exchange(other.size_, {});
         }
 
         return *this;
     }
 
-    i32 width() const { return width_; }
-    i32 height() const { return height_; }
+    glm::ivec2 size() const { return size_; }
+    i32 width() const { return size_.x; }
+    i32 height() const { return size_.y; }
 
     void bind()
     {

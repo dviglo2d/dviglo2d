@@ -3,6 +3,8 @@
 
 #include "../std_utils/str.hpp"
 
+#include <glm/glm_wrapped.hpp>
+
 #include <utility> // std::exchange()
 
 
@@ -12,8 +14,7 @@ namespace dviglo
 class Image
 {
 private:
-    i32 width_;
-    i32 height_;
+    glm::ivec2 size_;
     i32 num_components_;
     byte* data_;
 
@@ -29,8 +30,7 @@ public:
     // Но разрешаем перемещение, чтобы было можно хранить объект в векторе
 
     Image(Image&& other) noexcept
-        : width_(std::exchange(other.width_, 0))
-        , height_(std::exchange(other.height_, 0))
+        : size_(std::exchange(other.size_, {}))
         , num_components_(std::exchange(other.num_components_, 0))
         , data_(std::exchange(other.data_, nullptr))
     {
@@ -40,8 +40,7 @@ public:
     {
         if (this != &other)
         {
-            width_ = std::exchange(other.width_, 0);
-            height_ = std::exchange(other.height_, 0);
+            size_ = std::exchange(other.size_, {});
             num_components_ = std::exchange(other.num_components_, 0);
             data_ = std::exchange(other.data_, nullptr);
         }
@@ -49,8 +48,9 @@ public:
         return *this;
     }
 
-    i32 width() const { return width_; }
-    i32 height() const { return height_; }
+    glm::ivec2 size() const { return size_; }
+    i32 width() const { return size_.x; }
+    i32 height() const { return size_.y; }
     i32 num_components() const { return num_components_; }
     const byte* data() const { return data_; }
 };
