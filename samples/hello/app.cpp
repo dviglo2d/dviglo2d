@@ -140,15 +140,23 @@ void App::draw()
     sprite_batch_->draw_string(fps_text, font_.get(), vec2{4.f, 1.f}, 0xFF000000);
     sprite_batch_->draw_string(fps_text, font_.get(), vec2{3.f, 0.f}, 0xFFFFFFFF);
 
+    // Вращение строк вокруг экранной координаты
     StrUtf8 str = "QqWЙйр";
     u32 color = 0xFFFF9090;
-    vec2 origin{30.f, 10.f};
-    float rot = rotation;
-    sprite_batch_->draw_string(str, font_.get(), vec2{100.f, 100.f}, color, rot, origin, {1.f, 1.f}, FlipModes::none);
-    sprite_batch_->draw_string(str, font_.get(), vec2{200.f, 100.f}, color, rot, origin, {1.f, 1.f}, FlipModes::horizontally);
-    sprite_batch_->draw_string(str, font_.get(), vec2{100.f, 130.f}, color, rot, origin, {1.f, 1.f}, FlipModes::vertically);
-    sprite_batch_->draw_string(str, font_.get(), vec2{200.f, 130.f}, color, rot, origin, {1.f, 1.f}, FlipModes::both);
-
+    vec2 screen_origin{150.f, 115.f}; // Экранный origin
+    vec2 screen_pos0 = vec2{100.f, 100.f}; // Желаемые экранные координаты строки при нулевом повороте
+    vec2 screen_pos1 = vec2{200.f, 100.f};
+    vec2 screen_pos2 = vec2{100.f, 130.f};
+    vec2 screen_pos3 = vec2{200.f, 130.f};
+    vec2 origin0 = screen_origin - screen_pos0; // Преобразуем экранный origin в локальный origin строки
+    vec2 origin1 = screen_origin - screen_pos1;
+    vec2 origin2 = screen_origin - screen_pos2;
+    vec2 origin3 = screen_origin - screen_pos3;
+    sprite_batch_->draw_string(str, font_.get(), screen_origin, color, rotation, origin0, {1.f, 1.f}, FlipModes::none);
+    sprite_batch_->draw_string(str, font_.get(), screen_origin, color, rotation, origin1, {1.f, 1.f}, FlipModes::horizontally);
+    sprite_batch_->draw_string(str, font_.get(), screen_origin, color, rotation, origin2, {1.f, 1.f}, FlipModes::vertically);
+    sprite_batch_->draw_string(str, font_.get(), screen_origin, color, rotation, origin3, {1.f, 1.f}, FlipModes::both);
+    sprite_batch_->draw_rect({screen_origin - vec2(5.f, 5.f), {10.f, 10.f}}); // Рисуем экранный origin
     sprite_batch_->flush();
 }
 
