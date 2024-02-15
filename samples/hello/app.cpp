@@ -89,6 +89,8 @@ void App::on_key(const SDL_KeyboardEvent& event_data)
 
 static float rotation = 0.f;
 static StrUtf8 fps_text = "FPS: ?";
+static float scale = 1.f;
+static float scale_sign = 1.f;
 
 void App::update(u64 ns)
 {
@@ -110,6 +112,13 @@ void App::update(u64 ns)
     rotation += ns * 0.000'000'000'1f;
     while (rotation >= 360.f)
         rotation -= 360.f;
+
+    if (scale >= 2.f)
+        scale_sign = -1.f;
+    else if (scale <= 0.5f)
+        scale_sign = 1.f;
+
+    scale += scale_sign * ns * 0.0000000005f;
 
     //s_test_.update(ecs_, ns);
 }
@@ -152,10 +161,10 @@ void App::draw()
     vec2 origin1 = screen_origin - screen_pos1;
     vec2 origin2 = screen_origin - screen_pos2;
     vec2 origin3 = screen_origin - screen_pos3;
-    sprite_batch_->draw_string(str, font_.get(), screen_origin, color, rotation, origin0, {1.f, 1.f}, FlipModes::none);
-    sprite_batch_->draw_string(str, font_.get(), screen_origin, color, rotation, origin1, {1.f, 1.f}, FlipModes::horizontally);
-    sprite_batch_->draw_string(str, font_.get(), screen_origin, color, rotation, origin2, {1.f, 1.f}, FlipModes::vertically);
-    sprite_batch_->draw_string(str, font_.get(), screen_origin, color, rotation, origin3, {1.f, 1.f}, FlipModes::both);
+    sprite_batch_->draw_string(str, font_.get(), screen_origin, color, rotation, origin0, {scale, scale}, FlipModes::none);
+    sprite_batch_->draw_string(str, font_.get(), screen_origin, color, rotation, origin1, {scale, scale}, FlipModes::horizontally);
+    sprite_batch_->draw_string(str, font_.get(), screen_origin, color, rotation, origin2, {scale, scale}, FlipModes::vertically);
+    sprite_batch_->draw_string(str, font_.get(), screen_origin, color, rotation, origin3, {scale, scale}, FlipModes::both);
     sprite_batch_->draw_rect({screen_origin - vec2(5.f, 5.f), {10.f, 10.f}}); // Рисуем экранный origin
     sprite_batch_->flush();
 }
