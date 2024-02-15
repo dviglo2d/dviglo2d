@@ -132,13 +132,22 @@ void App::draw()
     sprite_batch_->draw_triangle({400.f, 0.f}, {400.f, 600.f}, {0.f, 600.f});
 
     sprite_batch_->set_shape_color(0x90FFFF00);
-    sprite_batch_->draw_rect({{300.f, 300.f}, {600.f, 400.f}});
+    sprite_batch_->draw_rect({{300.f, 300.f}, {300.f, 100.f}});
 
     sprite_batch_->draw_sprite(texture_, {100.f, 100.f});
     sprite_batch_->draw_sprite(texture_, {500.f, 100.f}, nullptr, 0x90FFFFFF, rotation);
 
     sprite_batch_->draw_string(fps_text, font_.get(), vec2{4.f, 1.f}, 0xFF000000);
     sprite_batch_->draw_string(fps_text, font_.get(), vec2{3.f, 0.f}, 0xFFFFFFFF);
+
+    StrUtf8 str = "QqWЙйр";
+    u32 color = 0xFFFF9090;
+    vec2 origin{30.f, 10.f};
+    float rot = rotation;
+    sprite_batch_->draw_string(str, font_.get(), vec2{100.f, 100.f}, color, rot, origin, {1.f, 1.f}, FlipModes::none);
+    sprite_batch_->draw_string(str, font_.get(), vec2{200.f, 100.f}, color, rot, origin, {1.f, 1.f}, FlipModes::horizontally);
+    sprite_batch_->draw_string(str, font_.get(), vec2{100.f, 130.f}, color, rot, origin, {1.f, 1.f}, FlipModes::vertically);
+    sprite_batch_->draw_string(str, font_.get(), vec2{200.f, 130.f}, color, rot, origin, {1.f, 1.f}, FlipModes::both);
 
     sprite_batch_->flush();
 }

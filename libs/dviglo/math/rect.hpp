@@ -11,42 +11,36 @@ namespace dviglo
 
 struct Rect
 {
-    glm::vec2 min;
-    glm::vec2 max;
+    glm::vec2 pos;
+    glm::vec2 size;
 
     // Clang версии < 16 не поддерживает P0960R3. Позже оба конструктора можно будет удалить
     // https://en.cppreference.com/w/cpp/compiler_support/20
 
     Rect() = default;
 
-    Rect(glm::vec2 min, glm::vec2 max)
-        : min(min)
-        , max(max)
+    Rect(glm::vec2 pos, glm::vec2 size)
+        : pos(pos)
+        , size(size)
     {
     }
-
-    float get_width() const { return max.x - min.x; }
-    float get_height() const { return max.y - min.y; }
 };
 
 struct IntRect
 {
-    glm::ivec2 min;
-    glm::ivec2 max;
+    glm::ivec2 pos;
+    glm::ivec2 size;
 
     // Clang версии < 16 не поддерживает P0960R3. Позже оба конструктора можно будет удалить
     // https://en.cppreference.com/w/cpp/compiler_support/20
 
     IntRect() = default;
 
-    IntRect(glm::ivec2 min, glm::ivec2 max)
-        : min(min)
-        , max(max)
+    IntRect(glm::ivec2 pos, glm::ivec2 size)
+        : pos(pos)
+        , size(size)
     {
     }
-
-    i32 get_width() const { return max.x - min.x; }
-    i32 get_height() const { return max.y - min.y; }
 };
 
 } // namespace dviglo

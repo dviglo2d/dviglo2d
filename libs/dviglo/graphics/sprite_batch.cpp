@@ -171,14 +171,16 @@ void SpriteBatch::draw_triangle(vec2 v0, vec2 v1, vec2 v2)
 
 void SpriteBatch::draw_rect(const Rect& rect)
 {
-    triangle_.v0.position = {rect.min.x, rect.min.y};
-    triangle_.v1.position = {rect.max.x, rect.min.y};
-    triangle_.v2.position = {rect.min.x, rect.max.y};
+    vec2 far_corner = rect.pos + rect.size;
+
+    triangle_.v0.position = {rect.pos.x, rect.pos.y};
+    triangle_.v1.position = {far_corner.x, rect.pos.y};
+    triangle_.v2.position = {rect.pos.x, far_corner.y};
     add_triangle();
 
-    triangle_.v0.position = {rect.max.x, rect.min.y};
-    triangle_.v1.position = {rect.max.x, rect.max.y};
-    triangle_.v2.position = {rect.min.x, rect.max.y};
+    triangle_.v0.position = {far_corner.x, rect.pos.y};
+    triangle_.v1.position = {far_corner.x, far_corner.y};
+    triangle_.v2.position = {rect.pos.x, far_corner.y};
     add_triangle();
 }
 
@@ -193,22 +195,23 @@ void SpriteBatch::draw_sprite_internal()
     if (sprite.rotation == 0.f && sprite.scale == vec2(1.f, 1.f))
     {
         // Сдвигаем спрайт на -origin
-        Rect result_dest(sprite.destination.min - sprite.origin, sprite.destination.max - sprite.origin);
+        Rect result_dest{sprite.destination.pos - sprite.origin, sprite.destination.size};
+        vec2 far_corner = result_dest.pos + result_dest.size;
 
         // Лицевая грань задаётся по часовой стрелке, ось Y направлена вниз
-        quad.v0.position = vec2(result_dest.min.x, result_dest.min.y); // Верхний левый угол спрайта
-        quad.v1.position = vec2(result_dest.max.x, result_dest.min.y); // Верхний правый угол
-        quad.v2.position = vec2(result_dest.max.x, result_dest.max.y); // Нижний правый угол
-        quad.v3.position = vec2(result_dest.min.x, result_dest.max.y); // Нижний левый угол
+        quad.v0.position = vec2(result_dest.pos.x, result_dest.pos.y); // Верхний левый угол спрайта
+        quad.v1.position = vec2(far_corner.x, result_dest.pos.y); // Верхний правый угол
+        quad.v2.position = vec2(far_corner.x, far_corner.y); // Нижний правый угол
+        quad.v3.position = vec2(result_dest.pos.x, far_corner.y); // Нижний левый угол
     }
     else
     {
         // Масштабировать и вращать необходимо относительно центра локальных координат:
         // 1) При стандартном origin == vec2(0.f, 0.f), который соответствует верхнему левому углу спрайта,
-        //    локальные координаты будут Rect(ноль, размеры_спрайта),
-        //    то есть Rect(ноль, destination.max - destination.min)
-        // 2) При ненулевом origin нужно сдвинуть на -origin
-        Rect local(-sprite.origin, sprite.destination.max - sprite.destination.min - sprite.origin);
+        //    локальные координаты углов будут ноль и размеры_спрайта
+        // 2) При ненулевом origin координаты нужно сдвинуть на -origin
+        Rect local(-sprite.origin, sprite.destination.size);
+        vec2 far_corner = local.pos + local.size;
 
         float sin, cos;
         sin_cos(sprite.rotation, sin, cos);
@@ -217,53 +220,59 @@ void SpriteBatch::draw_sprite_internal()
         // смещает ее в требуемые мировые координаты.
         // Но в матрице 3x3 последняя строка "0 0 1", умножать на которую бессмысленно.
         // Поэтому вычисляем без матрицы для оптимизации
-        float m11 = cos * sprite.scale.x; float m12 = -sin * sprite.scale.y; float m13 = sprite.destination.min.x;
-        float m21 = sin * sprite.scale.x; float m22 =  cos * sprite.scale.y; float m23 = sprite.destination.min.y;
+        float m11 = cos * sprite.scale.x; float m12 = -sin * sprite.scale.y; float m13 = sprite.destination.pos.x;
+        float m21 = sin * sprite.scale.x; float m22 =  cos * sprite.scale.y; float m23 = sprite.destination.pos.y;
         //          0                                  0                                 1
 
-        float min_x_m11 = local.min.x * m11;
-        float min_x_m21 = local.min.x * m21;
-        float max_x_m11 = local.max.x * m11;
-        float max_x_m21 = local.max.x * m21;
-        float min_y_m12 = local.min.y * m12;
-        float min_y_m22 = local.min.y * m22;
-        float max_y_m12 = local.max.y * m12;
-        float max_y_m22 = local.max.y * m22;
+        float pos_x_m11 = local.pos.x * m11;
+        float pos_x_m21 = local.pos.x * m21;
+        float far_x_m11 = far_corner.x * m11;
+        float far_x_m21 = far_corner.x * m21;
+        float pos_y_m12 = local.pos.y * m12;
+        float pos_y_m22 = local.pos.y * m22;
+        float far_y_m12 = far_corner.y * m12;
+        float far_y_m22 = far_corner.y * m22;
 
-        // transform * vec2(local.min.x, local.min.y)
-        quad.v0.position = vec2(min_x_m11 + min_y_m12 + m13,
-                                min_x_m21 + min_y_m22 + m23);
+        // transform * vec2(local.pos.x, local.pos.y)
+        quad.v0.position = vec2(pos_x_m11 + pos_y_m12 + m13,
+                                pos_x_m21 + pos_y_m22 + m23);
 
-        // transform * vec2(local.max.x, local.min.y)
-        quad.v1.position = vec2(max_x_m11 + min_y_m12 + m13,
-                                max_x_m21 + min_y_m22 + m23);
+        // transform * vec2(far_corner.x, local.pos.y)
+        quad.v1.position = vec2(far_x_m11 + pos_y_m12 + m13,
+                                far_x_m21 + pos_y_m22 + m23);
 
-        // transform * vec2(local.max.x, local.max.y)
-        quad.v2.position = vec2(max_x_m11 + max_y_m12 + m13,
-                                max_x_m21 + max_y_m22 + m23);
+        // transform * vec2(far_corner.x, far_corner.y)
+        quad.v2.position = vec2(far_x_m11 + far_y_m12 + m13,
+                                far_x_m21 + far_y_m22 + m23);
 
-        // transform * vec2(local.min.x, local.max.y)
-        quad.v3.position = vec2(min_x_m11 + max_y_m12 + m13,
-                                min_x_m21 + max_y_m22 + m23);
+        // transform * vec2(local.pos.x, far_corner.y)
+        quad.v3.position = vec2(pos_x_m11 + far_y_m12 + m13,
+                                pos_x_m21 + far_y_m22 + m23);
     }
 
     if (!!(sprite.flip_modes & FlipModes::horizontally))
-        swap(sprite.source_uv.min.x, sprite.source_uv.max.x);
+    {
+        sprite.source_uv.pos.x += sprite.source_uv.size.x;
+        sprite.source_uv.size.x = -sprite.source_uv.size.x;
+    }
 
     if (!!(sprite.flip_modes & FlipModes::vertically))
-        swap(sprite.source_uv.min.y, sprite.source_uv.max.y);
+    {
+        sprite.source_uv.pos.y += sprite.source_uv.size.y;
+        sprite.source_uv.size.y = -sprite.source_uv.size.y;
+    }
 
     quad.v0.color = sprite.color0;
-    quad.v0.uv = sprite.source_uv.min;
+    quad.v0.uv = sprite.source_uv.pos;
 
     quad.v1.color = sprite.color1;
-    quad.v1.uv = vec2(sprite.source_uv.max.x, sprite.source_uv.min.y);
+    quad.v1.uv = vec2(sprite.source_uv.pos.x + sprite.source_uv.size.x, sprite.source_uv.pos.y);
 
     quad.v2.color = sprite.color2;
-    quad.v2.uv = sprite.source_uv.max;
+    quad.v2.uv = sprite.source_uv.pos + sprite.source_uv.size;
 
     quad.v3.color = sprite.color3;
-    quad.v3.uv = vec2(sprite.source_uv.min.x, sprite.source_uv.max.y);
+    quad.v3.uv = vec2(sprite.source_uv.pos.x, sprite.source_uv.pos.y + sprite.source_uv.size.y);
 
     add_quad();
 }
@@ -283,8 +292,8 @@ static Rect src_to_uv(const Rect* source, Texture* texture)
 
         return Rect
         (
-            {source->min.x * inv_width, source->min.y * inv_height},
-            {source->max.x * inv_width, source->max.y * inv_height}
+            {source->pos.x * inv_width, source->pos.y * inv_height},
+            {source->size.x * inv_width, source->size.y * inv_height}
         );
     }
 }
@@ -294,20 +303,11 @@ static Rect pos_to_dest(vec2 position, Texture* texture, const Rect* src)
     if (src == nullptr)
     {
         // Проверки не производятся, текстура должна быть корректной
-        return Rect
-        (
-            {position.x, position.y},
-            {position.x + texture->width(), position.y + texture->height()}
-        );
+        return Rect{position, texture->size()};
     }
     else
     {
-        return Rect
-        (
-            {position.x, position.y},
-            {position.x + (src->max.x - src->min.x), // Сперва вычисляем размер, так как там вероятно более близкие
-             position.y + (src->max.y - src->min.y)} // значения и меньше ошибка вычислений
-        );
+        return Rect{position, src->size};
     }
 }
 
@@ -407,8 +407,8 @@ void SpriteBatch::draw_string(const StrUtf8& text, SpriteFont* font, vec2 positi
         float goy = (float)glyph.offset_y;
 
         sprite.texture = font->texture(glyph.page);
-        sprite.destination = Rect({char_pos.x, char_pos.y}, {char_pos.x + gw, char_pos.y + gh});
-        sprite.source_uv = Rect({gx * pixel_width, gy * pixel_height}, {(gx + gw) * pixel_width, (gy + gh) * pixel_height});
+        sprite.destination = Rect(char_pos, {gw, gh});
+        sprite.source_uv = Rect({gx * pixel_width, gy * pixel_height}, {gw * pixel_width, gh * pixel_height});
 
         // Модифицируем origin, а не позицию, чтобы было правильное вращение
         sprite.origin = !!(flip_modes & FlipModes::vertically) ? char_orig - vec2(gox, font->line_height() - goy - gh) : char_orig - vec2(gox, goy);
