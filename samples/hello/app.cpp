@@ -165,7 +165,7 @@ void App::draw()
     sprite_batch_->draw_string(str, font_.get(), screen_origin, color, rotation, origin1, {scale, scale}, FlipModes::horizontally);
     sprite_batch_->draw_string(str, font_.get(), screen_origin, color, rotation, origin2, {scale, scale}, FlipModes::vertically);
     sprite_batch_->draw_string(str, font_.get(), screen_origin, color, rotation, origin3, {scale, scale}, FlipModes::both);
-    sprite_batch_->draw_rect({screen_origin - vec2(5.f, 5.f), {10.f, 10.f}}); // Рисуем экранный origin
+    sprite_batch_->draw_disk(screen_origin, 5.f, 8); // Рисуем экранный origin
     sprite_batch_->flush();
 }
 

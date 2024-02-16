@@ -156,6 +156,9 @@ public:
 
     void draw_rect(const Rect& rect);
 
+    /// Рисует круг
+    void draw_disk(glm::vec2 center_pos, float radius, i32 num_segments);
+
     // ======================= Используем пакетный рендеринг четырёхугольников =======================
 
 private:

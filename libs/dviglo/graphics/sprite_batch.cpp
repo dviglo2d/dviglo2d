@@ -184,6 +184,26 @@ void SpriteBatch::draw_rect(const Rect& rect)
     add_triangle();
 }
 
+void SpriteBatch::draw_disk(vec2 center_pos, float radius, i32 num_segments)
+{
+    vector<vec2> points(num_segments);
+
+    for (i32 i = 0; i < num_segments; ++i)
+    {
+        // Угол увеличивается по часовой стрелке
+        float angle = radians(360.f) * i / num_segments;
+        float cos, sin;
+        sin_cos(angle, sin, cos);
+        points[i] = vec2(cos, sin) * radius + center_pos;
+    }
+
+    for (i32 i = 0; i < num_segments - 1; ++i)
+        draw_triangle(points[i], points[i + 1], center_pos);
+
+    // Рисуем последний сегмент
+    draw_triangle(points[num_segments - 1], points[0], center_pos);
+}
+
 // ======================= Используем пакетный рендеринг четырёхугольников =======================
 
 void SpriteBatch::draw_sprite_internal()
