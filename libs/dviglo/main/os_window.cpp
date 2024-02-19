@@ -49,6 +49,7 @@ OsWindow::OsWindow()
     SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_WIDTH_NUMBER, engine_params::window_size.x);
     SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_HEIGHT_NUMBER, engine_params::window_size.y);
     SDL_SetBooleanProperty(props, SDL_PROP_WINDOW_CREATE_OPENGL_BOOLEAN, SDL_TRUE);
+    SDL_SetBooleanProperty(props, SDL_PROP_WINDOW_CREATE_RESIZABLE_BOOLEAN, (SDL_bool)engine_params::window_resizable);
     window_ = SDL_CreateWindowWithProperties(props);
     SDL_DestroyProperties(props);
 

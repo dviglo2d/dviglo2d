@@ -16,6 +16,7 @@ namespace engine_params
 {
     inline StrUtf8 window_title{"Игра"};
     inline glm::ivec2 window_size{800, 600};
+    inline bool window_resizable = false;
 
     /// 0 - выключено, 1 - включено,
     /// -1 - адаптивная вертикальная синхронизация (если не поддерживается, то включается обычная).

@@ -56,7 +56,15 @@ Application::~Application()
 void Application::handle_sdl_event(const SDL_Event& event)
 {
     if (event.type == SDL_EVENT_QUIT)
+    {
         should_exit_ = true;
+    }
+    else if (event.type == SDL_EVENT_WINDOW_RESIZED)
+    {
+        i32 width = event.window.data1;
+        i32 height = event.window.data2;
+        glViewport(0, 0, width, height);
+    }
 }
 
 i32 Application::run()
