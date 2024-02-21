@@ -60,6 +60,7 @@ bool Application::handle_sdl_event(const SDL_Event& event)
     case SDL_EVENT_QUIT:
         should_exit_ = true;
         return true;
+
     case SDL_EVENT_WINDOW_RESIZED:
         {
             i32 width = event.window.data1;
@@ -67,6 +68,7 @@ bool Application::handle_sdl_event(const SDL_Event& event)
             glViewport(0, 0, width, height);
             return true;
         }
+
     default:
         return false;
     }

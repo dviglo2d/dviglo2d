@@ -78,6 +78,7 @@ bool App::handle_sdl_event(const SDL_Event& event)
     case SDL_EVENT_KEY_UP:
         on_key(event.key);
         return true;
+
     default:
         return false;
     }
