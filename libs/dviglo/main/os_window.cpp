@@ -95,7 +95,6 @@ OsWindow::OsWindow()
     DV_LOG->write_info(format("GL_RENDERER: {}", reinterpret_cast<const char*>(glGetString(GL_RENDERER))));
     DV_LOG->write_info(format("GL_VERSION: {}", reinterpret_cast<const char*>(glGetString(GL_VERSION))));
 
-    SDL_GetWindowSizeInPixels(window_, &size_in_pixels_.x, &size_in_pixels_.y);
     instance_ = this;
     DV_LOG->write_debug("OsWindow constructed");
 }

@@ -130,7 +130,8 @@ void App::update(u64 ns)
 
 void App::draw()
 {
-    ivec2 screen_size = DV_OS_WINDOW->size_in_pixels();
+    ivec2 screen_size;
+    SDL_GetWindowSizeInPixels(DV_OS_WINDOW->window(), &screen_size.x, &screen_size.y);
 
     glClearColor(1.0f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
@@ -146,7 +147,7 @@ void App::draw()
     sprite_batch_->draw_triangle({400.f, 0.f}, {400.f, 600.f}, {0.f, 600.f});
 
     sprite_batch_->set_shape_color(0x90FFFF00);
-    sprite_batch_->draw_rect({{300.f, 300.f}, {300.f, 100.f}});
+    sprite_batch_->draw_rect({{screen_size.x - 400.f, screen_size.y - 200.f}, {300.f, 100.f}});
 
     sprite_batch_->draw_sprite(texture_, {100.f, 100.f});
     sprite_batch_->draw_sprite(texture_, {500.f, 100.f}, nullptr, 0x90FFFFFF, rotation);
