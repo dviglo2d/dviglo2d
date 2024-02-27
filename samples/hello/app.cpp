@@ -17,7 +17,6 @@ using namespace glm;
 App::App(const vector<StrUtf8>& args)
     : Application(args)
 {
-    cout << "Командная строка: " << join(args, " ") << endl;
 }
 
 void App::setup()
@@ -31,7 +30,8 @@ void App::setup()
 void App::start()
 {
     StrUtf8 base_path = get_base_path();
-    cout << "Папка программы: " << base_path << endl;
+    DV_LOG->write_info(format("Командная строка: {}", join(args(), " ")));
+    DV_LOG->write_info(format("Папка программы: {}", base_path));
 
     texture_ = DV_TEXTURE_CACHE->get(base_path + "samples_data/textures/tile128.png");
     sprite_batch_ = make_unique<SpriteBatch>();
