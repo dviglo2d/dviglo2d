@@ -4,6 +4,7 @@
 
 #include "application.hpp"
 
+#include "engine_params.hpp"
 #include "os_window.hpp"
 
 #include "../audio/audio.hpp"
@@ -82,14 +83,14 @@ static Audio* audio = nullptr;
 
 i32 Application::sdl_init()
 {
-    log = new Log(log_path_);
+    setup();
+
+    log = new Log(engine_params::log_path);
     shader_cache = new ShaderCache();
     texture_cache = new TextureCache();
 
     if (SDL_Init(0) < 0)
         return -1;
-
-    setup();
 
     os_window = new OsWindow();
     audio = new Audio();

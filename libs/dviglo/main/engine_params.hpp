@@ -14,6 +14,8 @@ namespace dviglo
 /// Эти параметры используются при инициализации движка
 namespace engine_params
 {
+    extern StrUtf8 log_path;
+
     inline StrUtf8 window_title{"Игра"};
     inline glm::ivec2 window_size{800, 600};
     inline bool window_resizable = false;
