@@ -81,7 +81,7 @@ static TextureCache* texture_cache = nullptr;
 static OsWindow* os_window = nullptr;
 static Audio* audio = nullptr;
 
-i32 Application::sdl_init()
+i32 Application::main_init()
 {
     setup();
 
@@ -100,7 +100,7 @@ i32 Application::sdl_init()
     return 0;
 }
 
-i32 Application::sdl_iterate()
+i32 Application::main_iterate()
 {
 #ifdef DV_CTEST
     // При CTest выходим через duration_ секунд после запуска приложения
@@ -131,7 +131,7 @@ i32 Application::sdl_iterate()
         return 0;
 }
 
-i32 Application::sdl_event(const SDL_Event* event)
+i32 Application::main_event(const SDL_Event* event)
 {
     handle_sdl_event(*event);
 
@@ -141,7 +141,7 @@ i32 Application::sdl_event(const SDL_Event* event)
         return 0;
 }
 
-void Application::sdl_quit()
+void Application::main_quit()
 {
     delete audio;
     audio = nullptr;

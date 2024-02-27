@@ -45,12 +45,13 @@ protected:
 public:
     const std::vector<StrUtf8>& args() const { return args_; }
 
-    // Методы ниже должны быть публичными, чтобы SDL мог их вызвать
+    // Методы ниже должны быть публичными, чтобы SDL мог их вызвать.
+    // Пользователь не должен их вызывать
 
-    i32 sdl_init();
-    i32 sdl_iterate();
-    i32 sdl_event(const SDL_Event* event);
-    void sdl_quit();
+    i32 main_init();
+    i32 main_iterate();
+    i32 main_event(const SDL_Event* event);
+    void main_quit();
 };
 
 } // namespace dviglo

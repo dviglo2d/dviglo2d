@@ -20,22 +20,22 @@ std::vector<StrUtf8> get_command_line_args(i32 argc, char* argv[]);
     i32 SDL_AppInit(i32 argc, char* argv[])                       \
     {                                                             \
         app = new ClassName(get_command_line_args(argc, argv));   \
-        return app->sdl_init();                                   \
+        return app->main_init();                                  \
     }                                                             \
                                                                   \
     i32 SDL_AppIterate()                                          \
     {                                                             \
-        return app->sdl_iterate();                                \
+        return app->main_iterate();                               \
     }                                                             \
                                                                   \
     i32 SDL_AppEvent(const SDL_Event* event)                      \
     {                                                             \
-        return app->sdl_event(event);                             \
+        return app->main_event(event);                            \
     }                                                             \
                                                                   \
     void SDL_AppQuit()                                            \
     {                                                             \
-        app->sdl_quit();                                          \
+        app->main_quit();                                         \
         delete app;                                               \
         app = nullptr;                                            \
     }
