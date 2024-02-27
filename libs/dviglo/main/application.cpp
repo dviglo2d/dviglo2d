@@ -74,58 +74,88 @@ bool Application::handle_sdl_event(const SDL_Event& event)
     }
 }
 
-i32 Application::run()
+static Log* log = nullptr;
+static ShaderCache* shader_cache = nullptr;
+static TextureCache* texture_cache = nullptr;
+static OsWindow* os_window = nullptr;
+static Audio* audio = nullptr;
+
+i32 Application::sdl_init()
 {
-    unique_ptr<Log> log = make_unique<Log>(log_path_);
-    unique_ptr<ShaderCache> shader_cache = make_unique<ShaderCache>();
-    unique_ptr<TextureCache> texture_cache = make_unique<TextureCache>();
+    log = new Log(log_path_);
+    shader_cache = new ShaderCache();
+    texture_cache = new TextureCache();
 
     if (SDL_Init(0) < 0)
-        return 1;
+        return -1;
 
     setup();
 
-    unique_ptr<OsWindow> os_window = make_unique<OsWindow>();
-    unique_ptr<Audio> audio = make_unique<Audio>();
+    os_window = new OsWindow();
+    audio = new Audio();
 
     start();
 
-    u64 old_ticks = SDL_GetTicksNS();
+    return 0;
+}
 
-    while (!should_exit_)
-    {
+i32 Application::sdl_iterate()
+{
 #ifdef DV_CTEST
-        // При CTest выходим через duration_ секунд после запуска приложения
-        if (duration_ && SDL_GetTicks() > duration_ * SDL_MS_PER_SECOND)
-            should_exit_ = true;
+    // При CTest выходим через duration_ секунд после запуска приложения
+    if (duration_ && SDL_GetTicks() > duration_ * SDL_MS_PER_SECOND)
+        should_exit_ = true;
 #endif
 
-        u64 new_ticks = SDL_GetTicksNS();
-        u64 ns = new_ticks - old_ticks;
-        old_ticks = new_ticks;
+    static u64 old_ticks = SDL_GetTicksNS();
+    u64 new_ticks = SDL_GetTicksNS();
+    u64 ns = new_ticks - old_ticks;
+    old_ticks = new_ticks;
 
-        // Если точности SDL_GetTicksNS() не хватает
-        if (ns == 0)
-        {
-            // Ждём полмиллисекунды
-            SDL_DelayNS(SDL_NS_PER_MS / 2);
-            continue;
-        }
-
-        SDL_PumpEvents();
-        SDL_Event event;
-
-        while (SDL_PollEvent(&event))
-            handle_sdl_event(event);
-
-        update(ns);
-        draw();
-        SDL_GL_SwapWindow(DV_OS_WINDOW->window());
-
-        //SDL_Delay(500);
+    // Если точности SDL_GetTicksNS() не хватает
+    if (ns == 0)
+    {
+        // Ждём полмиллисекунды
+        SDL_DelayNS(SDL_NS_PER_MS / 2);
+        return 0;
     }
 
-    return 0;
+    update(ns);
+    draw();
+    SDL_GL_SwapWindow(DV_OS_WINDOW->window());
+
+    if (should_exit_)
+        return 1;
+    else
+        return 0;
+}
+
+i32 Application::sdl_event(const SDL_Event* event)
+{
+    handle_sdl_event(*event);
+
+    if (should_exit_)
+        return 1;
+    else
+        return 0;
+}
+
+void Application::sdl_quit()
+{
+    delete audio;
+    audio = nullptr;
+
+    delete os_window;
+    os_window = nullptr;
+
+    delete texture_cache;
+    texture_cache = nullptr;
+
+    delete shader_cache;
+    shader_cache = nullptr;
+
+    delete log;
+    log = nullptr;
 }
 
 } // namespace dviglo

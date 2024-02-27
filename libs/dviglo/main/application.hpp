@@ -49,7 +49,12 @@ protected:
 public:
     const std::vector<StrUtf8>& args() const { return args_; }
 
-    i32 run();
+    // Методы ниже должны быть публичными, чтобы SDL мог их вызвать
+
+    i32 sdl_init();
+    i32 sdl_iterate();
+    i32 sdl_event(const SDL_Event* event);
+    void sdl_quit();
 };
 
 } // namespace dviglo

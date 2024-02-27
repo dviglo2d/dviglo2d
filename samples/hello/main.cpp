@@ -5,11 +5,8 @@
 
 #include <dviglo/main/main.hpp>
 
+#define SDL_MAIN_USE_CALLBACKS
+#include <SDL3/SDL_main.h>
 
-i32 app_main(const vector<StrUtf8>& args)
-{
-    unique_ptr<App> app = make_unique<App>(args);
-    return app->run();
-}
 
-DV_DEFINE_MAIN(app_main);
+DV_DEFINE_APP(App);
