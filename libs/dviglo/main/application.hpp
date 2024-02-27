@@ -16,7 +16,7 @@ class Application
 {
 private:
     /// Аргументы командной строки
-    const std::vector<StrUtf8>& args_;
+    std::vector<StrUtf8> args_;
 
 #ifdef DV_CTEST
     /// Через сколько секунд после запуска приложение автоматически закроется.
