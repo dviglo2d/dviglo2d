@@ -49,11 +49,6 @@ Application::Application(const vector<StrUtf8>& args)
     }
 }
 
-Application::~Application()
-{
-    SDL_Quit();
-}
-
 bool Application::handle_sdl_event(const SDL_Event& event)
 {
     switch (event.type)

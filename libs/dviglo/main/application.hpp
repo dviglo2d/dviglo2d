@@ -30,7 +30,7 @@ protected:
     bool should_exit_ = false;
 
     Application(const std::vector<StrUtf8>& args);
-    ~Application();
+    virtual ~Application() = default;
 
     virtual void setup() = 0;
     virtual void start() = 0;
