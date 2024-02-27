@@ -9,7 +9,7 @@
 namespace dviglo
 {
 
-std::vector<StrUtf8> get_command_line_args(i32 argc, char* argv[]);
+std::vector<StrUtf8> main_args_to_vector(i32 argc, char* argv[]);
 
 } // namespace dviglo
 
@@ -19,7 +19,7 @@ std::vector<StrUtf8> get_command_line_args(i32 argc, char* argv[]);
                                                                   \
     i32 SDL_AppInit(i32 argc, char* argv[])                       \
     {                                                             \
-        app = new ClassName(get_command_line_args(argc, argv));   \
+        app = new ClassName(main_args_to_vector(argc, argv));     \
         return app->main_init();                                  \
     }                                                             \
                                                                   \
