@@ -27,7 +27,7 @@ class App : public Application
 
 public:
     App(const vector<StrUtf8>& args);
-    ~App();
+    ~App() override;
 
     //entt::registry& ecs() { return ecs_; }
 
