@@ -19,6 +19,7 @@ private:
     const std::vector<StrUtf8>& args_;
 
 protected:
+public:
     // Параметры движка, используемые при инициализации
 
     StrUtf8 log_path_;
@@ -48,6 +49,8 @@ protected:
 
 public:
     const std::vector<StrUtf8>& args() const { return args_; }
+
+    i32 iterate();
 
     i32 run();
 };

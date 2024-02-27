@@ -698,6 +698,9 @@ void WIN_PollRawMouseInput(void)
 
 #endif /*!defined(SDL_PLATFORM_XBOXONE) && !defined(SDL_PLATFORM_XBOXSERIES)*/
 
+static SDL_bool captionGrabbed = SDL_FALSE;
+static POINT grabOffset;
+
 LRESULT CALLBACK
 WIN_WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
@@ -791,6 +794,16 @@ WIN_WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
     case WM_MOUSEMOVE:
     {
+        if (captionGrabbed)
+        {
+            POINT mousePos;
+            GetCursorPos(&mousePos);
+            RECT rect;
+            GetWindowRect(hwnd, &rect);
+            MoveWindow(hwnd, mousePos.x-grabOffset.x, mousePos.y-grabOffset.y, rect.right - rect.left, rect.bottom - rect.top, 0);
+            break;
+        }
+
         SDL_Mouse *mouse = SDL_GetMouse();
 
         if (!data->mouse_tracked) {
@@ -815,6 +828,10 @@ WIN_WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     } break;
 
     case WM_LBUTTONUP:
+    {
+        SetCapture(NULL);
+        captionGrabbed = SDL_FALSE;
+    } // fallthrough
     case WM_RBUTTONUP:
     case WM_MBUTTONUP:
     case WM_XBUTTONUP:
@@ -997,6 +1014,17 @@ WIN_WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     case WM_NCLBUTTONDOWN:
     {
         data->in_title_click = SDL_TRUE;
+
+        if (wParam == HTCAPTION) {
+            SetCapture(hwnd); // Proccess mouse move outside window
+            captionGrabbed = SDL_TRUE;
+            GetCursorPos(&grabOffset);
+            RECT rect;
+            GetWindowRect(hwnd, &rect);
+            grabOffset.x -= rect.left;
+            grabOffset.y -= rect.top;
+            return 0;
+        }
     } break;
 
     case WM_CAPTURECHANGED:

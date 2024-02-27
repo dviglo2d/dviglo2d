@@ -74,8 +74,29 @@ bool Application::handle_sdl_event(const SDL_Event& event)
     }
 }
 
+i32 Application::iterate()
+{
+    static u64 old_ticks = SDL_GetTicksNS();
+    u64 new_ticks = SDL_GetTicksNS();
+    u64 ns = new_ticks - old_ticks;
+    old_ticks = new_ticks;
+
+    update(ns);
+    draw();
+    SDL_GL_SwapWindow(DV_OS_WINDOW->window());
+
+    return 0;
+}
+
+Log* log = nullptr;
+ShaderCache* shader_cache = nullptr;
+TextureCache* texture_cache = nullptr;
+OsWindow* os_window = nullptr;
+Audio* audio = nullptr;
+
 i32 Application::run()
 {
+    /*
     unique_ptr<Log> log = make_unique<Log>(log_path_);
     unique_ptr<ShaderCache> shader_cache = make_unique<ShaderCache>();
     unique_ptr<TextureCache> texture_cache = make_unique<TextureCache>();
@@ -89,8 +110,20 @@ i32 Application::run()
     unique_ptr<Audio> audio = make_unique<Audio>();
 
     start();
+    */
 
-    u64 old_ticks = SDL_GetTicksNS();
+    log = new Log(log_path_);
+    shader_cache = new ShaderCache();
+    texture_cache = new TextureCache();
+
+    setup();
+
+    os_window = new OsWindow();
+    audio = new Audio();
+
+    start();
+
+/*
 
     while (!should_exit_)
     {
@@ -118,12 +151,12 @@ i32 Application::run()
         while (SDL_PollEvent(&event))
             handle_sdl_event(event);
 
-        update(ns);
-        draw();
-        SDL_GL_SwapWindow(DV_OS_WINDOW->window());
+
 
         //SDL_Delay(500);
     }
+
+    */
 
     return 0;
 }
