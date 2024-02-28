@@ -302,7 +302,7 @@ static Rect src_to_uv(const Rect* source, Texture* texture)
 {
     if (source == nullptr)
     {
-        return Rect(vec2(0.f, 0.f), vec2(1.f, 1.f));
+        return Rect(0.f, 0.f, 1.f, 1.f);
     }
     else
     {
@@ -312,8 +312,8 @@ static Rect src_to_uv(const Rect* source, Texture* texture)
 
         return Rect
         (
-            {source->pos.x * inv_width, source->pos.y * inv_height},
-            {source->size.x * inv_width, source->size.y * inv_height}
+            source->pos.x * inv_width, source->pos.y * inv_height,
+            source->size.x * inv_width, source->size.y * inv_height
         );
     }
 }
@@ -428,7 +428,7 @@ void SpriteBatch::draw_string(const StrUtf8& text, SpriteFont* font, vec2 positi
 
         sprite.texture = font->texture(glyph.page);
         sprite.destination = Rect(char_pos, {gw, gh});
-        sprite.source_uv = Rect({gx * pixel_width, gy * pixel_height}, {gw * pixel_width, gh * pixel_height});
+        sprite.source_uv = Rect(gx * pixel_width, gy * pixel_height, gw * pixel_width, gh * pixel_height);
 
         // Модифицируем origin, а не позицию, чтобы было правильное вращение
         sprite.origin = !!(flip_modes & FlipModes::vertically) ? char_orig - vec2(gox, font->line_height() - goy - gh) : char_orig - vec2(gox, goy);
