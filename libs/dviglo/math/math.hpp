@@ -4,10 +4,12 @@
 
 #pragma once
 
+#include "../common/primitive_types.hpp"
+
 
 namespace dviglo
 {
 
-void sin_cos(float angle, float& sin, float& cos);
+void sin_cos(f32 angle, f32& sin, f32& cos);
 
 } // namespace dviglo

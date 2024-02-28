@@ -184,15 +184,15 @@ void SpriteBatch::draw_rect(const Rect& rect)
     add_triangle();
 }
 
-void SpriteBatch::draw_disk(vec2 center_pos, float radius, i32 num_segments)
+void SpriteBatch::draw_disk(vec2 center_pos, f32 radius, i32 num_segments)
 {
     vector<vec2> points(num_segments);
 
     for (i32 i = 0; i < num_segments; ++i)
     {
         // Угол увеличивается по часовой стрелке
-        float angle = radians(360.f) * i / num_segments;
-        float cos, sin;
+        f32 angle = radians(360.f) * i / num_segments;
+        f32 cos, sin;
         sin_cos(angle, sin, cos);
         points[i] = vec2(cos, sin) * radius + center_pos;
     }
@@ -233,25 +233,25 @@ void SpriteBatch::draw_sprite_internal()
         Rect local(-sprite.origin, sprite.destination.size);
         vec2 far_corner = local.pos + local.size;
 
-        float sin, cos;
+        f32 sin, cos;
         sin_cos(sprite.rotation, sin, cos);
 
         // Нам нужна матрица, которая масштабирует и поворачивает вершину в локальных координатах, а затем
         // смещает ее в требуемые мировые координаты.
         // Но в матрице 3x3 последняя строка "0 0 1", умножать на которую бессмысленно.
         // Поэтому вычисляем без матрицы для оптимизации
-        float m11 = cos * sprite.scale.x; float m12 = -sin * sprite.scale.y; float m13 = sprite.destination.pos.x;
-        float m21 = sin * sprite.scale.x; float m22 =  cos * sprite.scale.y; float m23 = sprite.destination.pos.y;
+        f32 m11 = cos * sprite.scale.x; f32 m12 = -sin * sprite.scale.y; f32 m13 = sprite.destination.pos.x;
+        f32 m21 = sin * sprite.scale.x; f32 m22 =  cos * sprite.scale.y; f32 m23 = sprite.destination.pos.y;
         //          0                                  0                                 1
 
-        float pos_x_m11 = local.pos.x * m11;
-        float pos_x_m21 = local.pos.x * m21;
-        float far_x_m11 = far_corner.x * m11;
-        float far_x_m21 = far_corner.x * m21;
-        float pos_y_m12 = local.pos.y * m12;
-        float pos_y_m22 = local.pos.y * m22;
-        float far_y_m12 = far_corner.y * m12;
-        float far_y_m22 = far_corner.y * m22;
+        f32 pos_x_m11 = local.pos.x * m11;
+        f32 pos_x_m21 = local.pos.x * m21;
+        f32 far_x_m11 = far_corner.x * m11;
+        f32 far_x_m21 = far_corner.x * m21;
+        f32 pos_y_m12 = local.pos.y * m12;
+        f32 pos_y_m22 = local.pos.y * m22;
+        f32 far_y_m12 = far_corner.y * m12;
+        f32 far_y_m22 = far_corner.y * m22;
 
         // transform * vec2(local.pos.x, local.pos.y)
         quad.v0.position = vec2(pos_x_m11 + pos_y_m12 + m13,
@@ -307,8 +307,8 @@ static Rect src_to_uv(const Rect* source, Texture* texture)
     else
     {
         // Проверки не производятся, текстура должна быть корректной
-        float inv_width = 1.f / texture->width();
-        float inv_height = 1.f / texture->height();
+        f32 inv_width = 1.f / texture->width();
+        f32 inv_height = 1.f / texture->height();
 
         return Rect
         (
@@ -332,7 +332,7 @@ static Rect pos_to_dest(vec2 position, Texture* texture, const Rect* src)
 }
 
 void SpriteBatch::draw_sprite(Texture* texture, const Rect& destination, const Rect* source, u32 color,
-    float rotation, vec2 origin, vec2 scale, FlipModes flip_modes)
+    f32 rotation, vec2 origin, vec2 scale, FlipModes flip_modes)
 {
     if (!texture)
         return;
@@ -354,7 +354,7 @@ void SpriteBatch::draw_sprite(Texture* texture, const Rect& destination, const R
 }
 
 void SpriteBatch::draw_sprite(Texture* texture, vec2 position, const Rect* source, u32 color,
-    float rotation, vec2 origin, vec2 scale, FlipModes flip_modes)
+    f32 rotation, vec2 origin, vec2 scale, FlipModes flip_modes)
 {
     if (!texture)
         return;
@@ -376,7 +376,7 @@ void SpriteBatch::draw_sprite(Texture* texture, vec2 position, const Rect* sourc
 }
 
 void SpriteBatch::draw_string(const StrUtf8& text, SpriteFont* font, vec2 position, u32 color,
-    float rotation, vec2 origin, vec2 scale, FlipModes flip_modes)
+    f32 rotation, vec2 origin, vec2 scale, FlipModes flip_modes)
 {
     if (text.length() == 0)
         return;
@@ -400,8 +400,8 @@ void SpriteBatch::draw_string(const StrUtf8& text, SpriteFont* font, vec2 positi
     sprite.texture = font->texture(0);
 
     // По идее все текстуры одинакового размера
-    float pixel_width = 1.f / sprite.texture->width();
-    float pixel_height = 1.f / sprite.texture->height();
+    f32 pixel_width = 1.f / sprite.texture->width();
+    f32 pixel_height = 1.f / sprite.texture->height();
 
     vec2 char_pos = position;
     vec2 char_orig = origin;
@@ -419,12 +419,12 @@ void SpriteBatch::draw_string(const StrUtf8& text, SpriteFont* font, vec2 positi
     {
         const Glyph& glyph = font->glyph(unicode_text[i]);
 
-        float gx = (float)glyph.x;
-        float gy = (float)glyph.y;
-        float gw = (float)glyph.width;
-        float gh = (float)glyph.height;
-        float gox = (float)glyph.offset_x;
-        float goy = (float)glyph.offset_y;
+        f32 gx = (f32)glyph.x;
+        f32 gy = (f32)glyph.y;
+        f32 gw = (f32)glyph.width;
+        f32 gh = (f32)glyph.height;
+        f32 gox = (f32)glyph.offset_x;
+        f32 goy = (f32)glyph.offset_y;
 
         sprite.texture = font->texture(glyph.page);
         sprite.destination = Rect(char_pos, {gw, gh});
@@ -435,7 +435,7 @@ void SpriteBatch::draw_string(const StrUtf8& text, SpriteFont* font, vec2 positi
 
         draw_sprite_internal();
 
-        char_orig.x -= (float)glyph.advance_x;
+        char_orig.x -= (f32)glyph.advance_x;
     }
 }
 

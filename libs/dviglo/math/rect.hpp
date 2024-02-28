@@ -24,7 +24,7 @@ struct Rect
     {
     }
 
-    Rect(float x, float y, float width, float height)
+    Rect(f32 x, f32 y, f32 width, f32 height)
         : pos(x, y)
         , size(width, height)
     {

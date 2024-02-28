@@ -3,8 +3,6 @@
 
 #include "vertex_buffer.hpp"
 
-#include "../common/primitive_types.hpp"
-
 
 namespace dviglo
 {
@@ -14,13 +12,13 @@ constexpr GLsizei calc_vertex_size(VertexAttributes vertex_attributes)
     GLsizei ret = 0;
 
     if (!!(vertex_attributes & VertexAttributes::position))
-        ret += 2 * sizeof(float);
+        ret += 2 * sizeof(f32);
 
     if (!!(vertex_attributes & VertexAttributes::color))
         ret += sizeof(u32);
 
     if (!!(vertex_attributes & VertexAttributes::uv))
-        ret += 2 * sizeof(float);
+        ret += 2 * sizeof(f32);
 
     return ret;
 }
@@ -66,7 +64,7 @@ void VertexBuffer::create(GLsizei num_vertices, VertexAttributes vertex_attribut
 
         // Вычисляем индекс и смещение следующего атрибута
         ++attribute_index;
-        attribute_offset += 2 * sizeof(float);
+        attribute_offset += 2 * sizeof(f32);
     }
 
     if (!!(vertex_attributes & VertexAttributes::color))
@@ -86,7 +84,7 @@ void VertexBuffer::create(GLsizei num_vertices, VertexAttributes vertex_attribut
         glEnableVertexAttribArray(attribute_index);
 
         ++attribute_index;
-        attribute_offset += 2 * sizeof(float);
+        attribute_offset += 2 * sizeof(f32);
     }
 
     capacity_ = num_vertices;

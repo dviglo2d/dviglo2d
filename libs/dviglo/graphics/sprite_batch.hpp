@@ -157,7 +157,7 @@ public:
     void draw_rect(const Rect& rect);
 
     /// Рисует круг
-    void draw_disk(glm::vec2 center_pos, float radius, i32 num_segments);
+    void draw_disk(glm::vec2 center_pos, f32 radius, i32 num_segments);
 
     // ======================= Используем пакетный рендеринг четырёхугольников =======================
 
@@ -172,7 +172,7 @@ private:
         Rect source_uv; ///< Текстурные координаты в диапазоне [0, 1]
         FlipModes flip_modes;
         glm::vec2 scale;
-        float rotation;
+        f32 rotation;
         glm::vec2 origin;
         u32 color0; ///< Верхний левый угол
         u32 color1; ///< Верхний правый угол
@@ -187,15 +187,15 @@ public:
 
     /// color - цвет в формате 0xAABBGGRR
     void draw_sprite(Texture* texture, const Rect& destination, const Rect* source = nullptr, u32 color = 0xFFFFFFFF,
-        float rotation = 0.f, glm::vec2 origin = {0.f, 0.f}, glm::vec2 scale = {1.f, 1.f}, FlipModes flip_modes = FlipModes::none);
+        f32 rotation = 0.f, glm::vec2 origin = {0.f, 0.f}, glm::vec2 scale = {1.f, 1.f}, FlipModes flip_modes = FlipModes::none);
 
     /// color - цвет в формате 0xAABBGGRR
     void draw_sprite(Texture* texture, glm::vec2 position, const Rect* source = nullptr, u32 color = 0xFFFFFFFF,
-        float rotation = 0.f, glm::vec2 origin = {0.f, 0.f}, glm::vec2 scale = {1.f, 1.f}, FlipModes flip_modes = FlipModes::none);
+        f32 rotation = 0.f, glm::vec2 origin = {0.f, 0.f}, glm::vec2 scale = {1.f, 1.f}, FlipModes flip_modes = FlipModes::none);
 
     /// color - цвет в формате 0xAABBGGRR
     void draw_string(const StrUtf8& text, SpriteFont* font, glm::vec2 position, u32 color = 0xFFFFFFFF,
-        float rotation = 0.0f, glm::vec2 origin = {0.f, 0.f}, glm::vec2 scale = {1.f, 1.f}, FlipModes flip_modes = FlipModes::none);
+        f32 rotation = 0.0f, glm::vec2 origin = {0.f, 0.f}, glm::vec2 scale = {1.f, 1.f}, FlipModes flip_modes = FlipModes::none);
 };
 
 } // namespace dviglo

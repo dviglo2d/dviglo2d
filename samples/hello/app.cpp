@@ -92,10 +92,10 @@ void App::on_key(const SDL_KeyboardEvent& event_data)
     }
 }
 
-static float rotation = 0.f;
+static f32 rotation = 0.f;
 static StrUtf8 fps_text = "FPS: ?";
-static float scale = 1.f;
-static float scale_sign = 1.f;
+static f32 scale = 1.f;
+static f32 scale_sign = 1.f;
 
 void App::update(u64 ns)
 {
