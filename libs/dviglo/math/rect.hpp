@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include "../common/primitive_types.hpp"
+
 #include <glm/glm_wrapped.hpp>
 
 
@@ -14,14 +16,17 @@ struct Rect
     glm::vec2 pos;
     glm::vec2 size;
 
-    // Clang версии < 16 не поддерживает P0960R3. Позже оба конструктора можно будет удалить
-    // https://en.cppreference.com/w/cpp/compiler_support/20
-
     Rect() = default;
 
     Rect(glm::vec2 pos, glm::vec2 size)
         : pos(pos)
         , size(size)
+    {
+    }
+
+    Rect(float x, float y, float width, float height)
+        : pos(x, y)
+        , size(width, height)
     {
     }
 };
@@ -31,14 +36,17 @@ struct IntRect
     glm::ivec2 pos;
     glm::ivec2 size;
 
-    // Clang версии < 16 не поддерживает P0960R3. Позже оба конструктора можно будет удалить
-    // https://en.cppreference.com/w/cpp/compiler_support/20
-
     IntRect() = default;
 
     IntRect(glm::ivec2 pos, glm::ivec2 size)
         : pos(pos)
         , size(size)
+    {
+    }
+
+    IntRect(i32 x, i32 y, i32 width, i32 height)
+        : pos(x, y)
+        , size(width, height)
     {
     }
 };
