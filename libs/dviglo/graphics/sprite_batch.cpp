@@ -123,7 +123,7 @@ void SpriteBatch::flush()
 {
     if (t_num_vertices_ > 0)
     {
-        ivec2 viewport_size = get_viewport_size();
+        ivec2 viewport_size = get_viewport().size;
 
         t_shader_program_->use();
         t_shader_program_->set("u_scale", vec2(2.f / viewport_size.x, -2.f / viewport_size.y));
@@ -138,7 +138,7 @@ void SpriteBatch::flush()
     }
     else if (q_num_vertices_ > 0)
     {
-        ivec2 viewport_size = get_viewport_size();
+        ivec2 viewport_size = get_viewport().size;
 
         q_current_shader_program_->use();
         q_current_shader_program_->set("u_scale", vec2(2.f / viewport_size.x, -2.f / viewport_size.y));

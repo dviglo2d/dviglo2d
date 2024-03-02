@@ -3,12 +3,12 @@
 
 #pragma once
 
-#include <glm/glm_wrapped.hpp>
+#include "../math/rect.hpp"
 
 
 namespace dviglo
 {
 
-glm::ivec2 get_viewport_size();
+IntRect get_viewport();
 
 }  // namespace dviglo
