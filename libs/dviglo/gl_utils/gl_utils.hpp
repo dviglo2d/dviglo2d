@@ -9,6 +9,7 @@
 namespace dviglo
 {
 
+/// Начало координат в левом нижнем углу
 IntRect get_viewport();
 
 }  // namespace dviglo
