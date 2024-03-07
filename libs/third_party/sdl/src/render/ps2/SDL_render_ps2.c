@@ -20,7 +20,7 @@
 */
 #include "SDL_internal.h"
 
-#ifdef SDL_VIDEO_RENDER_PS2
+#if SDL_VIDEO_RENDER_PS2
 
 #include "../SDL_sysrender.h"
 
@@ -492,6 +492,7 @@ static int PS2_RunCommandQueue(SDL_Renderer *renderer, SDL_RenderCommand *cmd, v
         case SDL_RENDERCMD_SETVIEWPORT:
         {
             PS2_RenderSetViewPort(renderer, cmd);
+            /* FIXME: We need to update the clip rect too, see https://github.com/libsdl-org/SDL/issues/9094 */
             break;
         }
         case SDL_RENDERCMD_SETCLIPRECT:
@@ -502,10 +503,6 @@ static int PS2_RunCommandQueue(SDL_Renderer *renderer, SDL_RenderCommand *cmd, v
         case SDL_RENDERCMD_SETDRAWCOLOR:
         {
             PS2_RenderSetDrawColor(renderer, cmd);
-            break;
-        }
-        case SDL_RENDERCMD_SETCOLORSCALE:
-        {
             break;
         }
         case SDL_RENDERCMD_CLEAR:
@@ -697,7 +694,6 @@ static SDL_Renderer *PS2_CreateRenderer(SDL_Window *window, SDL_PropertiesID cre
     renderer->SetRenderTarget = PS2_SetRenderTarget;
     renderer->QueueSetViewport = PS2_QueueSetViewport;
     renderer->QueueSetDrawColor = PS2_QueueNoOp;
-    renderer->QueueSetColorScale = PS2_QueueNoOp;
     renderer->QueueDrawPoints = PS2_QueueDrawPoints;
     renderer->QueueDrawLines = PS2_QueueDrawPoints;
     renderer->QueueGeometry = PS2_QueueGeometry;

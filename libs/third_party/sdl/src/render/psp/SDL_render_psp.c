@@ -20,7 +20,7 @@
 */
 #include "SDL_internal.h"
 
-#ifdef SDL_VIDEO_RENDER_PSP
+#if SDL_VIDEO_RENDER_PSP
 
 #include "../SDL_sysrender.h"
 
@@ -1072,17 +1072,13 @@ static int PSP_RunCommandQueue(SDL_Renderer *renderer, SDL_RenderCommand *cmd, v
             break;
         }
 
-        case SDL_RENDERCMD_SETCOLORSCALE:
-        {
-            break;
-        }
-
         case SDL_RENDERCMD_SETVIEWPORT:
         {
             SDL_Rect *viewport = &cmd->data.viewport.rect;
             sceGuOffset(2048 - (viewport->w >> 1), 2048 - (viewport->h >> 1));
             sceGuViewport(2048, 2048, viewport->w, viewport->h);
             sceGuScissor(viewport->x, viewport->y, viewport->w, viewport->h);
+            /* FIXME: We need to update the clip rect too, see https://github.com/libsdl-org/SDL/issues/9094 */
             break;
         }
 
@@ -1327,7 +1323,6 @@ SDL_Renderer *PSP_CreateRenderer(SDL_Window *window, SDL_PropertiesID create_pro
     renderer->SetRenderTarget = PSP_SetRenderTarget;
     renderer->QueueSetViewport = PSP_QueueNoOp;
     renderer->QueueSetDrawColor = PSP_QueueNoOp;
-    renderer->QueueSetColorScale = PSP_QueueNoOp;
     renderer->QueueDrawPoints = PSP_QueueDrawPoints;
     renderer->QueueDrawLines = PSP_QueueDrawPoints; /* lines and points queue vertices the same way. */
     renderer->QueueGeometry = PSP_QueueGeometry;

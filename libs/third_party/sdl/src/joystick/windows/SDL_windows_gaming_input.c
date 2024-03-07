@@ -106,7 +106,6 @@ DEFINE_GUID(IID___x_ABI_CWindows_CGaming_CInput_CIRawGameController2, 0x43c0c035
 DEFINE_GUID(IID___x_ABI_CWindows_CGaming_CInput_CIRawGameControllerStatics, 0xeb8d0792, 0xe95a, 0x4b19, 0xaf, 0xc7, 0x0a, 0x59, 0xf8, 0xbf, 0x75, 0x9e);
 
 extern SDL_bool SDL_XINPUT_Enabled(void);
-extern SDL_bool SDL_DINPUT_JoystickPresent(Uint16 vendor, Uint16 product, Uint16 version);
 
 
 static SDL_bool SDL_IsXInputDevice(Uint16 vendor, Uint16 product)
@@ -448,23 +447,12 @@ static HRESULT STDMETHODCALLTYPE IEventHandler_CRawGameControllerVtbl_InvokeAdde
             name = SDL_strdup("");
         }
 
-#ifdef SDL_JOYSTICK_HIDAPI
-        if (!ignore_joystick && HIDAPI_IsDevicePresent(vendor, product, version, name)) {
-            ignore_joystick = SDL_TRUE;
-        }
-#endif
-
-#ifdef SDL_JOYSTICK_RAWINPUT
-        if (!ignore_joystick && RAWINPUT_IsDevicePresent(vendor, product, version, name)) {
-            ignore_joystick = SDL_TRUE;
-        }
-#endif
-
-        if (!ignore_joystick && SDL_DINPUT_JoystickPresent(vendor, product, version)) {
+        if (!ignore_joystick && SDL_JoystickHandledByAnotherDriver(&SDL_WGI_JoystickDriver, vendor, product, version, name)) {
             ignore_joystick = SDL_TRUE;
         }
 
         if (!ignore_joystick && SDL_IsXInputDevice(vendor, product)) {
+            /* This hasn't been detected by the RAWINPUT driver yet, but it will be picked up later. */
             ignore_joystick = SDL_TRUE;
         }
 
@@ -563,6 +551,7 @@ static HRESULT STDMETHODCALLTYPE IEventHandler_CRawGameControllerVtbl_InvokeRemo
 #ifdef _MSC_VER
 #pragma warning(push)
 #pragma warning(disable : 4028) /* formal parameter 3 different from declaration, when using older buggy WGI headers */
+#pragma warning(disable : 4113) /* formal parameter 3 different from declaration (a more specific warning added in VS 2022), when using older buggy WGI headers */
 #endif
 
 static __FIEventHandler_1_Windows__CGaming__CInput__CRawGameControllerVtbl controller_added_vtbl = {
@@ -682,6 +671,12 @@ static int WGI_JoystickGetCount(void)
 
 static void WGI_JoystickDetect(void)
 {
+}
+
+static SDL_bool WGI_JoystickIsDevicePresent(Uint16 vendor_id, Uint16 product_id, Uint16 version, const char *name)
+{
+    /* We don't override any other drivers */
+    return SDL_FALSE;
 }
 
 static const char *WGI_JoystickGetDeviceName(int device_index)
@@ -1009,6 +1004,7 @@ SDL_JoystickDriver SDL_WGI_JoystickDriver = {
     WGI_JoystickInit,
     WGI_JoystickGetCount,
     WGI_JoystickDetect,
+    WGI_JoystickIsDevicePresent,
     WGI_JoystickGetDeviceName,
     WGI_JoystickGetDevicePath,
     WGI_JoystickGetDeviceSteamVirtualGamepadSlot,

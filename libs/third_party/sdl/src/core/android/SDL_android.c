@@ -381,9 +381,6 @@ static SDL_bool bHasNewData;
 
 static SDL_bool bHasEnvironmentVariables;
 
-static SDL_AtomicInt bPermissionRequestPending;
-static SDL_bool bPermissionRequestResult;
-
 /* Android AssetManager */
 static void Internal_Android_Create_AssetManager(void);
 static void Internal_Android_Destroy_AssetManager(void);
@@ -823,7 +820,7 @@ JNIEXPORT int JNICALL SDL_JAVA_INTERFACE(nativeRunMain)(JNIEnv *env, jclass cls,
             argv = SDL_small_alloc(char *, 1 + len + 1, &isstack); /* !!! FIXME: check for NULL */
             argc = 0;
             /* Use the name "app_process" so PHYSFS_platformCalcBaseDir() works.
-               https://bitbucket.org/MartinFelis/love-android-sdl2/issue/23/release-build-crash-on-start
+               https://github.com/love2d/love-android/issues/24
              */
             argv[argc++] = SDL_strdup("app_process");
             for (i = 0; i < len; ++i) {
@@ -995,14 +992,6 @@ JNIEXPORT void JNICALL SDL_JAVA_INTERFACE(nativeAddTouch)(
     SDL_AddTouch((SDL_TouchID)touchId, SDL_TOUCH_DEVICE_DIRECT, utfname);
 
     (*env)->ReleaseStringUTFChars(env, name, utfname);
-}
-
-JNIEXPORT void JNICALL SDL_JAVA_INTERFACE(nativePermissionResult)(
-    JNIEnv *env, jclass cls,
-    jint requestCode, jboolean result)
-{
-    bPermissionRequestResult = result;
-    SDL_AtomicSet(&bPermissionRequestPending, SDL_FALSE);
 }
 
 JNIEXPORT void JNICALL
@@ -2568,11 +2557,6 @@ const char *SDL_AndroidGetExternalStoragePath(void)
     return s_AndroidExternalFilesPath;
 }
 
-SDL_bool SDL_AndroidRequestPermission(const char *permission)
-{
-    return Android_JNI_RequestPermission(permission);
-}
-
 int SDL_AndroidShowToast(const char *message, int duration, int gravity, int xOffset, int yOffset)
 {
     return Android_JNI_ShowToast(message, duration, gravity, xOffset, yOffset);
@@ -2640,27 +2624,75 @@ SDL_bool Android_JNI_SetRelativeMouseEnabled(SDL_bool enabled)
     return (*env)->CallStaticBooleanMethod(env, mActivityClass, midSetRelativeMouseEnabled, (enabled == 1));
 }
 
-SDL_bool Android_JNI_RequestPermission(const char *permission)
+typedef struct NativePermissionRequestInfo
 {
-    JNIEnv *env = Android_JNI_GetEnv();
-    jstring jpermission;
-    const int requestCode = 1;
+    int request_code;
+    char *permission;
+    SDL_AndroidRequestPermissionCallback callback;
+    void *userdata;
+    struct NativePermissionRequestInfo *next;
+} NativePermissionRequestInfo;
 
-    /* Wait for any pending request on another thread */
-    while (SDL_AtomicGet(&bPermissionRequestPending) == SDL_TRUE) {
-        SDL_Delay(10);
+static NativePermissionRequestInfo pending_permissions;
+
+JNIEXPORT void JNICALL SDL_JAVA_INTERFACE(nativePermissionResult)(
+    JNIEnv *env, jclass cls,
+    jint requestCode, jboolean result)
+{
+    SDL_LockMutex(Android_ActivityMutex);
+    NativePermissionRequestInfo *prev = &pending_permissions;
+    for (NativePermissionRequestInfo *info = prev->next; info != NULL; info = info->next) {
+        if (info->request_code == (int) requestCode) {
+            prev->next = info->next;
+            SDL_UnlockMutex(Android_ActivityMutex);
+            info->callback(info->userdata, info->permission, result ? SDL_TRUE : SDL_FALSE);
+            SDL_free(info->permission);
+            SDL_free(info);
+            return;
+        }
+        prev = info;
     }
-    SDL_AtomicSet(&bPermissionRequestPending, SDL_TRUE);
 
-    jpermission = (*env)->NewStringUTF(env, permission);
-    (*env)->CallStaticVoidMethod(env, mActivityClass, midRequestPermission, jpermission, requestCode);
+    SDL_UnlockMutex(Android_ActivityMutex);
+    SDL_assert(!"Shouldn't have hit this code");  // we had a permission response for a request we never made...?
+}
+
+int SDL_AndroidRequestPermission(const char *permission, SDL_AndroidRequestPermissionCallback cb, void *userdata)
+{
+    if (!permission) {
+        return SDL_InvalidParamError("permission");
+    } else if (!cb) {
+        return SDL_InvalidParamError("cb");
+    }
+
+    NativePermissionRequestInfo *info = (NativePermissionRequestInfo *) SDL_calloc(1, sizeof (NativePermissionRequestInfo));
+    if (!info) {
+        return -1;
+    }
+
+    info->permission = SDL_strdup(permission);
+    if (!info->permission) {
+        SDL_free(info);
+        return -1;
+    }
+
+    static SDL_AtomicInt next_request_code;
+    info->request_code = SDL_AtomicAdd(&next_request_code, 1);
+
+    info->callback = cb;
+    info->userdata = userdata;
+
+    SDL_LockMutex(Android_ActivityMutex);
+    info->next = pending_permissions.next;
+    pending_permissions.next = info;
+    SDL_UnlockMutex(Android_ActivityMutex);
+
+    JNIEnv *env = Android_JNI_GetEnv();
+    jstring jpermission = (*env)->NewStringUTF(env, permission);
+    (*env)->CallStaticVoidMethod(env, mActivityClass, midRequestPermission, jpermission, info->request_code);
     (*env)->DeleteLocalRef(env, jpermission);
 
-    /* Wait for the request to complete */
-    while (SDL_AtomicGet(&bPermissionRequestPending) == SDL_TRUE) {
-        SDL_Delay(10);
-    }
-    return bPermissionRequestResult;
+    return 0;
 }
 
 /* Show toast notification */

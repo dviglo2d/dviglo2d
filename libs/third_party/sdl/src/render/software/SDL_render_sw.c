@@ -20,7 +20,7 @@
 */
 #include "SDL_internal.h"
 
-#if SDL_VIDEO_RENDER_SW && !defined(SDL_RENDER_DISABLED)
+#if SDL_VIDEO_RENDER_SW
 
 #include "../SDL_sysrender.h"
 #include "SDL_render_sw_c.h"
@@ -486,7 +486,7 @@ static int SW_RenderCopyEx(SDL_Renderer *renderer, SDL_Surface *surface, SDL_Tex
                          * to be created. This makes all source pixels opaque and the colors get copied correctly.
                          */
                         SDL_Surface *src_rotated_rgb;
-                        int f = SDL_GetPixelFormatEnumForMasks(src_rotated->format->bits_per_pixel,
+                        SDL_PixelFormatEnum f = SDL_GetPixelFormatEnumForMasks(src_rotated->format->bits_per_pixel,
                                                            src_rotated->format->Rmask,
                                                            src_rotated->format->Gmask,
                                                            src_rotated->format->Bmask,
@@ -703,11 +703,6 @@ static int SW_RunCommandQueue(SDL_Renderer *renderer, SDL_RenderCommand *cmd, vo
             drawstate.color.g = (Uint8)SDL_roundf(SDL_clamp(cmd->data.color.color.g * cmd->data.color.color_scale, 0.0f, 1.0f) * 255.0f);
             drawstate.color.b = (Uint8)SDL_roundf(SDL_clamp(cmd->data.color.color.b * cmd->data.color.color_scale, 0.0f, 1.0f) * 255.0f);
             drawstate.color.a = (Uint8)SDL_roundf(SDL_clamp(cmd->data.color.color.a, 0.0f, 1.0f) * 255.0f);
-            break;
-        }
-
-        case SDL_RENDERCMD_SETCOLORSCALE:
-        {
             break;
         }
 
@@ -1156,7 +1151,6 @@ SDL_Renderer *SW_CreateRendererForSurface(SDL_Surface *surface)
     renderer->SetRenderTarget = SW_SetRenderTarget;
     renderer->QueueSetViewport = SW_QueueNoOp;
     renderer->QueueSetDrawColor = SW_QueueNoOp;
-    renderer->QueueSetColorScale = SW_QueueNoOp;
     renderer->QueueDrawPoints = SW_QueueDrawPoints;
     renderer->QueueDrawLines = SW_QueueDrawPoints; /* lines and points queue vertices the same way. */
     renderer->QueueFillRects = SW_QueueFillRects;
@@ -1239,4 +1233,4 @@ SDL_RenderDriver SW_RenderDriver = {
       0 }
 };
 
-#endif /* SDL_VIDEO_RENDER_SW && !SDL_RENDER_DISABLED */
+#endif /* SDL_VIDEO_RENDER_SW */

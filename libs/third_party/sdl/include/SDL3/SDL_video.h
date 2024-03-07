@@ -141,6 +141,8 @@ typedef struct SDL_Window SDL_Window;
  *
  *  \sa SDL_GetWindowFlags
  */
+typedef Uint32 SDL_WindowFlags;
+
 #define SDL_WINDOW_FULLSCREEN           0x00000001U /**< window is in fullscreen mode */
 #define SDL_WINDOW_OPENGL               0x00000002U /**< window usable with OpenGL context */
 #define SDL_WINDOW_OCCLUDED             0x00000004U /**< window is occluded */
@@ -355,11 +357,18 @@ extern DECLSPEC SDL_DisplayID SDLCALL SDL_GetPrimaryDisplay(void);
  *
  * The following read-only properties are provided by SDL:
  *
- * - `SDL_PROP_DISPLAY_HDR_ENABLED_BOOLEAN`: true if the display has High
- *   Dynamic Range enabled
- * - `SDL_PROP_DISPLAY_SDR_WHITE_LEVEL_FLOAT`: the luminance, in nits, that
- *   SDR white is rendered on this display. If this value is not set or is
- *   zero, the value 200 is a reasonable default when HDR is enabled.
+ * - `SDL_PROP_DISPLAY_HDR_ENABLED_BOOLEAN`: true if the display has HDR
+ *   headroom above the SDR white point. This property can change dynamically
+ *   when SDL_EVENT_DISPLAY_HDR_STATE_CHANGED is sent.
+ * - `SDL_PROP_DISPLAY_SDR_WHITE_POINT_FLOAT`: the value of SDR white in the
+ *   SDL_COLORSPACE_SRGB_LINEAR colorspace. On Windows this corresponds to the
+ *   SDR white level in scRGB colorspace, and on Apple platforms this is
+ *   always 1.0 for EDR content. This property can change dynamically when
+ *   SDL_EVENT_DISPLAY_HDR_STATE_CHANGED is sent.
+ * - `SDL_PROP_DISPLAY_HDR_HEADROOM_FLOAT`: the additional high dynamic range
+ *   that can be displayed, in terms of the SDR white point. When HDR is not
+ *   enabled, this will be 1.0. This property can change dynamically when
+ *   SDL_EVENT_DISPLAY_HDR_STATE_CHANGED is sent.
  *
  * \param displayID the instance ID of the display to query
  * \returns a valid property ID on success or 0 on failure; call
@@ -373,7 +382,8 @@ extern DECLSPEC SDL_DisplayID SDLCALL SDL_GetPrimaryDisplay(void);
 extern DECLSPEC SDL_PropertiesID SDLCALL SDL_GetDisplayProperties(SDL_DisplayID displayID);
 
 #define SDL_PROP_DISPLAY_HDR_ENABLED_BOOLEAN            "SDL.display.HDR_enabled"
-#define SDL_PROP_DISPLAY_SDR_WHITE_LEVEL_FLOAT          "SDL.display.SDR_white_level"
+#define SDL_PROP_DISPLAY_SDR_WHITE_POINT_FLOAT          "SDL.display.SDR_white_point"
+#define SDL_PROP_DISPLAY_HDR_HEADROOM_FLOAT             "SDL.display.HDR_headroom"
 
 /**
  * Get the name of a display in UTF-8 encoding.
@@ -776,7 +786,7 @@ extern DECLSPEC Uint32 SDLCALL SDL_GetWindowPixelFormat(SDL_Window *window);
  * \sa SDL_CreateWindowWithProperties
  * \sa SDL_DestroyWindow
  */
-extern DECLSPEC SDL_Window *SDLCALL SDL_CreateWindow(const char *title, int w, int h, Uint32 flags);
+extern DECLSPEC SDL_Window *SDLCALL SDL_CreateWindow(const char *title, int w, int h, SDL_WindowFlags flags);
 
 /**
  * Create a child popup window of the specified parent window.
@@ -831,7 +841,7 @@ extern DECLSPEC SDL_Window *SDLCALL SDL_CreateWindow(const char *title, int w, i
  * \sa SDL_DestroyWindow
  * \sa SDL_GetWindowParent
  */
-extern DECLSPEC SDL_Window *SDLCALL SDL_CreatePopupWindow(SDL_Window *parent, int offset_x, int offset_y, int w, int h, Uint32 flags);
+extern DECLSPEC SDL_Window *SDLCALL SDL_CreatePopupWindow(SDL_Window *parent, int offset_x, int offset_y, int w, int h, SDL_WindowFlags flags);
 
 /**
  * Create a window with the specified properties.
@@ -1170,7 +1180,7 @@ extern DECLSPEC SDL_PropertiesID SDLCALL SDL_GetWindowProperties(SDL_Window *win
  * \sa SDL_SetWindowGrab
  * \sa SDL_ShowWindow
  */
-extern DECLSPEC Uint32 SDLCALL SDL_GetWindowFlags(SDL_Window *window);
+extern DECLSPEC SDL_WindowFlags SDLCALL SDL_GetWindowFlags(SDL_Window *window);
 
 /**
  * Set the title of a window.

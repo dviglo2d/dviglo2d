@@ -20,7 +20,7 @@
 */
 #include "SDL_internal.h"
 
-#ifdef SDL_VIDEO_RENDER_VITA_GXM
+#if SDL_VIDEO_RENDER_VITA_GXM
 
 #include "../SDL_sysrender.h"
 
@@ -249,7 +249,6 @@ SDL_Renderer *VITA_GXM_CreateRenderer(SDL_Window *window, SDL_PropertiesID creat
     renderer->SetRenderTarget = VITA_GXM_SetRenderTarget;
     renderer->QueueSetViewport = VITA_GXM_QueueNoOp;
     renderer->QueueSetDrawColor = VITA_GXM_QueueSetDrawColor;
-    renderer->QueueSetColorScale = VITA_GXM_QueueNoOp;
     renderer->QueueDrawPoints = VITA_GXM_QueueDrawPoints;
     renderer->QueueDrawLines = VITA_GXM_QueueDrawLines;
     renderer->QueueGeometry = VITA_GXM_QueueGeometry;
@@ -341,13 +340,13 @@ static void VITA_GXM_SetYUVProfile(SDL_Renderer *renderer, SDL_Texture *texture)
 {
     VITA_GXM_RenderData *data = (VITA_GXM_RenderData *)renderer->driverdata;
     int ret = 0;
-    if (SDL_ISCOLORSPACE_YUV_BT601(texture->colorspace)) {
+    if (SDL_ISCOLORSPACE_MATRIX_BT601(texture->colorspace)) {
         if (SDL_ISCOLORSPACE_LIMITED_RANGE(texture->colorspace)) {
             ret = sceGxmSetYuvProfile(data->gxm_context, 0, SCE_GXM_YUV_PROFILE_BT601_STANDARD);
         } else {
             ret = sceGxmSetYuvProfile(data->gxm_context, 0, SCE_GXM_YUV_PROFILE_BT601_FULL_RANGE);
         }
-    } else if (SDL_ISCOLORSPACE_YUV_BT709(texture->colorspace)) {
+    } else if (SDL_ISCOLORSPACE_MATRIX_BT709(texture->colorspace)) {
         if (SDL_ISCOLORSPACE_LIMITED_RANGE(texture->colorspace)) {
             ret = sceGxmSetYuvProfile(data->gxm_context, 0, SCE_GXM_YUV_PROFILE_BT709_STANDARD);
         } else {
@@ -982,6 +981,7 @@ static int VITA_GXM_RunCommandQueue(SDL_Renderer *renderer, SDL_RenderCommand *c
             if (SDL_memcmp(viewport, &cmd->data.viewport.rect, sizeof(cmd->data.viewport.rect)) != 0) {
                 SDL_copyp(viewport, &cmd->data.viewport.rect);
                 data->drawstate.viewport_dirty = SDL_TRUE;
+                data->drawstate.cliprect_dirty = SDL_TRUE;
             }
             break;
         }
@@ -1002,11 +1002,6 @@ static int VITA_GXM_RunCommandQueue(SDL_Renderer *renderer, SDL_RenderCommand *c
         }
 
         case SDL_RENDERCMD_SETDRAWCOLOR:
-        {
-            break;
-        }
-
-        case SDL_RENDERCMD_SETCOLORSCALE:
         {
             break;
         }

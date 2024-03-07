@@ -83,7 +83,7 @@ Uint8 *SDL_expand_byte[9] = {
 #define CASE(X) \
     case X:     \
         return #X;
-const char *SDL_GetPixelFormatName(Uint32 format)
+const char *SDL_GetPixelFormatName(SDL_PixelFormatEnum format)
 {
     switch (format) {
 
@@ -123,6 +123,24 @@ const char *SDL_GetPixelFormatName(Uint32 format)
         CASE(SDL_PIXELFORMAT_XBGR2101010)
         CASE(SDL_PIXELFORMAT_ARGB2101010)
         CASE(SDL_PIXELFORMAT_ABGR2101010)
+        CASE(SDL_PIXELFORMAT_RGB48)
+        CASE(SDL_PIXELFORMAT_BGR48)
+        CASE(SDL_PIXELFORMAT_RGBA64)
+        CASE(SDL_PIXELFORMAT_ARGB64)
+        CASE(SDL_PIXELFORMAT_BGRA64)
+        CASE(SDL_PIXELFORMAT_ABGR64)
+        CASE(SDL_PIXELFORMAT_RGB48_FLOAT)
+        CASE(SDL_PIXELFORMAT_BGR48_FLOAT)
+        CASE(SDL_PIXELFORMAT_RGBA64_FLOAT)
+        CASE(SDL_PIXELFORMAT_ARGB64_FLOAT)
+        CASE(SDL_PIXELFORMAT_BGRA64_FLOAT)
+        CASE(SDL_PIXELFORMAT_ABGR64_FLOAT)
+        CASE(SDL_PIXELFORMAT_RGB96_FLOAT)
+        CASE(SDL_PIXELFORMAT_BGR96_FLOAT)
+        CASE(SDL_PIXELFORMAT_RGBA128_FLOAT)
+        CASE(SDL_PIXELFORMAT_ARGB128_FLOAT)
+        CASE(SDL_PIXELFORMAT_BGRA128_FLOAT)
+        CASE(SDL_PIXELFORMAT_ABGR128_FLOAT)
         CASE(SDL_PIXELFORMAT_YV12)
         CASE(SDL_PIXELFORMAT_IYUV)
         CASE(SDL_PIXELFORMAT_YUY2)
@@ -130,6 +148,7 @@ const char *SDL_GetPixelFormatName(Uint32 format)
         CASE(SDL_PIXELFORMAT_YVYU)
         CASE(SDL_PIXELFORMAT_NV12)
         CASE(SDL_PIXELFORMAT_NV21)
+        CASE(SDL_PIXELFORMAT_P010)
         CASE(SDL_PIXELFORMAT_EXTERNAL_OES)
 
     default:
@@ -138,7 +157,7 @@ const char *SDL_GetPixelFormatName(Uint32 format)
 }
 #undef CASE
 
-SDL_bool SDL_GetMasksForPixelFormatEnum(Uint32 format, int *bpp, Uint32 *Rmask,
+SDL_bool SDL_GetMasksForPixelFormatEnum(SDL_PixelFormatEnum format, int *bpp, Uint32 *Rmask,
                                         Uint32 *Gmask, Uint32 *Bmask, Uint32 *Amask)
 {
     Uint32 masks[4];
@@ -147,8 +166,17 @@ SDL_bool SDL_GetMasksForPixelFormatEnum(Uint32 format, int *bpp, Uint32 *Rmask,
     /* Partial support for SDL_Surface with FOURCC */
     if (SDL_ISPIXELFORMAT_FOURCC(format)) {
         /* Not a format that uses masks */
-        *bpp = 0;
         *Rmask = *Gmask = *Bmask = *Amask = 0;
+        // however, some of these are packed formats, and can legit declare bits-per-pixel!
+        switch (format) {
+            case SDL_PIXELFORMAT_YUY2:
+            case SDL_PIXELFORMAT_UYVY:
+            case SDL_PIXELFORMAT_YVYU:
+                *bpp = 32;
+                break;
+            default:
+                *bpp = 0;  // oh well.
+        }
         return SDL_TRUE;
     }
 #else
@@ -305,7 +333,7 @@ SDL_bool SDL_GetMasksForPixelFormatEnum(Uint32 format, int *bpp, Uint32 *Rmask,
     return SDL_TRUE;
 }
 
-Uint32 SDL_GetPixelFormatEnumForMasks(int bpp, Uint32 Rmask, Uint32 Gmask, Uint32 Bmask, Uint32 Amask)
+SDL_PixelFormatEnum SDL_GetPixelFormatEnumForMasks(int bpp, Uint32 Rmask, Uint32 Gmask, Uint32 Bmask, Uint32 Amask)
 {
     switch (bpp) {
     case 1:
@@ -546,7 +574,7 @@ Uint32 SDL_GetPixelFormatEnumForMasks(int bpp, Uint32 Rmask, Uint32 Gmask, Uint3
 static SDL_PixelFormat *formats;
 static SDL_SpinLock formats_lock = 0;
 
-SDL_PixelFormat *SDL_CreatePixelFormat(Uint32 pixel_format)
+SDL_PixelFormat *SDL_CreatePixelFormat(SDL_PixelFormatEnum pixel_format)
 {
     SDL_PixelFormat *format;
 
@@ -584,7 +612,7 @@ SDL_PixelFormat *SDL_CreatePixelFormat(Uint32 pixel_format)
     return format;
 }
 
-int SDL_InitFormat(SDL_PixelFormat *format, Uint32 pixel_format)
+int SDL_InitFormat(SDL_PixelFormat *format, SDL_PixelFormatEnum pixel_format)
 {
     int bpp;
     Uint32 Rmask, Gmask, Bmask, Amask;
@@ -695,9 +723,13 @@ void SDL_DestroyPixelFormat(SDL_PixelFormat *format)
 SDL_Colorspace SDL_GetDefaultColorspaceForFormat(Uint32 format)
 {
     if (SDL_ISPIXELFORMAT_FOURCC(format)) {
-        return SDL_COLORSPACE_YUV_DEFAULT;
+        if (format == SDL_PIXELFORMAT_P010) {
+            return SDL_COLORSPACE_HDR10;
+        } else {
+            return SDL_COLORSPACE_YUV_DEFAULT;
+        }
     } else if (SDL_ISPIXELFORMAT_FLOAT(format)) {
-        return SDL_COLORSPACE_SCRGB;
+        return SDL_COLORSPACE_SRGB_LINEAR;
     } else if (SDL_ISPIXELFORMAT_10BIT(format)) {
         return SDL_COLORSPACE_HDR10;
     } else {
@@ -705,30 +737,18 @@ SDL_Colorspace SDL_GetDefaultColorspaceForFormat(Uint32 format)
     }
 }
 
-float SDL_scRGBtoNits(float v)
-{
-    return v * 80.0f;
-}
-
-float SDL_scRGBfromNits(float v)
-{
-    return v / 80.0f;
-}
-
-float SDL_sRGBtoNits(float v)
+float SDL_sRGBtoLinear(float v)
 {
     if (v <= 0.04045f) {
         v = (v / 12.92f);
     } else {
         v = SDL_powf((v + 0.055f) / 1.055f, 2.4f);
     }
-    return SDL_scRGBtoNits(v);
+    return v;
 }
 
-float SDL_sRGBfromNits(float v)
+float SDL_sRGBfromLinear(float v)
 {
-    v = SDL_scRGBfromNits(v);
-
     if (v <= 0.0031308f) {
         v = (v * 12.92f);
     } else {
@@ -857,14 +877,13 @@ const float *SDL_GetYCbCRtoRGBConversionMatrix(SDL_Colorspace colorspace, int w,
 
     switch (SDL_COLORSPACEMATRIX(colorspace)) {
     case SDL_MATRIX_COEFFICIENTS_BT601:
+    case SDL_MATRIX_COEFFICIENTS_BT470BG:
         return SDL_GetBT601ConversionMatrix(colorspace);
 
     case SDL_MATRIX_COEFFICIENTS_BT709:
         return SDL_GetBT709ConversionMatrix(colorspace);
 
-    /* FIXME: Are these the same? */
     case SDL_MATRIX_COEFFICIENTS_BT2020_NCL:
-    case SDL_MATRIX_COEFFICIENTS_BT2020_CL:
         return SDL_GetBT2020ConversionMatrix(colorspace);
 
     case SDL_MATRIX_COEFFICIENTS_UNSPECIFIED:
@@ -892,6 +911,10 @@ const float *SDL_GetColorPrimariesConversionMatrix(SDL_ColorPrimaries src, SDL_C
 {
     /* Conversion matrices generated using gamescope color helpers and the primaries definitions at:
      * https://www.itu.int/rec/T-REC-H.273-201612-S/en
+     *
+     * You can also generate these online using the RGB-XYZ matrix calculator, and then multiplying
+     * XYZ_to_dst * src_to_XYZ to get the combined conversion matrix:
+     * https://www.russellcottrell.com/photo/matrixCalculator.htm
      */
     static const float mat601to709[] = {
         0.939542f, 0.050181f, 0.010277f,
@@ -923,30 +946,25 @@ const float *SDL_GetColorPrimariesConversionMatrix(SDL_ColorPrimaries src, SDL_C
         -0.124547f, 1.132895f, -0.008348f,
         -0.018154f, -0.100597f, 1.118751f
     };
-    static const float matXYZto601[] = {
-        3.506001f, -1.739790f, -0.544058f,
-        -1.069047f, 1.977779f, 0.035171f,
-        0.056307f, -0.196976f, 1.049952f,
-    };
-    static const float matXYZto709[] = {
-        3.240969f, -1.537383f, -0.498611f,
-        -0.969243f, 1.875967f, 0.041555f,
-        0.055630f, -0.203977f, 1.056971f,
-    };
-    static const float matXYZto2020[] = {
-        1.716651f, -0.355671f, -0.253366f,
-        -0.666684f, 1.616481f, 0.015769f,
-        0.017640f, -0.042771f, 0.942103f,
-    };
     static const float matSMPTE431to709[] = {
         1.120713f, -0.234649f, 0.000000f,
         -0.038478f, 1.087034f, 0.000000f,
         -0.017967f, -0.082030f, 0.954576f,
     };
+    static const float matSMPTE431to2020[] = {
+        0.689691f, 0.207169f, 0.041346f,
+        0.041852f, 0.982426f, 0.010846f,
+        -0.001107f, 0.018362f, 0.854914f,
+    };
     static const float matSMPTE432to709[] = {
         1.224940f, -0.224940f, -0.000000f,
         -0.042057f, 1.042057f, 0.000000f,
         -0.019638f, -0.078636f, 1.098273f,
+    };
+    static const float matSMPTE432to2020[] = {
+        0.753833f, 0.198597f, 0.047570f,
+        0.045744f, 0.941777f, 0.012479f,
+        -0.001210f, 0.017602f, 0.983609f,
     };
 
     switch (dst) {
@@ -957,8 +975,6 @@ const float *SDL_GetColorPrimariesConversionMatrix(SDL_ColorPrimaries src, SDL_C
             return mat709to601;
         case SDL_COLOR_PRIMARIES_BT2020:
             return mat2020to601;
-        case SDL_COLOR_PRIMARIES_XYZ:
-            return matXYZto601;
         default:
             break;
         }
@@ -970,8 +986,6 @@ const float *SDL_GetColorPrimariesConversionMatrix(SDL_ColorPrimaries src, SDL_C
             return mat601to709;
         case SDL_COLOR_PRIMARIES_BT2020:
             return mat2020to709;
-        case SDL_COLOR_PRIMARIES_XYZ:
-            return matXYZto709;
         case SDL_COLOR_PRIMARIES_SMPTE431:
             return matSMPTE431to709;
         case SDL_COLOR_PRIMARIES_SMPTE432:
@@ -987,8 +1001,10 @@ const float *SDL_GetColorPrimariesConversionMatrix(SDL_ColorPrimaries src, SDL_C
             return mat601to2020;
         case SDL_COLOR_PRIMARIES_BT709:
             return mat709to2020;
-        case SDL_COLOR_PRIMARIES_XYZ:
-            return matXYZto2020;
+        case SDL_COLOR_PRIMARIES_SMPTE431:
+            return matSMPTE431to2020;
+        case SDL_COLOR_PRIMARIES_SMPTE432:
+            return matSMPTE432to2020;
         default:
             break;
         }

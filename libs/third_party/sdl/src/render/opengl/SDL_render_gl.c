@@ -20,7 +20,7 @@
 */
 #include "SDL_internal.h"
 
-#if defined(SDL_VIDEO_RENDER_OGL) && !defined(SDL_RENDER_DISABLED)
+#if SDL_VIDEO_RENDER_OGL
 #include "../../video/SDL_sysvideo.h" /* For SDL_RecreateWindow */
 #include <SDL3/SDL_opengl.h>
 #include "../SDL_sysrender.h"
@@ -1251,17 +1251,13 @@ static int GL_RunCommandQueue(SDL_Renderer *renderer, SDL_RenderCommand *cmd, vo
             break;
         }
 
-        case SDL_RENDERCMD_SETCOLORSCALE:
-        {
-            break;
-        }
-
         case SDL_RENDERCMD_SETVIEWPORT:
         {
             SDL_Rect *viewport = &data->drawstate.viewport;
             if (SDL_memcmp(viewport, &cmd->data.viewport.rect, sizeof(cmd->data.viewport.rect)) != 0) {
                 SDL_copyp(viewport, &cmd->data.viewport.rect);
                 data->drawstate.viewport_dirty = SDL_TRUE;
+                data->drawstate.cliprect_dirty = SDL_TRUE;
             }
             break;
         }
@@ -1647,7 +1643,7 @@ static SDL_Renderer *GL_CreateRenderer(SDL_Window *window, SDL_PropertiesID crea
     SDL_Renderer *renderer;
     GL_RenderData *data;
     GLint value;
-    Uint32 window_flags;
+    SDL_WindowFlags window_flags;
     int profile_mask = 0, major = 0, minor = 0;
     SDL_bool changed_window = SDL_FALSE;
     const char *hint;
@@ -1707,7 +1703,6 @@ static SDL_Renderer *GL_CreateRenderer(SDL_Window *window, SDL_PropertiesID crea
     renderer->SetRenderTarget = GL_SetRenderTarget;
     renderer->QueueSetViewport = GL_QueueNoOp;
     renderer->QueueSetDrawColor = GL_QueueNoOp;
-    renderer->QueueSetColorScale = GL_QueueNoOp;
     renderer->QueueDrawPoints = GL_QueueDrawPoints;
     renderer->QueueDrawLines = GL_QueueDrawLines;
     renderer->QueueGeometry = GL_QueueGeometry;
@@ -1934,4 +1929,4 @@ SDL_RenderDriver GL_RenderDriver = {
       0 }
 };
 
-#endif /* SDL_VIDEO_RENDER_OGL && !SDL_RENDER_DISABLED */
+#endif /* SDL_VIDEO_RENDER_OGL */

@@ -20,7 +20,7 @@
 */
 #include "SDL_internal.h"
 
-#if defined(SDL_VIDEO_RENDER_OGL_ES2) && !defined(SDL_RENDER_DISABLED)
+#if SDL_VIDEO_RENDER_OGL_ES2
 
 #include "../../video/SDL_sysvideo.h" /* For SDL_RecreateWindow */
 #include <SDL3/SDL_opengles2.h>
@@ -1238,17 +1238,13 @@ static int GLES2_RunCommandQueue(SDL_Renderer *renderer, SDL_RenderCommand *cmd,
             break;
         }
 
-        case SDL_RENDERCMD_SETCOLORSCALE:
-        {
-            break;
-        }
-
         case SDL_RENDERCMD_SETVIEWPORT:
         {
             SDL_Rect *viewport = &data->drawstate.viewport;
             if (SDL_memcmp(viewport, &cmd->data.viewport.rect, sizeof(cmd->data.viewport.rect)) != 0) {
                 SDL_copyp(viewport, &cmd->data.viewport.rect);
                 data->drawstate.viewport_dirty = SDL_TRUE;
+                data->drawstate.cliprect_dirty = SDL_TRUE;
             }
             break;
         }
@@ -1279,7 +1275,7 @@ static int GLES2_RunCommandQueue(SDL_Renderer *renderer, SDL_RenderCommand *cmd,
                 (g != data->drawstate.clear_color.g) ||
                 (b != data->drawstate.clear_color.b) ||
                 (a != data->drawstate.clear_color.a)) {
-                data->glClearColor(r, g, g, a);
+                data->glClearColor(r, g, b, a);
                 data->drawstate.clear_color.r = r;
                 data->drawstate.clear_color.g = g;
                 data->drawstate.clear_color.b = b;
@@ -2041,7 +2037,7 @@ static SDL_Renderer *GLES2_CreateRenderer(SDL_Window *window, SDL_PropertiesID c
 {
     SDL_Renderer *renderer;
     GLES2_RenderData *data;
-    Uint32 window_flags = 0; /* -Wconditional-uninitialized */
+    SDL_WindowFlags window_flags = 0; /* -Wconditional-uninitialized */
     GLint window_framebuffer;
     GLint value;
     int profile_mask = 0, major = 0, minor = 0;
@@ -2188,7 +2184,6 @@ static SDL_Renderer *GLES2_CreateRenderer(SDL_Window *window, SDL_PropertiesID c
     renderer->SetRenderTarget = GLES2_SetRenderTarget;
     renderer->QueueSetViewport = GLES2_QueueNoOp;
     renderer->QueueSetDrawColor = GLES2_QueueNoOp;
-    renderer->QueueSetColorScale = GLES2_QueueNoOp;
     renderer->QueueDrawPoints = GLES2_QueueDrawPoints;
     renderer->QueueDrawLines = GLES2_QueueDrawLines;
     renderer->QueueGeometry = GLES2_QueueGeometry;
@@ -2271,4 +2266,4 @@ SDL_RenderDriver GLES2_RenderDriver = {
       0 }
 };
 
-#endif /* SDL_VIDEO_RENDER_OGL_ES2 && !defined(SDL_RENDER_DISABLED) */
+#endif /* SDL_VIDEO_RENDER_OGL_ES2 */

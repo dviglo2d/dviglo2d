@@ -356,6 +356,22 @@ extern "C" {
 #define SDL_HINT_BMP_SAVE_LEGACY_FORMAT "SDL_BMP_SAVE_LEGACY_FORMAT"
 
 /**
+ *  A variable that decides what camera backend to use.
+ *
+ *  By default, SDL will try all available camera backends in a reasonable
+ *  order until it finds one that can work, but this hint allows the app
+ *  or user to force a specific target, such as "directshow" if, say, you are
+ *  on Windows Media Foundations but want to try DirectShow instead.
+ *
+ *  The default value is unset, in which case SDL will try to figure out
+ *  the best camera backend on your behalf. This hint needs to be set
+ *  before SDL_Init() is called to be useful.
+ *
+ *  This hint is available since SDL 3.0.0.
+ */
+#define SDL_HINT_CAMERA_DRIVER "SDL_CAMERA_DRIVER"
+
+/**
  * A variable controlling whether DirectInput should be used for controllers
  *
  * The variable can be set to the following values:
@@ -1721,6 +1737,18 @@ extern "C" {
 #define SDL_HINT_RENDER_DIRECT3D11_DEBUG    "SDL_RENDER_DIRECT3D11_DEBUG"
 
 /**
+ *  A variable controlling whether to enable Vulkan Validation Layers
+ *
+ *
+ *  This variable can be set to the following values:
+ *    "0"       - Disable Validation Layer use
+ *    "1"       - Enable Validation Layer use
+ *
+ *  By default, SDL does not use Vulkan Validation Layers.
+ */
+#define SDL_HINT_RENDER_VULKAN_DEBUG    "SDL_RENDER_VULKAN_DEBUG"
+
+/**
  * A variable specifying which render driver to use.
  *
  * If the application doesn't pick a specific renderer to use, this variable specifies the name of the preferred renderer.  If the preferred renderer can't be initialized, the normal default renderer is used.
@@ -1733,6 +1761,7 @@ extern "C" {
  *   "opengles2"
  *   "opengles"
  *   "metal"
+ *   "vulkan"
  *   "software"
  *
  * The default varies by platform, but it's the first one in the list that is available on the current platform.
@@ -2478,7 +2507,6 @@ extern "C" {
  */
 #define SDL_HINT_XINPUT_ENABLED "SDL_XINPUT_ENABLED"
 
-
 /**
  *  An enumeration of hint priorities
  */
@@ -2633,23 +2661,6 @@ extern DECLSPEC int SDLCALL SDL_AddHintCallback(const char *name,
 extern DECLSPEC void SDLCALL SDL_DelHintCallback(const char *name,
                                                  SDL_HintCallback callback,
                                                  void *userdata);
-
-/**
- * Clear all hints.
- *
- * This function is automatically called during SDL_Quit(), and deletes all
- * callbacks without calling them and frees all memory associated with hints.
- * If you're calling this from application code you probably want to call
- * SDL_ResetHints() instead.
- *
- * This function will be removed from the API the next time we rev the ABI.
- *
- * \since This function is available since SDL 3.0.0.
- *
- * \sa SDL_ResetHints
- */
-extern DECLSPEC void SDLCALL SDL_ClearHints(void);
-
 
 /* Ends C function definitions when using C++ */
 #ifdef __cplusplus

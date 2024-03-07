@@ -247,27 +247,41 @@ if(SDL_SHARED_DEFAULT AND SDL_STATIC_DEFAULT AND SDL_SHARED_AVAILABLE)
   endif()
 endif()
 
-set(SDL_SUBSYSTEMS
-  Audio
-  Video
-  Render
-  Joystick
-  Haptic
-  Hidapi
-  Power
-  Sensor
-)
-foreach(_SUB IN LISTS SDL_SUBSYSTEMS)
-  string(TOUPPER ${_SUB} _OPT)
-  if(NOT DEFINED SDL_${_OPT}_DEFAULT)
-    set(SDL_${_OPT}_DEFAULT ON)
+set(SDL_SUBSYSTEMS )
+
+macro(define_sdl_subsystem _name)
+  cmake_parse_arguments("_ds" "" "" "DEPS" ${ARGN})
+  string(TOUPPER ${_name} _uname)
+  if(NOT DEFINED SDL_${_uname}_DEFAULT)
+    set(SDL_${_uname}_DEFAULT ON)
   endif()
-  option(SDL_${_OPT} "Enable the ${_SUB} subsystem" ${SDL_${_OPT}_DEFAULT})
-endforeach()
+  if(_ds_DEPS)
+    cmake_dependent_option(SDL_${_uname} "Enable the ${_name} subsystem" "${SDL_${_uname}_DEFAULT}" "${_ds_DEPS}" OFF)
+  else()
+    option(SDL_${_uname} "Enable the ${_name} subsystem" "${SDL_${_uname}_DEFAULT}")
+  endif()
+  list(APPEND SDL_SUBSYSTEMS "${_name}")
+endmacro()
+
+define_sdl_subsystem(Audio)
+define_sdl_subsystem(Video)
+define_sdl_subsystem(Render DEPS SDL_VIDEO)
+define_sdl_subsystem(Camera DEPS SDL_VIDEO)
+define_sdl_subsystem(Joystick)
+define_sdl_subsystem(Haptic)
+define_sdl_subsystem(Hidapi)
+define_sdl_subsystem(Power)
+define_sdl_subsystem(Sensor)
 
 cmake_dependent_option(SDL_FRAMEWORK "Build SDL libraries as Apple Framework" OFF "APPLE" OFF)
 if(SDL_FRAMEWORK)
   set(SDL_STATIC_AVAILABLE FALSE)
+endif()
+
+if(UNIX AND NOT ANDROID AND NOT RISCOS AND NOT SDL_FRAMEWORK)
+  set(SDL_RPATH_DEFAULT ON)
+else()
+  set(SDL_RPATH_DEFAULT OFF)
 endif()
 
 # Allow some projects to be built conditionally.
@@ -300,54 +314,55 @@ set_option(SDL_LIBC                "Use the system C library" ${SDL_LIBC_DEFAULT
 set_option(SDL_SYSTEM_ICONV        "Use iconv() from system-installed libraries" ${SDL_SYSTEM_ICONV_DEFAULT})
 set_option(SDL_LIBICONV            "Prefer iconv() from libiconv, if available, over libc version" OFF)
 set_option(SDL_GCC_ATOMICS         "Use gcc builtin atomics" ${SDL_GCC_ATOMICS_DEFAULT})
-dep_option(SDL_DBUS                "Enable D-Bus support" ON ${UNIX_SYS} OFF)
-set_option(SDL_DISKAUDIO           "Support the disk writer audio driver" ON)
-set_option(SDL_DUMMYAUDIO          "Support the dummy audio driver" ON)
-set_option(SDL_DUMMYVIDEO          "Use dummy video driver" ON)
-dep_option(SDL_IBUS                "Enable IBus support" ON ${UNIX_SYS} OFF)
-dep_option(SDL_OPENGL              "Include OpenGL support" ON "NOT VISIONOS" OFF)
-dep_option(SDL_OPENGLES            "Include OpenGL ES support" ON "NOT VISIONOS" OFF)
+dep_option(SDL_DBUS                "Enable D-Bus support" ON "${UNIX_SYS}" OFF)
+dep_option(SDL_DISKAUDIO           "Support the disk writer audio driver" ON "SDL_AUDIO" OFF)
+dep_option(SDL_DUMMYAUDIO          "Support the dummy audio driver" ON "SDL_AUDIO" OFF)
+dep_option(SDL_DUMMYVIDEO          "Use dummy video driver" ON "SDL_VIDEO" OFF)
+dep_option(SDL_IBUS                "Enable IBus support" ON "${UNIX_SYS}" OFF)
+dep_option(SDL_OPENGL              "Include OpenGL support" ON "SDL_VIDEO;NOT VISIONOS" OFF)
+dep_option(SDL_OPENGLES            "Include OpenGL ES support" ON "SDL_VIDEO;NOT VISIONOS" OFF)
 set_option(SDL_PTHREADS            "Use POSIX threads for multi-threading" ${SDL_PTHREADS_DEFAULT})
 dep_option(SDL_PTHREADS_SEM        "Use pthread semaphores" ON "SDL_PTHREADS" OFF)
-dep_option(SDL_OSS                 "Support the OSS audio API" ${SDL_OSS_DEFAULT} "UNIX_SYS OR RISCOS" OFF)
-set_option(SDL_ALSA                "Support the ALSA audio API" ${UNIX_SYS})
+dep_option(SDL_OSS                 "Support the OSS audio API" ${SDL_OSS_DEFAULT} "UNIX_SYS OR RISCOS;SDL_AUDIO" OFF)
+dep_option(SDL_ALSA                "Support the ALSA audio API" ${UNIX_SYS} "SDL_AUDIO" OFF)
 dep_option(SDL_ALSA_SHARED         "Dynamically load ALSA audio support" ON "SDL_ALSA" OFF)
-set_option(SDL_JACK                "Support the JACK audio API" ${UNIX_SYS})
+dep_option(SDL_JACK                "Support the JACK audio API" ${UNIX_SYS} "SDL_AUDIO" OFF)
 dep_option(SDL_JACK_SHARED         "Dynamically load JACK audio support" ON "SDL_JACK" OFF)
 set_option(SDL_PIPEWIRE            "Use Pipewire audio" ${UNIX_SYS})
 dep_option(SDL_PIPEWIRE_SHARED     "Dynamically load Pipewire support" ON "SDL_PIPEWIRE" OFF)
-set_option(SDL_PULSEAUDIO          "Use PulseAudio" ${UNIX_SYS})
+dep_option(SDL_PULSEAUDIO          "Use PulseAudio" ${UNIX_SYS} "SDL_AUDIO" OFF)
 dep_option(SDL_PULSEAUDIO_SHARED   "Dynamically load PulseAudio support" ON "SDL_PULSEAUDIO" OFF)
-set_option(SDL_SNDIO               "Support the sndio audio API" ${UNIX_SYS})
+dep_option(SDL_SNDIO               "Support the sndio audio API" ${UNIX_SYS} "SDL_AUDIO" OFF)
 dep_option(SDL_SNDIO_SHARED        "Dynamically load the sndio audio API" ON "SDL_SNDIO" OFF)
-set_option(SDL_RPATH               "Use an rpath when linking SDL" ${UNIX_SYS})
+set_option(SDL_RPATH               "Use an rpath when linking SDL" ${SDL_RPATH_DEFAULT})
 set_option(SDL_CLOCK_GETTIME       "Use clock_gettime() instead of gettimeofday()" ${SDL_CLOCK_GETTIME_DEFAULT})
-set_option(SDL_X11                 "Use X11 video driver" ${UNIX_SYS})
+dep_option(SDL_X11                 "Use X11 video driver" ${UNIX_SYS} "SDL_VIDEO" OFF)
 dep_option(SDL_X11_SHARED          "Dynamically load X11 support" ON "SDL_X11" OFF)
 set(SDL_X11_OPTIONS Xcursor Xdbe XInput Xfixes Xrandr Xscrnsaver XShape)
 foreach(_SUB ${SDL_X11_OPTIONS})
   string(TOUPPER "SDL_X11_${_SUB}" _OPT)
   dep_option(${_OPT}               "Enable ${_SUB} support" ON "SDL_X11" OFF)
 endforeach()
-set_option(SDL_WAYLAND             "Use Wayland video driver" ${UNIX_SYS})
+dep_option(SDL_WAYLAND             "Use Wayland video driver" ${UNIX_SYS} "SDL_VIDEO" OFF)
 dep_option(SDL_WAYLAND_SHARED      "Dynamically load Wayland support" ON "SDL_WAYLAND" OFF)
 dep_option(SDL_WAYLAND_LIBDECOR    "Use client-side window decorations on Wayland" ON "SDL_WAYLAND" OFF)
 dep_option(SDL_WAYLAND_LIBDECOR_SHARED     "Dynamically load libdecor support" ON "SDL_WAYLAND_LIBDECOR;SDL_WAYLAND_SHARED" OFF)
-dep_option(SDL_RPI                 "Use Raspberry Pi video driver" ON "UNIX_SYS;SDL_CPU_ARM32 OR SDL_CPU_ARM64" OFF)
-dep_option(SDL_ROCKCHIP            "Use ROCKCHIP Hardware Acceleration video driver" ON "UNIX_SYS;SDL_CPU_ARM32 OR SDL_CPU_ARM64" OFF)
-set_option(SDL_COCOA               "Use Cocoa video driver" ${APPLE})
-set_option(SDL_DIRECTX             "Use DirectX for Windows audio/video" ${WINDOWS})
-set_option(SDL_XINPUT              "Use Xinput for Windows" ${WINDOWS})
-set_option(SDL_WASAPI              "Use the Windows WASAPI audio driver" ${WINDOWS})
-set_option(SDL_RENDER_D3D          "Enable the Direct3D render driver" ${WINDOWS})
-set_option(SDL_RENDER_METAL        "Enable the Metal render driver" ${APPLE})
+dep_option(SDL_RPI                 "Use Raspberry Pi video driver" ON "SDL_VIDEO;UNIX_SYS;SDL_CPU_ARM32 OR SDL_CPU_ARM64" OFF)
+dep_option(SDL_ROCKCHIP            "Use ROCKCHIP Hardware Acceleration video driver" ON "SDL_VIDEO;UNIX_SYS;SDL_CPU_ARM32 OR SDL_CPU_ARM64" OFF)
+dep_option(SDL_COCOA               "Use Cocoa video driver" ON "APPLE" OFF)
+dep_option(SDL_DIRECTX             "Use DirectX for Windows audio/video" ON "SDL_AUDIO OR SDL_VIDEO;WINDOWS" OFF)
+dep_option(SDL_XINPUT              "Use Xinput for Windows" ON "WINDOWS" OFF)
+dep_option(SDL_WASAPI              "Use the Windows WASAPI audio driver" ON "WINDOWS;SDL_AUDIO" OFF)
+dep_option(SDL_RENDER_D3D          "Enable the Direct3D render driver" ON "SDL_RENDER" OFF)
+dep_option(SDL_RENDER_METAL        "Enable the Metal render driver" ON "SDL_RENDER;${APPLE}" OFF)
 dep_option(SDL_VIVANTE             "Use Vivante EGL video driver" ON "${UNIX_SYS};SDL_CPU_ARM32" OFF)
-dep_option(SDL_VULKAN              "Enable Vulkan support" ON "ANDROID OR APPLE OR LINUX OR WINDOWS" OFF)
-set_option(SDL_METAL               "Enable Metal support" ${APPLE})
-set_option(SDL_KMSDRM              "Use KMS DRM video driver" ${UNIX_SYS})
+dep_option(SDL_VULKAN              "Enable Vulkan support" ON "SDL_VIDEO;ANDROID OR APPLE OR LINUX OR WINDOWS" OFF)
+dep_option(SDL_RENDER_VULKAN       "Enable the Vulkan render driver" ON "SDL_RENDER;SDL_VULKAN;ANDROID OR APPLE OR LINUX OR WINDOWS" OFF)
+dep_option(SDL_METAL               "Enable Metal support" ON "APPLE" OFF)
+dep_option(SDL_KMSDRM              "Use KMS DRM video driver" ${UNIX_SYS} "SDL_VIDEO" OFF)
 dep_option(SDL_KMSDRM_SHARED       "Dynamically load KMS DRM support" ON "SDL_KMSDRM" OFF)
 set_option(SDL_OFFSCREEN           "Use offscreen video driver" ON)
-dep_option(SDL_VIDEO_CAPTURE       "Enable video capturing" ON SDL_VIDEO OFF)
+dep_option(SDL_DUMMYCAMERA         "Support the dummy camera driver" ON SDL_CAMERA OFF)
 option_string(SDL_BACKGROUNDING_SIGNAL "number to use for magic backgrounding signal or 'OFF'" OFF)
 option_string(SDL_FOREGROUNDING_SIGNAL "number to use for magic foregrounding signal or 'OFF'" OFF)
 dep_option(SDL_HIDAPI              "Enable the HIDAPI subsystem" ON "NOT VISIONOS" OFF)
@@ -387,14 +402,22 @@ if(SDL_SHARED)
   add_library(SDL3-shared SHARED)
   add_library(SDL3::SDL3-shared ALIAS SDL3-shared)
   SDL_AddCommonCompilerFlags(SDL3-shared)
-  target_compile_features(SDL3-shared PRIVATE c_std_99)
+  if ("c_std_99" IN_LIST CMAKE_C_COMPILE_FEATURES)
+    target_compile_features(SDL3-shared PRIVATE c_std_99)
+  else()
+    message(WARNING "target_compile_features does not know c_std_99 for C compiler")
+  endif()
 endif()
 
 if(SDL_STATIC)
   add_library(SDL3-static STATIC)
   add_library(SDL3::SDL3-static ALIAS SDL3-static)
   SDL_AddCommonCompilerFlags(SDL3-static)
-  target_compile_features(SDL3-static PRIVATE c_std_99)
+  if ("c_std_99" IN_LIST CMAKE_C_COMPILE_FEATURES)
+    target_compile_features(SDL3-static PRIVATE c_std_99)
+  else()
+    message(WARNING "target_compile_features does not know c_std_99 for C compiler")
+  endif()
 endif()
 
 if(SDL_TEST_LIBRARY)
@@ -469,6 +492,7 @@ sdl_glob_sources(
   "${SDL3_SOURCE_DIR}/src/*.c"
   "${SDL3_SOURCE_DIR}/src/atomic/*.c"
   "${SDL3_SOURCE_DIR}/src/audio/*.c"
+  "${SDL3_SOURCE_DIR}/src/camera/*.c"
   "${SDL3_SOURCE_DIR}/src/core/*.c"
   "${SDL3_SOURCE_DIR}/src/cpuinfo/*.c"
   "${SDL3_SOURCE_DIR}/src/dynapi/*.c"
@@ -581,7 +605,6 @@ if(USE_GCC OR USE_CLANG OR USE_INTELCC OR USE_QCC)
   cmake_pop_check_state()
 
   if(APPLE)
-    # FIXME: don't use deprecated declarations
     check_c_compiler_flag(-Wno-error=deprecated-declarations COMPILER_SUPPORTS_WNO_ERROR_DEPRECATED_DECLARATIONS)
     if(COMPILER_SUPPORTS_WNO_ERROR_DEPRECATED_DECLARATIONS)
       sdl_compile_options(PRIVATE "-Wno-error=deprecated-declarations")
@@ -1050,7 +1073,7 @@ if(SDL_LIBC)
 
   set(symbols_to_check
     abs acos acosf asin asinf atan atan2 atan2f atanf atof atoi
-    bcopy bsearch
+    bcopy
     calloc ceil ceilf copysign copysignf cos cosf
     _Exit exp expf
     fabs fabsf floor floorf fmod fmodf fopen64 free fseeko fseeko64
@@ -1059,7 +1082,6 @@ if(SDL_LIBC)
     log log10 log10f logf lround lroundf _ltoa
     malloc memcmp memcpy memmove memset modf modff
     pow powf putenv
-    qsort
     realloc rindex round roundf
     scalbn scalbnf setenv sin sinf sqr sqrt sqrtf sscanf strchr
     strcmp strlcat strlcpy strlen strncmp strnlen
@@ -1187,6 +1209,23 @@ if(SDL_AUDIO)
   endif()
 endif()
 
+if(SDL_CAMERA)
+  # CheckDummyCamera/CheckDiskCamera - valid for all platforms
+  if(SDL_DUMMYCAMERA)
+    set(SDL_CAMERA_DRIVER_DUMMY 1)
+    sdl_glob_sources("${SDL3_SOURCE_DIR}/src/camera/dummy/*.c")
+    set(HAVE_DUMMYCAMERA TRUE)
+    set(HAVE_SDL_CAMERA TRUE)
+  endif()
+  # !!! FIXME: for later.
+  #if(SDL_DISKCAMERA)
+  #  set(SDL_CAMERA_DRIVER_DISK 1)
+  #  sdl_glob_sources("${SDL3_SOURCE_DIR}/src/camera/disk/*.c")
+  #  set(HAVE_DISKCAMERA TRUE)
+  #  set(HAVE_SDL_CAMERA TRUE)
+  #endif()
+endif()
+
 if(UNIX OR APPLE)
   # Relevant for Unix/Darwin only
   set(DYNAPI_NEEDS_DLOPEN 1)
@@ -1304,6 +1343,12 @@ if(ANDROID)
     sdl_glob_sources("${SDL3_SOURCE_DIR}/src/sensor/android/*.c")
   endif()
 
+  if(SDL_CAMERA)
+    set(SDL_CAMERA_DRIVER_ANDROID 1)
+    set(HAVE_CAMERA TRUE)
+    sdl_glob_sources("${SDL3_SOURCE_DIR}/src/camera/android/*.c")
+  endif()
+
   if(SDL_VIDEO)
     set(SDL_VIDEO_DRIVER_ANDROID 1)
     sdl_glob_sources("${SDL3_SOURCE_DIR}/src/video/android/*.c")
@@ -1414,6 +1459,12 @@ elseif(EMSCRIPTEN)
   sdl_glob_sources("${SDL3_SOURCE_DIR}/src/filesystem/emscripten/*.c")
   set(HAVE_SDL_FILESYSTEM TRUE)
 
+  if(SDL_CAMERA)
+    set(SDL_CAMERA_DRIVER_EMSCRIPTEN 1)
+    set(HAVE_CAMERA TRUE)
+    sdl_glob_sources("${SDL3_SOURCE_DIR}/src/camera/emscripten/*.c")
+  endif()
+
   if(SDL_JOYSTICK)
     set(SDL_JOYSTICK_EMSCRIPTEN 1)
     sdl_glob_sources("${SDL3_SOURCE_DIR}/src/joystick/emscripten/*.c")
@@ -1513,6 +1564,9 @@ elseif(UNIX AND NOT APPLE AND NOT RISCOS AND NOT HAIKU)
               ioctl(0, KDGKBENT, &kbe);
               return 0;
           }" HAVE_INPUT_KD)
+      check_c_source_compiles("
+          #include <linux/videodev2.h>
+          int main(int argc, char** argv) { return 0; }" HAVE_LINUX_VIDEODEV2_H)
     elseif(FREEBSD)
       check_c_source_compiles("
           #include <sys/kbio.h>
@@ -1534,6 +1588,12 @@ elseif(UNIX AND NOT APPLE AND NOT RISCOS AND NOT HAIKU)
               ioctl(0, WSKBDIO_GETMAP, &data);
               return 0;
           }" HAVE_INPUT_WSCONS)
+    endif()
+
+    if(SDL_CAMERA AND HAVE_LINUX_VIDEODEV2_H)
+      set(SDL_CAMERA_DRIVER_V4L2 1)
+      set(HAVE_CAMERA TRUE)
+      sdl_glob_sources("${SDL3_SOURCE_DIR}/src/camera/v4l2/*.c")
     endif()
 
     if(HAVE_LINUX_INPUT_H)
@@ -1723,10 +1783,11 @@ elseif(UNIX AND NOT APPLE AND NOT RISCOS AND NOT HAIKU)
       else()
         set(SDL_RLD_FLAGS "-Wl,-rpath,\${libdir}")
       endif()
+      set(HAVE_RPATH TRUE)
     elseif(SOLARIS)
       set(SDL_RLD_FLAGS "-R\${libdir}")
+      set(HAVE_RPATH TRUE)
     endif()
-    set(HAVE_RPATH TRUE)
   endif()
 
   if(QNX)
@@ -1968,6 +2029,10 @@ elseif(WINDOWS)
     if(SDL_VULKAN)
       set(SDL_VIDEO_VULKAN 1)
       set(HAVE_VULKAN TRUE)
+      if(SDL_RENDER_VULKAN)
+        set(SDL_VIDEO_RENDER_VULKAN 1)
+        set(HAVE_RENDER_VULKAN TRUE)
+      endif()
     endif()
   endif()
 
@@ -2005,6 +2070,14 @@ elseif(WINDOWS)
     endif()
   endif()
 
+  if(SDL_CAMERA)
+    if(NOT WINDOWS_STORE)
+      set(HAVE_CAMERA TRUE)
+      set(SDL_CAMERA_DRIVER_MEDIAFOUNDATION 1)
+      sdl_glob_sources("${SDL3_SOURCE_DIR}/src/camera/mediafoundation/*.c")
+    endif()
+  endif()
+
   sdl_glob_sources(SHARED "${SDL3_SOURCE_DIR}/src/core/windows/*.rc")
   if(MINGW OR CYGWIN)
     sdl_pc_link_options("-mwindows")
@@ -2034,8 +2107,12 @@ elseif(APPLE)
 
   sdl_glob_sources("${SDL3_SOURCE_DIR}/src/file/cocoa/*.m")
 
-  if(IOS OR TVOS OR MACOSX OR DARWIN)
-    sdl_sources("${SDL3_SOURCE_DIR}/src/video/SDL_video_capture_apple.m")
+  if(SDL_CAMERA)
+    if(IOS OR TVOS OR MACOSX OR DARWIN)
+      set(SDL_CAMERA_DRIVER_COREMEDIA 1)
+      set(HAVE_CAMERA TRUE)
+      sdl_glob_sources("${SDL3_SOURCE_DIR}/src/camera/coremedia/*.m")
+    endif()
   endif()
 
   if(IOS OR TVOS OR VISIONOS)
@@ -2197,6 +2274,10 @@ elseif(APPLE)
         if(SDL_VULKAN)
           set(SDL_VIDEO_VULKAN 1)
           set(HAVE_VULKAN TRUE)
+          if(SDL_RENDER_VULKAN)
+            set(SDL_VIDEO_RENDER_VULKAN 1)
+            set(HAVE_RENDER_VULKAN TRUE)
+          endif()
         endif()
         if(SDL_METAL)
           set(SDL_VIDEO_METAL 1)
@@ -2286,6 +2367,11 @@ elseif(APPLE)
   endif()
 
   CheckPTHREAD()
+
+  if(SDL_RPATH AND SDL_SHARED)
+    set(SDL_RLD_FLAGS "-Wl,-rpath,\${libdir}")
+    set(HAVE_RPATH TRUE)
+  endif()
 
 elseif(HAIKU)
   if(SDL_AUDIO)
@@ -2735,6 +2821,10 @@ endif()
 if(NOT HAVE_SDL_MISC)
   set(SDL_MISC_DUMMY 1)
   sdl_glob_sources("${SDL3_SOURCE_DIR}/src/misc/dummy/*.c")
+endif()
+if(NOT HAVE_CAMERA)
+  set(SDL_CAMERA_DRIVER_DUMMY 1)
+  sdl_glob_sources("${SDL3_SOURCE_DIR}/src/camera/dummy/*.c")
 endif()
 
 # We always need to have threads and timers around
