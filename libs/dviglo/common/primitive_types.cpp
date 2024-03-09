@@ -21,9 +21,10 @@ static_assert(sizeof(long) == 4);
 static_assert(sizeof(wchar_t) == 2);
 static_assert(is_same_v<int64_t, long long>);
 #else // GCC или Clang
-static_assert(sizeof(long) == sizeof(void*));
+static_assert(sizeof(long) == sizeof(void*)); // 4 или 8
 static_assert(sizeof(wchar_t) == 4);
-static_assert(is_same_v<int64_t, long>);
+static_assert((sizeof(void*) == 4 && is_same_v<int64_t, long long>)
+           || (sizeof(void*) == 8 && is_same_v<int64_t, long>));
 #endif
 
 // Тип 0x7FFFFFFFFFFFFFFF зависит от компилятора
