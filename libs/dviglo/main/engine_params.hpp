@@ -5,7 +5,7 @@
 
 #include "../std_utils/str.hpp"
 
-#include <glm/glm_wrapped.hpp>
+#include <glm/glm.hpp>
 
 
 namespace dviglo

@@ -6,7 +6,7 @@
 #include "../std_utils/str.hpp"
 
 #include <glad/gl.h>
-#include <glm/glm_wrapped.hpp>
+#include <glm/glm.hpp>
 
 #include <utility> // std::exchange()
 

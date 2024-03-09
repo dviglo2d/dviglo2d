@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include <glm/glm_wrapped.hpp>
+#include <glm/glm.hpp>
 #include <SDL3/SDL.h>
 
 
