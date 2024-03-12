@@ -403,6 +403,7 @@ BigInt BigInt::operator-(const BigInt& rhs) const
     return ret;
 }
 
+// Простое умножение столбиком
 BigInt BigInt::operator*(const BigInt& rhs) const
 {
     BigInt ret;
