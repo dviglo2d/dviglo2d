@@ -122,9 +122,6 @@ pair<BigInt, BigInt> div_mod(BigInt numerator, BigInt denominator)
     {
         ++quotient;
         remainder -= abs_denom;
-
-        StrUtf8 strQ = quotient.to_string();
-        StrUtf8 strRem = remainder.to_string();
     }
 
     // https://en.cppreference.com/w/cpp/language/operator_arithmetic
