@@ -33,7 +33,7 @@ static bool first_is_less(const vector<BigInt::Digit>& first, const vector<BigIn
             return first[i] < second[i];
     }
 
-    return false; // first == b
+    return false; // first == second
 }
 
 // Складывает модули столбиком
