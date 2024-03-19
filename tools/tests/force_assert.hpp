@@ -11,8 +11,6 @@
 // и не определён в конфигурации Debug.
 // Макрос NDEBUG отключает assert(): https://en.cppreference.com/w/cpp/error/assert
 // Нам же нужно, чтобы assert() был доступен даже в релизных конфигурациях
-#ifdef NDEBUG
-    #undef NDEBUG
-#endif
+#undef NDEBUG
 
 #include <cassert>
