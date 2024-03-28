@@ -14,4 +14,4 @@ set(CMAKE_FOLDER инструменты)
 # Указываем папку для следующих скомпилированных экзешников
 dv_set_bin_dir(${CMAKE_BINARY_DIR}/result/tools)
 
-add_subdirectory(tests)
+add_subdirectory(tester)

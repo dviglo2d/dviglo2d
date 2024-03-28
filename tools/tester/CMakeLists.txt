@@ -2,7 +2,7 @@
 # License: MIT
 
 # Название таргета
-set(target_name tests)
+set(target_name tester)
 
 # Создаём список файлов
 file(GLOB_RECURSE source_files *.cpp *.hpp)
