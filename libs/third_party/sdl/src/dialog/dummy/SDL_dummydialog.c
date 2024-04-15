@@ -18,13 +18,22 @@
      misrepresented as being the original software.
   3. This notice may not be removed or altered from any source distribution.
 */
+#include "SDL_internal.h"
 
-#ifdef SDL_PLATFORM_APPLE
+void SDL_ShowOpenFileDialog(SDL_DialogFileCallback callback, void* userdata, SDL_Window* window, const SDL_DialogFileFilter *filters, const char* default_location, SDL_bool allow_many)
+{
+  SDL_Unsupported();
+  callback(userdata, NULL, -1);
+}
 
-#include <stdio.h>
+void SDL_ShowSaveFileDialog(SDL_DialogFileCallback callback, void* userdata, SDL_Window* window, const SDL_DialogFileFilter *filters, const char* default_location)
+{
+  SDL_Unsupported();
+  callback(userdata, NULL, -1);
+}
 
-#ifndef SDL_rwopsbundlesupport_h
-#define SDL_rwopsbundlesupport_h
-FILE *SDL_OpenFPFromBundleOrFallback(const char *file, const char *mode);
-#endif
-#endif
+void SDL_ShowOpenFolderDialog(SDL_DialogFileCallback callback, void* userdata, SDL_Window* window, const char* default_location, SDL_bool allow_many)
+{
+  SDL_Unsupported();
+  callback(userdata, NULL, -1);
+}

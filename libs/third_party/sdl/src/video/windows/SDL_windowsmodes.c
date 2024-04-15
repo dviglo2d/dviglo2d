@@ -407,7 +407,9 @@ static SDL_bool WIN_GetMonitorPathInfo(HMONITOR hMonitor, DISPLAYCONFIG_PATH_INF
 
     do {
         if (GetDisplayConfigBufferSizes(QDC_ONLY_ACTIVE_PATHS, &num_path_array_elements, &num_mode_info_array_elements) != ERROR_SUCCESS) {
-            return -1;
+            SDL_free(path_infos);
+            SDL_free(mode_infos);
+            return SDL_FALSE;
         }
 
         new_path_infos = (DISPLAYCONFIG_PATH_INFO *)SDL_realloc(path_infos, num_path_array_elements * sizeof(*path_infos));
@@ -750,7 +752,7 @@ static void WIN_LogMonitor(SDL_VideoDevice *_this, HMONITOR mon)
 int WIN_SetDisplayMode(SDL_VideoDevice *_this, SDL_VideoDisplay *display, SDL_DisplayMode *mode)
 {
     SDL_DisplayData *displaydata = display->driverdata;
-    SDL_DisplayModeData *data = mode->driverdata;
+    SDL_DisplayModeData *data = (SDL_DisplayModeData *)mode->driverdata;
     LONG status;
 
 #ifdef DEBUG_MODES

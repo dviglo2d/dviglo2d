@@ -20,9 +20,10 @@
 */
 #include "SDL_internal.h"
 
-#ifndef SDL_rwopsromfs_h_
-#define SDL_rwopsromfs_h_
+#ifndef SDL_windowsrawinput_h_
+#define SDL_windowsrawinput_h_
 
-FILE *N3DS_FileOpen(const char *file, const char *mode);
+extern int WIN_SetRawMouseEnabled(SDL_VideoDevice *_this, SDL_bool enabled);
+extern int WIN_SetRawKeyboardEnabled(SDL_VideoDevice *_this, SDL_bool enabled);
 
-#endif /* SDL_rwopsromfs_h_ */
+#endif /* SDL_windowsrawinput_h_ */

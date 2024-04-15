@@ -281,7 +281,7 @@ static void APIENTRY GL_HandleDebugMessage(GLenum source, GLenum type, GLuint id
     if (type == GL_DEBUG_TYPE_ERROR_ARB) {
         /* Record this error */
         int errors = data->errors + 1;
-        char **error_messages = SDL_realloc(data->error_messages, errors * sizeof(*data->error_messages));
+        char **error_messages = (char **)SDL_realloc(data->error_messages, errors * sizeof(*data->error_messages));
         if (error_messages) {
             data->errors = errors;
             data->error_messages = error_messages;
@@ -310,7 +310,7 @@ static GL_FBOList *GL_GetFBO(GL_RenderData *data, Uint32 w, Uint32 h)
     }
 
     if (!result) {
-        result = SDL_malloc(sizeof(GL_FBOList));
+        result = (GL_FBOList *)SDL_malloc(sizeof(GL_FBOList));
         if (result) {
             result->w = w;
             result->h = h;
@@ -1451,7 +1451,7 @@ static int GL_RunCommandQueue(SDL_Renderer *renderer, SDL_RenderCommand *cmd, vo
 static SDL_Surface *GL_RenderReadPixels(SDL_Renderer *renderer, const SDL_Rect *rect)
 {
     GL_RenderData *data = (GL_RenderData *)renderer->driverdata;
-    Uint32 format = renderer->target ? renderer->target->format : SDL_PIXELFORMAT_ARGB8888;
+    SDL_PixelFormatEnum format = renderer->target ? renderer->target->format : SDL_PIXELFORMAT_ARGB8888;
     GLint internalFormat;
     GLenum targetFormat, type;
     int w, h;
@@ -1612,32 +1612,6 @@ static int GL_SetVSync(SDL_Renderer *renderer, const int vsync)
     return retval;
 }
 
-static SDL_bool GL_IsProbablyAccelerated(const GL_RenderData *data)
-{
-    /*const char *vendor = (const char *) data->glGetString(GL_VENDOR);*/
-    const char *renderer = (const char *)data->glGetString(GL_RENDERER);
-
-#if defined(SDL_PLATFORM_WIN32) || defined(SDL_PLATFORM_WINGDK)
-    if (SDL_strcmp(renderer, "GDI Generic") == 0) {
-        return SDL_FALSE; /* Microsoft's fallback software renderer. Fix your system! */
-    }
-#endif
-
-#ifdef SDL_PLATFORM_APPLE
-    if (SDL_strcmp(renderer, "Apple Software Renderer") == 0) {
-        return SDL_FALSE; /* (a probably very old) Apple software-based OpenGL. */
-    }
-#endif
-
-    if (SDL_strcmp(renderer, "Software Rasterizer") == 0) {
-        return SDL_FALSE; /* (a probably very old) Software Mesa, or some other generic thing. */
-    }
-
-    /* !!! FIXME: swrast? llvmpipe? softpipe? */
-
-    return SDL_TRUE;
-}
-
 static SDL_Renderer *GL_CreateRenderer(SDL_Window *window, SDL_PropertiesID create_props)
 {
     SDL_Renderer *renderer;
@@ -1737,10 +1711,6 @@ static SDL_Renderer *GL_CreateRenderer(SDL_Window *window, SDL_PropertiesID crea
         SDL_free(renderer);
         SDL_free(data);
         goto error;
-    }
-
-    if (GL_IsProbablyAccelerated(data)) {
-        renderer->info.flags |= SDL_RENDERER_ACCELERATED;
     }
 
 #ifdef SDL_PLATFORM_MACOS
@@ -1919,7 +1889,7 @@ error:
 SDL_RenderDriver GL_RenderDriver = {
     GL_CreateRenderer,
     { "opengl",
-      (SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC),
+      SDL_RENDERER_PRESENTVSYNC,
       4,
       { SDL_PIXELFORMAT_ARGB8888,
         SDL_PIXELFORMAT_ABGR8888,

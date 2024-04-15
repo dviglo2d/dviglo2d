@@ -62,21 +62,22 @@ extern "C" {
 #define MIX_VERSION(X)      SDL_MIXER_VERSION(X)
 
 #if SDL_MIXER_MAJOR_VERSION < 3 && SDL_MAJOR_VERSION < 3
+
 /**
- *  This is the version number macro for the current SDL_mixer version.
+ * This is the version number macro for the current SDL_mixer version.
  *
- *  In versions higher than 2.9.0, the minor version overflows into
- *  the thousands digit: for example, 2.23.0 is encoded as 4300.
- *  This macro will not be available in SDL 3.x or SDL_mixer 3.x.
+ * In versions higher than 2.9.0, the minor version overflows into the
+ * thousands digit: for example, 2.23.0 is encoded as 4300. This macro will
+ * not be available in SDL 3.x or SDL_mixer 3.x.
  *
- *  Deprecated, use SDL_MIXER_VERSION_ATLEAST or SDL_MIXER_VERSION instead.
+ * Deprecated, use SDL_MIXER_VERSION_ATLEAST or SDL_MIXER_VERSION instead.
  */
 #define SDL_MIXER_COMPILEDVERSION \
     SDL_VERSIONNUM(SDL_MIXER_MAJOR_VERSION, SDL_MIXER_MINOR_VERSION, SDL_MIXER_PATCHLEVEL)
 #endif /* SDL_MIXER_MAJOR_VERSION < 3 && SDL_MAJOR_VERSION < 3 */
 
 /**
- *  This macro will evaluate to true if compiled with SDL_mixer at least X.Y.Z.
+ * This macro will evaluate to true if compiled with SDL_mixer at least X.Y.Z.
  */
 #define SDL_MIXER_VERSION_ATLEAST(X, Y, Z) \
     ((SDL_MIXER_MAJOR_VERSION >= X) && \
@@ -101,7 +102,7 @@ extern DECLSPEC const SDL_Version * SDLCALL Mix_Linked_Version(void);
 /**
  * Initialization flags
  */
-typedef enum
+typedef enum MIX_InitFlags
 {
     MIX_INIT_FLAC   = 0x00000001,
     MIX_INIT_MOD    = 0x00000002,
@@ -233,7 +234,7 @@ typedef struct Mix_Chunk {
 /**
  * The different fading types supported
  */
-typedef enum {
+typedef enum Mix_Fading {
     MIX_NO_FADING,
     MIX_FADING_OUT,
     MIX_FADING_IN
@@ -242,7 +243,7 @@ typedef enum {
 /**
  * These are types of music files (not libraries used to load them)
  */
-typedef enum {
+typedef enum Mix_MusicType {
     MUS_NONE,
     MUS_CMD,
     MUS_WAV,
@@ -400,20 +401,20 @@ extern DECLSPEC int SDLCALL Mix_AllocateChannels(int numchans);
  * fly. Also, crucially, there are as many channels for chunks as the app can
  * allocate, but SDL_mixer only offers a single "music" channel.
  *
- * If `freesrc` is SDL_TRUE, the RWops will be closed before returning,
+ * If `closeio` is SDL_TRUE, the IOStream will be closed before returning,
  * whether this function succeeds or not. SDL_mixer reads everything it needs
- * from the RWops during this call in any case.
+ * from the IOStream during this call in any case.
  *
  * There is a separate function (a macro, before SDL_mixer 3.0.0) to read
- * files from disk without having to deal with SDL_RWops:
+ * files from disk without having to deal with SDL_IOStream:
  * `Mix_LoadWAV("filename.wav")` will call this function and manage those
  * details for you.
  *
  * When done with a chunk, the app should dispose of it with a call to
  * Mix_FreeChunk().
  *
- * \param src an SDL_RWops that data will be read from.
- * \param freesrc SDL_TRUE to close/free the SDL_RWops before returning,
+ * \param src an SDL_IOStream that data will be read from.
+ * \param closeio SDL_TRUE to close the SDL_IOStream before returning,
  *                SDL_FALSE to leave it open.
  * \returns a new chunk, or NULL on error.
  *
@@ -422,7 +423,7 @@ extern DECLSPEC int SDLCALL Mix_AllocateChannels(int numchans);
  * \sa Mix_LoadWAV
  * \sa Mix_FreeChunk
  */
-extern DECLSPEC Mix_Chunk * SDLCALL Mix_LoadWAV_RW(SDL_RWops *src, SDL_bool freesrc);
+extern DECLSPEC Mix_Chunk * SDLCALL Mix_LoadWAV_IO(SDL_IOStream *src, SDL_bool closeio);
 
 /**
  * Load a supported audio format into a chunk.
@@ -442,16 +443,17 @@ extern DECLSPEC Mix_Chunk * SDLCALL Mix_LoadWAV_RW(SDL_RWops *src, SDL_bool free
  * fly. Also, crucially, there are as many channels for chunks as the app can
  * allocate, but SDL_mixer only offers a single "music" channel.
  *
- * If you would rather use the abstract SDL_RWops interface to load data from
- * somewhere other than the filesystem, you can use Mix_LoadWAV_RW() instead.
+ * If you would rather use the abstract SDL_IOStream interface to load data
+ * from somewhere other than the filesystem, you can use Mix_LoadWAV_IO()
+ * instead.
  *
  * When done with a chunk, the app should dispose of it with a call to
  * Mix_FreeChunk().
  *
  * Note that before SDL_mixer 3.0.0, this function was a macro that called
- * Mix_LoadWAV_RW(), creating a RWops and setting `freesrc` to SDL_TRUE. This
- * macro has since been promoted to a proper API function. Older binaries
- * linked against a newer SDL_mixer will still call Mix_LoadWAV_RW directly,
+ * Mix_LoadWAV_IO(), creating a IOStream and setting `closeio` to SDL_TRUE.
+ * This macro has since been promoted to a proper API function. Older binaries
+ * linked against a newer SDL_mixer will still call Mix_LoadWAV_IO directly,
  * as they are using the macro, which was available since the dawn of time.
  *
  * \param file the filesystem path to load data from.
@@ -459,7 +461,7 @@ extern DECLSPEC Mix_Chunk * SDLCALL Mix_LoadWAV_RW(SDL_RWops *src, SDL_bool free
  *
  * \since This function is available since SDL_mixer 3.0.0
  *
- * \sa Mix_LoadWAV_RW
+ * \sa Mix_LoadWAV_IO
  * \sa Mix_FreeChunk
  */
 extern DECLSPEC Mix_Chunk * SDLCALL Mix_LoadWAV(const char *file);
@@ -513,23 +515,23 @@ extern DECLSPEC Mix_Music * SDLCALL Mix_LoadMUS(const char *file);
  * fly. Also, crucially, there are as many channels for chunks as the app can
  * allocate, but SDL_mixer only offers a single "music" channel.
  *
- * If `freesrc` is SDL_TRUE, the RWops will be closed before returning,
+ * If `closeio` is SDL_TRUE, the IOStream will be closed before returning,
  * whether this function succeeds or not. SDL_mixer reads everything it needs
- * from the RWops during this call in any case.
+ * from the IOStream during this call in any case.
  *
  * As a convenience, there is a function to read files from disk without
- * having to deal with SDL_RWops: `Mix_LoadMUS("filename.mp3")` will manage
+ * having to deal with SDL_IOStream: `Mix_LoadMUS("filename.mp3")` will manage
  * those details for you.
  *
  * This function attempts to guess the file format from incoming data. If the
  * caller knows the format, or wants to force it, it should use
- * Mix_LoadMUSType_RW() instead.
+ * Mix_LoadMUSType_IO() instead.
  *
  * When done with this music, the app should dispose of it with a call to
  * Mix_FreeMusic().
  *
- * \param src an SDL_RWops that data will be read from.
- * \param freesrc SDL_TRUE to close/free the SDL_RWops before returning,
+ * \param src an SDL_IOStream that data will be read from.
+ * \param closeio SDL_TRUE to close the SDL_IOStream before returning,
  *                SDL_FALSE to leave it open.
  * \returns a new music object, or NULL on error.
  *
@@ -537,7 +539,7 @@ extern DECLSPEC Mix_Music * SDLCALL Mix_LoadMUS(const char *file);
  *
  * \sa Mix_FreeMusic
  */
-extern DECLSPEC Mix_Music * SDLCALL Mix_LoadMUS_RW(SDL_RWops *src, SDL_bool freesrc);
+extern DECLSPEC Mix_Music * SDLCALL Mix_LoadMUS_IO(SDL_IOStream *src, SDL_bool closeio);
 
 /**
  * Load an audio format into a music object, assuming a specific format.
@@ -573,20 +575,20 @@ extern DECLSPEC Mix_Music * SDLCALL Mix_LoadMUS_RW(SDL_RWops *src, SDL_bool free
  * - `MUS_OPUS` (Opus files)
  * - `MUS_WAVPACK` (WavPack files)
  *
- * If `freesrc` is SDL_TRUE, the RWops will be closed before returning,
+ * If `closeio` is SDL_TRUE, the IOStream will be closed before returning,
  * whether this function succeeds or not. SDL_mixer reads everything it needs
- * from the RWops during this call in any case.
+ * from the IOStream during this call in any case.
  *
  * As a convenience, there is a function to read files from disk without
- * having to deal with SDL_RWops: `Mix_LoadMUS("filename.mp3")` will manage
+ * having to deal with SDL_IOStream: `Mix_LoadMUS("filename.mp3")` will manage
  * those details for you (but not let you specify the music type explicitly)..
  *
  * When done with this music, the app should dispose of it with a call to
  * Mix_FreeMusic().
  *
- * \param src an SDL_RWops that data will be read from.
+ * \param src an SDL_IOStream that data will be read from.
  * \param type the type of audio data provided by `src`.
- * \param freesrc SDL_TRUE to close/free the SDL_RWops before returning,
+ * \param closeio SDL_TRUE to close the SDL_IOStream before returning,
  *                SDL_FALSE to leave it open.
  * \returns a new music object, or NULL on error.
  *
@@ -594,12 +596,12 @@ extern DECLSPEC Mix_Music * SDLCALL Mix_LoadMUS_RW(SDL_RWops *src, SDL_bool free
  *
  * \sa Mix_FreeMusic
  */
-extern DECLSPEC Mix_Music * SDLCALL Mix_LoadMUSType_RW(SDL_RWops *src, Mix_MusicType type, SDL_bool freesrc);
+extern DECLSPEC Mix_Music * SDLCALL Mix_LoadMUSType_IO(SDL_IOStream *src, Mix_MusicType type, SDL_bool closeio);
 
 /**
  * Load a WAV file from memory as quickly as possible.
  *
- * Unlike Mix_LoadWAV_RW, this function has several requirements, and unless
+ * Unlike Mix_LoadWAV_IO, this function has several requirements, and unless
  * you control all your audio data and know what you're doing, you should
  * consider this function unsafe and not use it.
  *
@@ -616,7 +618,7 @@ extern DECLSPEC Mix_Music * SDLCALL Mix_LoadMUSType_RW(SDL_RWops *src, Mix_Music
  *
  * This function will do NO error checking! Be extremely careful here!
  *
- * (Seriously, use Mix_LoadWAV_RW instead.)
+ * (Seriously, use Mix_LoadWAV_IO instead.)
  *
  * If this function is successful, the provided memory buffer must remain
  * available until Mix_FreeChunk() is called on the returned chunk.
@@ -626,7 +628,7 @@ extern DECLSPEC Mix_Music * SDLCALL Mix_LoadMUSType_RW(SDL_RWops *src, Mix_Music
  *
  * \since This function is available since SDL_mixer 3.0.0.
  *
- * \sa Mix_LoadWAV_RW
+ * \sa Mix_LoadWAV_IO
  * \sa Mix_FreeChunk
  */
 extern DECLSPEC Mix_Chunk * SDLCALL Mix_QuickLoad_WAV(Uint8 *mem);
@@ -666,7 +668,7 @@ extern DECLSPEC Mix_Chunk * SDLCALL Mix_QuickLoad_RAW(Uint8 *mem, Uint32 len);
  * \since This function is available since SDL_mixer 3.0.0.
  *
  * \sa Mix_LoadWAV
- * \sa Mix_LoadWAV_RW
+ * \sa Mix_LoadWAV_IO
  * \sa Mix_QuickLoad_WAV
  * \sa Mix_QuickLoad_RAW
  */
@@ -686,8 +688,8 @@ extern DECLSPEC void SDLCALL Mix_FreeChunk(Mix_Chunk *chunk);
  * \since This function is available since SDL_mixer 3.0.0.
  *
  * \sa Mix_LoadMUS
- * \sa Mix_LoadMUS_RW
- * \sa Mix_LoadMUSType_RW
+ * \sa Mix_LoadMUS_IO
+ * \sa Mix_LoadMUSType_IO
  */
 extern DECLSPEC void SDLCALL Mix_FreeMusic(Mix_Music *music);
 
@@ -852,7 +854,7 @@ extern DECLSPEC Mix_MusicType SDLCALL Mix_GetMusicType(const Mix_Music *music);
  * you'd rather have the actual metadata or nothing, use
  * Mix_GetMusicTitleTag() instead.
  *
- * Please note that if the music was loaded from an SDL_RWops instead of a
+ * Please note that if the music was loaded from an SDL_IOStream instead of a
  * filename, the filename returned will be an empty string ("").
  *
  * This function never returns NULL! If no data is available, it will return
@@ -1113,29 +1115,29 @@ extern DECLSPEC void SDLCALL Mix_ChannelFinished(void (SDLCALL *channel_finished
 /**
  * This is the format of a special effect callback:
  *
- *   myeffect(int chan, void *stream, int len, void *udata);
+ * myeffect(int chan, void *stream, int len, void *udata);
  *
- * (chan) is the channel number that your effect is affecting. (stream) is
- *  the buffer of data to work upon. (len) is the size of (stream), and
- *  (udata) is a user-defined bit of data, which you pass as the last arg of
- *  Mix_RegisterEffect(), and is passed back unmolested to your callback.
- *  Your effect changes the contents of (stream) based on whatever parameters
- *  are significant, or just leaves it be, if you prefer. You can do whatever
- *  you like to the buffer, though, and it will continue in its changed state
- *  down the mixing pipeline, through any other effect functions, then finally
- *  to be mixed with the rest of the channels and music for the final output
- *  stream.
+ * (chan) is the channel number that your effect is affecting. (stream) is the
+ * buffer of data to work upon. (len) is the size of (stream), and (udata) is
+ * a user-defined bit of data, which you pass as the last arg of
+ * Mix_RegisterEffect(), and is passed back unmolested to your callback. Your
+ * effect changes the contents of (stream) based on whatever parameters are
+ * significant, or just leaves it be, if you prefer. You can do whatever you
+ * like to the buffer, though, and it will continue in its changed state down
+ * the mixing pipeline, through any other effect functions, then finally to be
+ * mixed with the rest of the channels and music for the final output stream.
  *
  * DO NOT EVER call SDL_LockAudio() from your callback function!
  */
 typedef void (SDLCALL *Mix_EffectFunc_t)(int chan, void *stream, int len, void *udata);
 
 /**
- * This is a callback that signifies that a channel has finished all its
- *  loops and has completed playback. This gets called if the buffer
- *  plays out normally, or if you call Mix_HaltChannel(), implicitly stop
- *  a channel via Mix_AllocateChannels(), or unregister a callback while
- *  it's still playing.
+ * This is a callback that signifies that a channel has finished all its loops
+ * and has completed playback.
+ *
+ * This gets called if the buffer plays out normally, or if you call
+ * Mix_HaltChannel(), implicitly stop a channel via Mix_AllocateChannels(), or
+ * unregister a callback while it's still playing.
  *
  * DO NOT EVER call SDL_LockAudio() from your callback function!
  */
@@ -1927,7 +1929,7 @@ extern DECLSPEC int SDLCALL Mix_GetMusicVolume(Mix_Music *music);
  * this function returns the previous (in this case, still-current) value.
  *
  * Note that the master volume does not affect any playing music; it is only
- * applied when mixing chunks. Use Mix_MusicVolume() for that.\
+ * applied when mixing chunks. Use Mix_VolumeMusic() for that.\
  *
  * \param volume the new volume, between 0 and MIX_MAX_VOLUME, or -1 to query.
  * \returns the previous volume. If the specified volume is -1, this returns

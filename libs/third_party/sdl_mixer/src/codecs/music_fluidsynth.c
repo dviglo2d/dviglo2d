@@ -24,8 +24,7 @@
 
 #ifdef MUSIC_MID_FLUIDSYNTH
 
-#include <SDL3/SDL_loadso.h>
-#include <SDL3/SDL_rwops.h>
+#include <SDL3/SDL.h>
 
 #include "music_fluidsynth.h"
 
@@ -39,6 +38,7 @@ typedef struct {
 #if (FLUIDSYNTH_VERSION_MAJOR >= 2)
     void (*delete_fluid_player)(fluid_player_t*);
     void (*delete_fluid_synth)(fluid_synth_t*);
+    int (*fluid_player_seek)(fluid_player_t *, int);
 #else
     int (*delete_fluid_player)(fluid_player_t*);
     int (*delete_fluid_synth)(fluid_synth_t*);
@@ -85,6 +85,7 @@ static int FLUIDSYNTH_Load()
 #if (FLUIDSYNTH_VERSION_MAJOR >= 2)
         FUNCTION_LOADER(delete_fluid_player, void (*)(fluid_player_t*))
         FUNCTION_LOADER(delete_fluid_synth, void (*)(fluid_synth_t*))
+        FUNCTION_LOADER(fluid_player_seek, int (*)(fluid_player_t *, int))
 #else
         FUNCTION_LOADER(delete_fluid_player, int (*)(fluid_player_t*))
         FUNCTION_LOADER(delete_fluid_synth, int (*)(fluid_synth_t*))
@@ -135,17 +136,18 @@ typedef struct {
     void *buffer;
     int buffer_size;
     int volume;
+    SDL_bool is_paused;
 } FLUIDSYNTH_Music;
 
 static void FLUIDSYNTH_Delete(void *context);
 
 static int SDLCALL fluidsynth_check_soundfont(const char *path, void *data)
 {
-    SDL_RWops *rw = SDL_RWFromFile(path, "rb");
+    SDL_IOStream *io = SDL_IOFromFile(path, "rb");
 
     (void)data;
-    if (rw) {
-        SDL_RWclose(rw);
+    if (io) {
+        SDL_CloseIO(io);
         return 1;
     } else {
         Mix_SetError("Failed to access the SoundFont %s", path);
@@ -172,13 +174,13 @@ static int FLUIDSYNTH_Open(const SDL_AudioSpec *spec)
 static FLUIDSYNTH_Music *FLUIDSYNTH_LoadMusic(void *data)
 {
     SDL_AudioSpec srcspec;
-    SDL_RWops *src = (SDL_RWops *)data;
+    SDL_IOStream *src = (SDL_IOStream *)data;
     FLUIDSYNTH_Music *music;
     double samplerate; /* as set by the lib. */
     const Uint8 channels = 2;
     int src_format = SDL_AUDIO_S16;
-    void *rw_mem;
-    size_t rw_size;
+    void *io_mem;
+    size_t io_size;
     int ret;
 
     if (!(music = SDL_calloc(1, sizeof(FLUIDSYNTH_Music)))) {
@@ -222,14 +224,14 @@ static FLUIDSYNTH_Music *FLUIDSYNTH_LoadMusic(void *data)
         goto fail;
     }
 
-    rw_mem = SDL_LoadFile_RW(src, &rw_size, SDL_FALSE);
-    if (!rw_mem) {
+    io_mem = SDL_LoadFile_IO(src, &io_size, SDL_FALSE);
+    if (!io_mem) {
         SDL_OutOfMemory();
         goto fail;
     }
 
-    ret = fluidsynth.fluid_player_add_mem(music->player, rw_mem, rw_size);
-    SDL_free(rw_mem);
+    ret = fluidsynth.fluid_player_add_mem(music->player, io_mem, io_size);
+    SDL_free(io_mem);
     if (ret != FLUID_OK) {
         Mix_SetError("FluidSynth failed to load in-memory song");
         goto fail;
@@ -248,13 +250,13 @@ fail:
     return NULL;
 }
 
-static void *FLUIDSYNTH_CreateFromRW(SDL_RWops *src, SDL_bool freesrc)
+static void *FLUIDSYNTH_CreateFromIO(SDL_IOStream *src, SDL_bool closeio)
 {
     FLUIDSYNTH_Music *music;
 
     music = FLUIDSYNTH_LoadMusic(src);
-    if (music && freesrc) {
-        SDL_RWclose(src);
+    if (music && closeio) {
+        SDL_CloseIO(src);
     }
     return music;
 }
@@ -277,14 +279,25 @@ static int FLUIDSYNTH_Play(void *context, int play_count)
 {
     FLUIDSYNTH_Music *music = (FLUIDSYNTH_Music *)context;
     fluidsynth.fluid_player_set_loop(music->player, play_count);
+#if (FLUIDSYNTH_VERSION_MAJOR >= 2)
+    fluidsynth.fluid_player_seek(music->player, 0);
+#endif
     fluidsynth.fluid_player_play(music->player);
+    music->is_paused = SDL_FALSE;
     return 0;
+}
+
+static void FLUIDSYNTH_Resume(void *context)
+{
+    FLUIDSYNTH_Music *music = (FLUIDSYNTH_Music *)context;
+    fluidsynth.fluid_player_play(music->player);
+    music->is_paused = SDL_FALSE;
 }
 
 static SDL_bool FLUIDSYNTH_IsPlaying(void *context)
 {
     FLUIDSYNTH_Music *music = (FLUIDSYNTH_Music *)context;
-    return fluidsynth.fluid_player_get_status(music->player) == FLUID_PLAYER_PLAYING ? SDL_TRUE : SDL_FALSE;
+    return music->is_paused || fluidsynth.fluid_player_get_status(music->player) == FLUID_PLAYER_PLAYING ? SDL_TRUE : SDL_FALSE;
 }
 
 static int FLUIDSYNTH_GetSome(void *context, void *data, int bytes, SDL_bool *done)
@@ -316,6 +329,17 @@ static void FLUIDSYNTH_Stop(void *context)
 {
     FLUIDSYNTH_Music *music = (FLUIDSYNTH_Music *)context;
     fluidsynth.fluid_player_stop(music->player);
+#if (FLUIDSYNTH_VERSION_MAJOR >= 2)
+    fluidsynth.fluid_player_seek(music->player, 0);
+#endif
+    music->is_paused = SDL_FALSE;
+}
+
+static void FLUIDSYNTH_Pause(void *context)
+{
+    FLUIDSYNTH_Music *music = (FLUIDSYNTH_Music *)context;
+    fluidsynth.fluid_player_stop(music->player);
+    music->is_paused = SDL_TRUE;
 }
 
 static void FLUIDSYNTH_Delete(void *context)
@@ -350,7 +374,7 @@ Mix_MusicInterface Mix_MusicInterface_FLUIDSYNTH =
 
     FLUIDSYNTH_Load,
     FLUIDSYNTH_Open,
-    FLUIDSYNTH_CreateFromRW,
+    FLUIDSYNTH_CreateFromIO,
     NULL,   /* CreateFromFile */
     FLUIDSYNTH_SetVolume,
     FLUIDSYNTH_GetVolume,
@@ -367,8 +391,8 @@ Mix_MusicInterface Mix_MusicInterface_FLUIDSYNTH =
     NULL,   /* GetMetaTag */
     NULL,   /* GetNumTracks */
     NULL,   /* StartTrack */
-    NULL,   /* Pause */
-    NULL,   /* Resume */
+    FLUIDSYNTH_Pause,
+    FLUIDSYNTH_Resume,
     FLUIDSYNTH_Stop,
     FLUIDSYNTH_Delete,
     NULL,   /* Close */

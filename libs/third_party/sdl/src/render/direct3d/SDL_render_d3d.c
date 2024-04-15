@@ -209,7 +209,7 @@ static D3DFORMAT PixelFormatToD3DFMT(Uint32 format)
     }
 }
 
-static Uint32 D3DFMTToPixelFormat(D3DFORMAT format)
+static SDL_PixelFormatEnum D3DFMTToPixelFormat(D3DFORMAT format)
 {
     switch (format) {
     case D3DFMT_R5G6B5:
@@ -1552,7 +1552,7 @@ static int D3D_Reset(SDL_Renderer *renderer)
 
 static int D3D_SetVSync(SDL_Renderer *renderer, const int vsync)
 {
-    D3D_RenderData *data = renderer->driverdata;
+    D3D_RenderData *data = (D3D_RenderData *)renderer->driverdata;
     if (vsync) {
         data->pparams.PresentationInterval = D3DPRESENT_INTERVAL_ONE;
         renderer->info.flags |= SDL_RENDERER_PRESENTVSYNC;
@@ -1631,7 +1631,6 @@ SDL_Renderer *D3D_CreateRenderer(SDL_Window *window, SDL_PropertiesID create_pro
     renderer->DestroyRenderer = D3D_DestroyRenderer;
     renderer->SetVSync = D3D_SetVSync;
     renderer->info = D3D_RenderDriver.info;
-    renderer->info.flags = SDL_RENDERER_ACCELERATED;
     renderer->driverdata = data;
     D3D_InvalidateCachedState(renderer);
 
@@ -1748,7 +1747,7 @@ SDL_Renderer *D3D_CreateRenderer(SDL_Window *window, SDL_PropertiesID create_pro
 SDL_RenderDriver D3D_RenderDriver = {
     D3D_CreateRenderer,
     { "direct3d",
-      (SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC),
+      SDL_RENDERER_PRESENTVSYNC,
       1,
       { SDL_PIXELFORMAT_ARGB8888 },
       0,

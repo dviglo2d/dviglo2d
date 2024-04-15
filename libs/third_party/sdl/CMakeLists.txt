@@ -24,7 +24,7 @@ endif()
 set(CMAKE_POLICY_DEFAULT_CMP0091 NEW)
 
 # See docs/release_checklist.md
-project(SDL3 LANGUAGES C CXX VERSION "3.0.0")
+project(SDL3 LANGUAGES C VERSION "3.1.1")
 
 if(CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
   set(SDL3_SUBPROJECT OFF)
@@ -149,8 +149,7 @@ endif()
 # The hidraw support doesn't catch Xbox, PS4 and Nintendo controllers,
 #  so we'll just use libusb when it's available. libusb does not support iOS,
 #  so we default to yes on iOS.
-#  TODO: Windows can support libusb, the hid.c file just depends on Unix APIs
-if((WINDOWS AND NOT WINDOWS_STORE) OR IOS OR TVOS OR VISIONOS OR ANDROID)
+if(IOS OR TVOS OR VISIONOS OR WATCHOS OR ANDROID)
   set(SDL_HIDAPI_LIBUSB_AVAILABLE FALSE)
 else()
   set(SDL_HIDAPI_LIBUSB_AVAILABLE TRUE)
@@ -169,7 +168,7 @@ endif()
 # Default option knobs
 set(SDL_LIBC_DEFAULT ON)
 set(SDL_SYSTEM_ICONV_DEFAULT ON)
-if(WINDOWS OR IOS OR TVOS OR VISIONOS)
+if(WINDOWS OR IOS OR TVOS OR VISIONOS OR WATCHOS)
   set(SDL_SYSTEM_ICONV_DEFAULT OFF)
 endif()
 
@@ -272,6 +271,7 @@ define_sdl_subsystem(Haptic)
 define_sdl_subsystem(Hidapi)
 define_sdl_subsystem(Power)
 define_sdl_subsystem(Sensor)
+define_sdl_subsystem(Dialog)
 
 cmake_dependent_option(SDL_FRAMEWORK "Build SDL libraries as Apple Framework" OFF "APPLE" OFF)
 if(SDL_FRAMEWORK)
@@ -319,8 +319,8 @@ dep_option(SDL_DISKAUDIO           "Support the disk writer audio driver" ON "SD
 dep_option(SDL_DUMMYAUDIO          "Support the dummy audio driver" ON "SDL_AUDIO" OFF)
 dep_option(SDL_DUMMYVIDEO          "Use dummy video driver" ON "SDL_VIDEO" OFF)
 dep_option(SDL_IBUS                "Enable IBus support" ON "${UNIX_SYS}" OFF)
-dep_option(SDL_OPENGL              "Include OpenGL support" ON "SDL_VIDEO;NOT VISIONOS" OFF)
-dep_option(SDL_OPENGLES            "Include OpenGL ES support" ON "SDL_VIDEO;NOT VISIONOS" OFF)
+dep_option(SDL_OPENGL              "Include OpenGL support" ON "SDL_VIDEO;NOT IOS;NOT VISIONOS;NOT TVOS;NOT WATCHOS" OFF)
+dep_option(SDL_OPENGLES            "Include OpenGL ES support" ON "SDL_VIDEO;NOT IOS;NOT VISIONOS;NOT TVOS;NOT WATCHOS" OFF)
 set_option(SDL_PTHREADS            "Use POSIX threads for multi-threading" ${SDL_PTHREADS_DEFAULT})
 dep_option(SDL_PTHREADS_SEM        "Use pthread semaphores" ON "SDL_PTHREADS" OFF)
 dep_option(SDL_OSS                 "Support the OSS audio API" ${SDL_OSS_DEFAULT} "UNIX_SYS OR RISCOS;SDL_AUDIO" OFF)
@@ -498,6 +498,7 @@ sdl_glob_sources(
   "${SDL3_SOURCE_DIR}/src/dynapi/*.c"
   "${SDL3_SOURCE_DIR}/src/events/*.c"
   "${SDL3_SOURCE_DIR}/src/file/*.c"
+  "${SDL3_SOURCE_DIR}/src/filesystem/*.c"
   "${SDL3_SOURCE_DIR}/src/joystick/*.c"
   "${SDL3_SOURCE_DIR}/src/haptic/*.c"
   "${SDL3_SOURCE_DIR}/src/hidapi/*.c"
@@ -510,7 +511,9 @@ sdl_glob_sources(
   "${SDL3_SOURCE_DIR}/src/render/*/*.c"
   "${SDL3_SOURCE_DIR}/src/sensor/*.c"
   "${SDL3_SOURCE_DIR}/src/stdlib/*.c"
+  "${SDL3_SOURCE_DIR}/src/storage/*.c"
   "${SDL3_SOURCE_DIR}/src/thread/*.c"
+  "${SDL3_SOURCE_DIR}/src/time/*.c"
   "${SDL3_SOURCE_DIR}/src/timer/*.c"
   "${SDL3_SOURCE_DIR}/src/video/*.c"
   "${SDL3_SOURCE_DIR}/src/video/yuv2rgb/*.c"
@@ -1041,7 +1044,6 @@ if(SDL_LIBC)
   set(available_headers)
   set(HAVE_LIBC TRUE)
   set(headers_to_check
-    ctype.h
     float.h
     iconv.h
     inttypes.h
@@ -1058,6 +1060,7 @@ if(SDL_LIBC)
     string.h
     strings.h
     sys/types.h
+    time.h
     wchar.h
   )
   foreach(_HEADER IN LISTS headers_to_check)
@@ -1093,11 +1096,11 @@ if(SDL_LIBC)
   )
   if(WINDOWS)
     list(APPEND symbols_to_check
-      _stricmp _strlwr _strnicmp _strrev _strupr _ui64toa _uitoa _ultoa _wcsdup _wcsicmp _wcsnicmp
+      _strrev _ui64toa _uitoa _ultoa _wcsdup
     )
   else()
     list(APPEND symbols_to_check
-        strcasecmp strcasestr strncasecmp wcscasecmp wcsncasecmp
+        strcasestr
     )
   endif()
   check_library_exists(m pow "" HAVE_LIBM)
@@ -1119,11 +1122,16 @@ if(SDL_LIBC)
     check_symbol_exists(sigaction "signal.h" HAVE_SIGACTION)
     check_symbol_exists(setjmp "setjmp.h" HAVE_SETJMP)
     check_symbol_exists(nanosleep "time.h" HAVE_NANOSLEEP)
+    check_symbol_exists(gmtime_r "time.h" HAVE_GMTIME_R)
+    check_symbol_exists(localtime_r "time.h" HAVE_LOCALTIME_R)
+    check_symbol_exists(nl_langinfo "langinfo.h" HAVE_NL_LANGINFO)
     check_symbol_exists(sysconf "unistd.h" HAVE_SYSCONF)
     check_symbol_exists(sysctlbyname "sys/types.h;sys/sysctl.h" HAVE_SYSCTLBYNAME)
     check_symbol_exists(getauxval "sys/auxv.h" HAVE_GETAUXVAL)
     check_symbol_exists(elf_aux_info "sys/auxv.h" HAVE_ELF_AUX_INFO)
     check_symbol_exists(poll "poll.h" HAVE_POLL)
+    check_symbol_exists(memfd_create "sys/mman.h" HAVE_MEMFD_CREATE)
+    check_symbol_exists(posix_fallocate "fcntl.h" HAVE_POSIX_FALLOCATE)
 
     if(SDL_SYSTEM_ICONV)
       check_c_source_compiles("
@@ -1156,6 +1164,7 @@ if(SDL_LIBC)
     endif()
 
     check_struct_has_member("struct sigaction" "sa_sigaction" "signal.h" HAVE_SA_SIGACTION)
+    check_struct_has_member("struct stat" "st_mtim" "sys/stat.h" HAVE_ST_MTIM)
   endif()
 else()
   set(headers
@@ -1301,6 +1310,10 @@ if(ANDROID)
   sdl_glob_sources("${SDL3_SOURCE_DIR}/src/filesystem/android/*.c")
   set(HAVE_SDL_FILESYSTEM TRUE)
 
+  set(SDL_FSOPS_POSIX 1)  # !!! FIXME: this might need something else for .apk data?
+  sdl_sources("${SDL3_SOURCE_DIR}/src/filesystem/posix/SDL_sysfsops.c")
+  set(HAVE_SDL_FSOPS TRUE)
+
   if(SDL_HAPTIC)
     set(SDL_HAPTIC_ANDROID 1)
     sdl_glob_sources("${SDL3_SOURCE_DIR}/src/haptic/android/*.c")
@@ -1332,6 +1345,10 @@ if(ANDROID)
 
   sdl_glob_sources("${SDL3_SOURCE_DIR}/src/locale/android/*.c")
   set(HAVE_SDL_LOCALE TRUE)
+
+  set(SDL_TIME_UNIX 1)
+  sdl_glob_sources("${SDL3_SOURCE_DIR}/src/time/unix/*.c")
+  set(HAVE_SDL_TIME TRUE)
 
   set(SDL_TIMER_UNIX 1)
   sdl_glob_sources("${SDL3_SOURCE_DIR}/src/timer/unix/*.c")
@@ -1459,6 +1476,10 @@ elseif(EMSCRIPTEN)
   sdl_glob_sources("${SDL3_SOURCE_DIR}/src/filesystem/emscripten/*.c")
   set(HAVE_SDL_FILESYSTEM TRUE)
 
+  set(SDL_FSOPS_POSIX 1)
+  sdl_sources("${SDL3_SOURCE_DIR}/src/filesystem/posix/SDL_sysfsops.c")
+  set(HAVE_SDL_FSOPS TRUE)
+
   if(SDL_CAMERA)
     set(SDL_CAMERA_DRIVER_EMSCRIPTEN 1)
     set(HAVE_CAMERA TRUE)
@@ -1479,6 +1500,10 @@ elseif(EMSCRIPTEN)
 
   sdl_glob_sources("${SDL3_SOURCE_DIR}/src/locale/emscripten/*.c")
   set(HAVE_SDL_LOCALE TRUE)
+
+  set(SDL_TIME_UNIX 1)
+  sdl_glob_sources("${SDL3_SOURCE_DIR}/src/time/unix/*.c")
+  set(HAVE_SDL_TIME TRUE)
 
   set(SDL_TIMER_UNIX 1)
   sdl_glob_sources("${SDL3_SOURCE_DIR}/src/timer/unix/*.c")
@@ -1767,6 +1792,22 @@ elseif(UNIX AND NOT APPLE AND NOT RISCOS AND NOT HAIKU)
   sdl_glob_sources("${SDL3_SOURCE_DIR}/src/filesystem/unix/*.c")
   set(HAVE_SDL_FILESYSTEM TRUE)
 
+  set(SDL_STORAGE_GENERIC 1)
+  sdl_glob_sources("${SDL3_SOURCE_DIR}/src/storage/generic/*.c")
+  if(LINUX)
+    set(SDL_STORAGE_STEAM 1)
+    sdl_glob_sources("${SDL3_SOURCE_DIR}/src/storage/steam/*.c")
+  endif()
+  set(HAVE_SDL_STORAGE 1)
+
+  set(SDL_FSOPS_POSIX 1)
+  sdl_sources("${SDL3_SOURCE_DIR}/src/filesystem/posix/SDL_sysfsops.c")
+  set(HAVE_SDL_FSOPS TRUE)
+
+  set(SDL_TIME_UNIX 1)
+  sdl_glob_sources("${SDL3_SOURCE_DIR}/src/time/unix/*.c")
+  set(HAVE_SDL_TIME TRUE)
+
   set(SDL_TIMER_UNIX 1)
   sdl_glob_sources("${SDL3_SOURCE_DIR}/src/timer/unix/*.c")
   set(HAVE_SDL_TIMERS TRUE)
@@ -1805,6 +1846,7 @@ elseif(WINDOWS)
   sdl_glob_sources("${SDL3_SOURCE_DIR}/src/core/windows/*.c")
 
   if(WINDOWS_STORE)
+    enable_language(CXX)
     sdl_glob_sources(
       "${SDL3_SOURCE_DIR}/src/core/winrt/*.c"
       "${SDL3_SOURCE_DIR}/src/core/winrt/*.cpp"
@@ -1980,10 +2022,22 @@ elseif(WINDOWS)
   set(SDL_FILESYSTEM_WINDOWS 1)
   if(WINDOWS_STORE)
     sdl_glob_sources("${SDL3_SOURCE_DIR}/src/filesystem/winrt/*.cpp")
+    sdl_sources("${SDL3_SOURCE_DIR}/src/filesystem/windows/SDL_sysfsops.c")
   else()
     sdl_glob_sources("${SDL3_SOURCE_DIR}/src/filesystem/windows/*.c")
   endif()
   set(HAVE_SDL_FILESYSTEM TRUE)
+
+  set(SDL_FSOPS_WINDOWS 1)
+  set(HAVE_SDL_FSOPS TRUE)
+
+  set(SDL_STORAGE_GENERIC 1)
+  sdl_glob_sources("${SDL3_SOURCE_DIR}/src/storage/generic/*.c")
+  if(NOT WINDOWS_STORE)
+    set(SDL_STORAGE_STEAM 1)
+    sdl_glob_sources("${SDL3_SOURCE_DIR}/src/storage/steam/*.c")
+  endif()
+  set(HAVE_SDL_STORAGE 1)
 
   # Libraries for Win32 native and MinGW
   if(NOT WINDOWS_STORE)
@@ -2000,6 +2054,10 @@ elseif(WINDOWS)
         /nodefaultlib:msvcrt$<$<CONFIG:Debug>:d>
     )
   endif()
+
+  set(SDL_TIME_WINDOWS 1)
+  sdl_glob_sources("${SDL3_SOURCE_DIR}/src/time/windows/*.c")
+  set(HAVE_SDL_TIME TRUE)
 
   set(SDL_TIMER_WINDOWS 1)
   sdl_glob_sources("${SDL3_SOURCE_DIR}/src/timer/windows/*.c")
@@ -2092,15 +2150,16 @@ elseif(APPLE)
   # !!! FIXME: we need Carbon for some very old API calls in
   # !!! FIXME:  src/video/cocoa/SDL_cocoakeyboard.c, but we should figure out
   # !!! FIXME:  how to dump those.
-  if(DARWIN OR MACOSX)
+  if(MACOS)
     set(SDL_FRAMEWORK_COCOA 1)
     set(SDL_FRAMEWORK_CARBON 1)
+    set(SDL_FRAMEWORK_UTTYPES 1)
   endif()
   set(SDL_FRAMEWORK_FOUNDATION 1)
   set(SDL_FRAMEWORK_COREVIDEO 1)
 
   # iOS can use a CADisplayLink for main callbacks. macOS just uses the generic one atm.
-  if(IOS OR TVOS OR VISIONOS)
+  if(IOS OR TVOS OR VISIONOS OR WATCHOS)
     sdl_glob_sources("${SDL3_SOURCE_DIR}/src/main/ios/*.m")
     set(HAVE_SDL_MAIN_CALLBACKS TRUE)
   endif()
@@ -2108,14 +2167,14 @@ elseif(APPLE)
   sdl_glob_sources("${SDL3_SOURCE_DIR}/src/file/cocoa/*.m")
 
   if(SDL_CAMERA)
-    if(IOS OR TVOS OR MACOSX OR DARWIN)
+    if(MACOS OR IOS)
       set(SDL_CAMERA_DRIVER_COREMEDIA 1)
       set(HAVE_CAMERA TRUE)
       sdl_glob_sources("${SDL3_SOURCE_DIR}/src/camera/coremedia/*.m")
     endif()
   endif()
 
-  if(IOS OR TVOS OR VISIONOS)
+  if(IOS OR TVOS OR VISIONOS OR WATCHOS)
     sdl_glob_sources("${SDL3_SOURCE_DIR}/src/misc/ios/*.m")
   else()
     sdl_glob_sources("${SDL3_SOURCE_DIR}/src/misc/macos/*.m")
@@ -2137,10 +2196,10 @@ elseif(APPLE)
 
   if(SDL_JOYSTICK)
     sdl_glob_sources("${SDL3_SOURCE_DIR}/src/joystick/apple/*.m")
-    if(IOS OR TVOS OR VISIONOS)
+    if(IOS OR TVOS OR VISIONOS OR WATCHOS)
       sdl_glob_sources("${SDL3_SOURCE_DIR}/src/joystick/steam/*.c")
       set(SDL_JOYSTICK_MFI 1)
-      if(IOS OR VISIONOS)
+      if(IOS OR VISIONOS OR WATCHOS)
         set(SDL_FRAMEWORK_COREMOTION 1)
       endif()
       set(SDL_FRAMEWORK_GAMECONTROLLER 1)
@@ -2182,7 +2241,7 @@ elseif(APPLE)
   endif()
 
   if(SDL_HAPTIC)
-    if (IOS OR TVOS OR VISIONOS)
+    if (IOS OR TVOS OR VISIONOS OR WATCHOS)
       sdl_glob_sources("${SDL3_SOURCE_DIR}/src/haptic/dummy/*.c")
       set(SDL_HAPTIC_DUMMY 1)
     else()
@@ -2195,7 +2254,7 @@ elseif(APPLE)
   endif()
 
   if(SDL_POWER)
-    if (IOS OR TVOS OR VISIONOS)
+    if (IOS OR TVOS OR VISIONOS OR WATCHOS)
       sdl_glob_sources("${SDL3_SOURCE_DIR}/src/power/uikit/*.m")
       set(SDL_POWER_UIKIT 1)
     else()
@@ -2209,6 +2268,10 @@ elseif(APPLE)
   sdl_glob_sources("${SDL3_SOURCE_DIR}/src/locale/macos/*.m")
   set(HAVE_SDL_LOCALE TRUE)
 
+  set(SDL_TIME_UNIX 1)
+  sdl_glob_sources("${SDL3_SOURCE_DIR}/src/time/unix/*.c")
+  set(HAVE_SDL_TIME TRUE)
+
   set(SDL_TIMER_UNIX 1)
   sdl_glob_sources("${SDL3_SOURCE_DIR}/src/timer/unix/*.c")
   set(HAVE_SDL_TIMERS TRUE)
@@ -2217,8 +2280,21 @@ elseif(APPLE)
   sdl_glob_sources("${SDL3_SOURCE_DIR}/src/filesystem/cocoa/*.m")
   set(HAVE_SDL_FILESYSTEM TRUE)
 
+  # TODO: SDL_STORAGE_ICLOUD
+  set(SDL_STORAGE_GENERIC 1)
+  sdl_glob_sources("${SDL3_SOURCE_DIR}/src/storage/generic/*.c")
+  if(MACOS)
+    set(SDL_STORAGE_STEAM 1)
+    sdl_glob_sources("${SDL3_SOURCE_DIR}/src/storage/steam/*.c")
+  endif()
+  set(HAVE_SDL_STORAGE 1)
+
+  set(SDL_FSOPS_POSIX 1)
+  sdl_sources("${SDL3_SOURCE_DIR}/src/filesystem/posix/SDL_sysfsops.c")
+  set(HAVE_SDL_FSOPS TRUE)
+
   if(SDL_SENSOR)
-    if(IOS OR VISIONOS)
+    if(IOS OR VISIONOS OR WATCHOS)
       set(SDL_SENSOR_COREMOTION 1)
       set(HAVE_SDL_SENSORS TRUE)
       sdl_glob_sources("${SDL3_SOURCE_DIR}/src/sensor/coremotion/*.m")
@@ -2227,7 +2303,7 @@ elseif(APPLE)
 
   # iOS hack needed - http://code.google.com/p/ios-cmake/ ?
   if(SDL_VIDEO)
-    if (IOS OR TVOS OR VISIONOS)
+    if(IOS OR TVOS OR VISIONOS OR WATCHOS)
       set(SDL_VIDEO_DRIVER_UIKIT 1)
       set(SDL_FRAMEWORK_COREGRAPHICS 1)
       set(SDL_FRAMEWORK_QUARTZCORE 1)
@@ -2247,7 +2323,7 @@ elseif(APPLE)
     endif()
 
     if(SDL_OPENGLES)
-      if(IOS OR TVOS OR VISIONOS)
+      if(IOS OR TVOS OR VISIONOS OR WATCHOS)
         set(SDL_FRAMEWORK_OPENGLES 1)
         set(SDL_VIDEO_OPENGL_ES 1)
       else()
@@ -2340,7 +2416,7 @@ elseif(APPLE)
     endif()
   endif()
   if(SDL_FRAMEWORK_METAL)
-    if(IOS OR TVOS OR VISIONOS)
+    if(IOS OR TVOS OR VISIONOS OR WATCHOS)
       sdl_link_dependency(metal LINK_OPTIONS "-Wl,-framework,Metal")
     else()
       sdl_link_dependency(metal LINK_OPTIONS "-Wl,-weak_framework,Metal")
@@ -2350,7 +2426,7 @@ elseif(APPLE)
     sdl_link_dependency(opengles LINK_OPTIONS "-Wl,-framework,OpenGLES")
   endif()
   if(SDL_FRAMEWORK_QUARTZCORE)
-    if(IOS OR TVOS OR VISIONOS)
+    if(IOS OR TVOS OR VISIONOS OR WATCHOS)
       sdl_link_dependency(quartz_core LINK_OPTIONS "-Wl,-framework,QuartzCore")
     else()
       sdl_link_dependency(metal LINK_OPTIONS "-Wl,-weak_framework,QuartzCore")
@@ -2374,6 +2450,7 @@ elseif(APPLE)
   endif()
 
 elseif(HAIKU)
+  enable_language(CXX)
   if(SDL_AUDIO)
     set(SDL_AUDIO_DRIVER_HAIKU 1)
     sdl_glob_sources("${SDL3_SOURCE_DIR}/src/audio/haiku/*.cc")
@@ -2408,6 +2485,14 @@ elseif(HAIKU)
   sdl_glob_sources("${SDL3_SOURCE_DIR}/src/filesystem/haiku/*.cc")
   set(HAVE_SDL_FILESYSTEM TRUE)
 
+  set(SDL_FSOPS_POSIX 1)
+  sdl_sources("${SDL3_SOURCE_DIR}/src/filesystem/posix/SDL_sysfsops.c")
+  set(HAVE_SDL_FSOPS TRUE)
+
+  set(SDL_TIME_UNIX 1)
+  sdl_glob_sources("${SDL3_SOURCE_DIR}/src/time/unix/*.c")
+  set(HAVE_SDL_TIME TRUE)
+
   set(SDL_TIMER_HAIKU 1)
   sdl_glob_sources("${SDL3_SOURCE_DIR}/src/timer/haiku/*.c")
   set(HAVE_SDL_TIMERS TRUE)
@@ -2424,7 +2509,7 @@ elseif(HAIKU)
   sdl_glob_sources("${SDL3_SOURCE_DIR}/src/core/haiku/*.cc")
 
   CheckPTHREAD()
-  sdl_link_dependency(base LIBS root be media game device textencoding)
+  sdl_link_dependency(base LIBS root be media game device textencoding tracker)
 
 elseif(RISCOS)
   sdl_glob_sources("${SDL3_SOURCE_DIR}/src/misc/riscos/*.c")
@@ -2439,6 +2524,14 @@ elseif(RISCOS)
   set(SDL_FILESYSTEM_RISCOS 1)
   sdl_glob_sources("${SDL3_SOURCE_DIR}/src/filesystem/riscos/*.c")
   set(HAVE_SDL_FILESYSTEM TRUE)
+
+  set(SDL_FSOPS_POSIX 1)
+  sdl_sources("${SDL3_SOURCE_DIR}/src/filesystem/posix/SDL_sysfsops.c")
+  set(HAVE_SDL_FSOPS TRUE)
+
+  set(SDL_TIME_UNIX 1)
+  sdl_glob_sources("${SDL3_SOURCE_DIR}/src/time/unix/*.c")
+  set(HAVE_SDL_TIME TRUE)
 
   set(SDL_TIMER_UNIX 1)
   sdl_glob_sources("${SDL3_SOURCE_DIR}/src/timer/unix/*.c")
@@ -2477,6 +2570,8 @@ elseif(VITA)
   sdl_glob_sources("${SDL3_SOURCE_DIR}/src/filesystem/vita/*.c")
   set(HAVE_SDL_FILESYSTEM TRUE)
 
+  # !!! FIXME: do we need a FSops implementation for this?
+
   if(SDL_JOYSTICK)
     set(SDL_JOYSTICK_VITA 1)
     sdl_glob_sources("${SDL3_SOURCE_DIR}/src/joystick/vita/*.c")
@@ -2502,6 +2597,10 @@ elseif(VITA)
 
   sdl_glob_sources("${SDL3_SOURCE_DIR}/src/locale/vita/*.c")
   set(HAVE_SDL_LOCALE TRUE)
+
+  set(SDL_TIME_VITA 1)
+  sdl_glob_sources("${SDL3_SOURCE_DIR}/src/time/vita/*.c")
+  set(HAVE_SDL_TIME TRUE)
 
   set(SDL_TIMER_VITA 1)
   sdl_glob_sources("${SDL3_SOURCE_DIR}/src/timer/vita/*.c")
@@ -2611,6 +2710,8 @@ elseif(PSP)
   sdl_glob_sources("${SDL3_SOURCE_DIR}/src/filesystem/psp/*.c")
   set(HAVE_SDL_FILESYSTEM TRUE)
 
+  # !!! FIXME: do we need a FSops implementation for this?
+
   if(SDL_JOYSTICK)
     set(SDL_JOYSTICK_PSP 1)
     sdl_glob_sources("${SDL3_SOURCE_DIR}/src/joystick/psp/*.c")
@@ -2631,6 +2732,10 @@ elseif(PSP)
     "${SDL3_SOURCE_DIR}/src/thread/psp/*.c"
   )
   set(HAVE_SDL_THREADS TRUE)
+
+  set(SDL_TIME_PSP 1)
+  sdl_glob_sources("${SDL3_SOURCE_DIR}/src/time/psp/*.c")
+  set(HAVE_SDL_TIME TRUE)
 
   set(SDL_TIMER_PSP 1)
   sdl_glob_sources("${SDL3_SOURCE_DIR}/src/timer/psp/*.c")
@@ -2674,6 +2779,8 @@ elseif(PS2)
   sdl_glob_sources("${SDL3_SOURCE_DIR}/src/filesystem/ps2/*.c")
   set(HAVE_SDL_FILESYSTEM TRUE)
 
+  # !!! FIXME: do we need a FSops implementation for this?
+
   if(SDL_JOYSTICK)
     set(SDL_JOYSTICK_PS2 1)
     sdl_glob_sources("${SDL3_SOURCE_DIR}/src/joystick/ps2/*.c")
@@ -2689,6 +2796,10 @@ elseif(PS2)
     "${SDL3_SOURCE_DIR}/src/thread/ps2/*.c"
   )
   set(HAVE_SDL_THREADS TRUE)
+
+  set(SDL_TIME_PS2 1)
+  sdl_glob_sources("${SDL3_SOURCE_DIR}/src/time/ps2/*.c")
+  set(HAVE_SDL_TIME TRUE)
 
   set(SDL_TIMER_PS2 1)
   sdl_glob_sources("${SDL3_SOURCE_DIR}/src/timer/ps2/*.c")
@@ -2725,6 +2836,8 @@ elseif(N3DS)
   sdl_glob_sources("${SDL3_SOURCE_DIR}/src/filesystem/n3ds/*.c")
   set(HAVE_SDL_FILESYSTEM TRUE)
 
+  # !!! FIXME: do we need a FSops implementation for this?
+
   if(SDL_JOYSTICK)
     set(SDL_JOYSTICK_N3DS 1)
     sdl_glob_sources("${SDL3_SOURCE_DIR}/src/joystick/n3ds/*.c")
@@ -2745,9 +2858,17 @@ elseif(N3DS)
   )
   set(HAVE_SDL_THREADS TRUE)
 
+  set(SDL_TIME_N3DS 1)
+  sdl_glob_sources("${SDL3_SOURCE_DIR}/src/time/n3ds/*.c")
+  set(HAVE_SDL_TIME TRUE)
+
   set(SDL_TIMER_N3DS 1)
   sdl_glob_sources("${SDL3_SOURCE_DIR}/src/timer/n3ds/*.c")
   set(HAVE_SDL_TIMERS TRUE)
+
+  set(SDL_FSOPS_POSIX 1)
+  sdl_sources("${SDL3_SOURCE_DIR}/src/filesystem/posix/SDL_sysfsops.c")
+  set(HAVE_SDL_FSOPS TRUE)
 
   if(SDL_SENSOR)
     set(SDL_SENSOR_N3DS 1)
@@ -2765,6 +2886,26 @@ elseif(N3DS)
   set(HAVE_SDL_LOCALE TRUE)
 
   sdl_glob_sources("${SDL3_SOURCE_DIR}/src/file/n3ds/*.c")
+endif()
+
+if (SDL_DIALOG)
+  sdl_sources(${SDL3_SOURCE_DIR}/src/dialog/SDL_dialog_utils.c)
+  if(UNIX AND NOT APPLE AND NOT RISCOS AND NOT HAIKU)
+    sdl_sources(${SDL3_SOURCE_DIR}/src/dialog/unix/SDL_unixdialog.c)
+    sdl_sources(${SDL3_SOURCE_DIR}/src/dialog/unix/SDL_portaldialog.c)
+    sdl_sources(${SDL3_SOURCE_DIR}/src/dialog/unix/SDL_zenitydialog.c)
+    set(HAVE_SDL_DIALOG TRUE)
+  elseif(HAIKU)
+    sdl_sources(${SDL3_SOURCE_DIR}/src/dialog/haiku/SDL_haikudialog.cc)
+    set(HAVE_SDL_DIALOG TRUE)
+  elseif(WINDOWS AND NOT WINDOWS_STORE)
+    sdl_sources(${SDL3_SOURCE_DIR}/src/dialog/windows/SDL_windowsdialog.c)
+    set(HAVE_SDL_DIALOG TRUE)
+  elseif(MACOS)
+    sdl_sources(${SDL3_SOURCE_DIR}/src/dialog/cocoa/SDL_cocoadialog.m)
+    sdl_link_dependency(uniformtypeidentifiers LINK_OPTIONS "-Wl,-weak_framework,UniformTypeIdentifiers")
+    set(HAVE_SDL_DIALOG TRUE)
+  endif()
 endif()
 
 # Platform-independent options
@@ -2814,6 +2955,14 @@ if(NOT HAVE_SDL_FILESYSTEM)
   set(SDL_FILESYSTEM_DUMMY 1)
   sdl_glob_sources("${SDL3_SOURCE_DIR}/src/filesystem/dummy/*.c")
 endif()
+if(NOT HAVE_SDL_STORAGE)
+  set(SDL_STORAGE_GENERIC 1)
+  sdl_glob_sources("${SDL3_SOURCE_DIR}/src/storage/generic/*.c")
+endif()
+if(NOT HAVE_SDL_FSOPS)
+  set(SDL_FSOPS_DUMMY 1)
+  sdl_sources("${SDL3_SOURCE_DIR}/src/filesystem/dummy/SDL_sysfsops.c")
+endif()
 if(NOT HAVE_SDL_LOCALE)
   set(SDL_LOCALE_DUMMY 1)
   sdl_glob_sources("${SDL3_SOURCE_DIR}/src/locale/dummy/*.c")
@@ -2821,6 +2970,10 @@ endif()
 if(NOT HAVE_SDL_MISC)
   set(SDL_MISC_DUMMY 1)
   sdl_glob_sources("${SDL3_SOURCE_DIR}/src/misc/dummy/*.c")
+endif()
+if(NOT HAVE_SDL_DIALOG)
+  set(SDL_DIALOG_DUMMY 1)
+  sdl_sources(${SDL3_SOURCE_DIR}/src/dialog/dummy/SDL_dummydialog.c)
 endif()
 if(NOT HAVE_CAMERA)
   set(SDL_CAMERA_DRIVER_DUMMY 1)
@@ -3073,9 +3226,7 @@ endif()
 
 add_library(SDL3_Headers INTERFACE)
 add_library(SDL3::Headers ALIAS SDL3_Headers)
-set_target_properties(SDL3_Headers PROPERTIES
-  EXPORT_NAME "Headers"
-)
+set_property(TARGET SDL3_Headers PROPERTY EXPORT_NAME "Headers")
 target_include_directories(SDL3_Headers
   INTERFACE
     "$<BUILD_INTERFACE:${SDL3_BINARY_DIR}/include>"
@@ -3132,9 +3283,13 @@ if(SDL_SHARED)
     endif()
   endif()
   if(APPLE)
+    cmake_minimum_required(VERSION 3.17)
     set_target_properties(SDL3-shared PROPERTIES
       MACOSX_RPATH TRUE
       FRAMEWORK "${SDL_FRAMEWORK}"
+      SOVERSION "${SDL_SO_VERSION_MAJOR}"
+      MACHO_COMPATIBILITY_VERSION "${SDL_DYLIB_COMPAT_VERSION}"
+      MACHO_CURRENT_VERSION "${SDL_DYLIB_CURRENT_VERSION}"
     )
     if(SDL_FRAMEWORK)
       set_target_properties(SDL3-shared PROPERTIES
@@ -3144,10 +3299,6 @@ if(SDL_SHARED)
         RESOURCE "${SDL_FRAMEWORK_RESOURCES}"
       )
     endif()
-    set_target_properties(SDL3-shared PROPERTIES
-      SOVERSION "${SDL_DYLIB_COMPAT_VERSION}" # SOVERSION corresponds to compatibility version
-      VERSION "${SDL_DYLIB_CURRENT_VERSION}"  # VERSION corresponds to the current version
-    )
   elseif(UNIX AND NOT ANDROID)
     set_target_properties(SDL3-shared PROPERTIES
       VERSION "${SDL_SO_VERSION}"

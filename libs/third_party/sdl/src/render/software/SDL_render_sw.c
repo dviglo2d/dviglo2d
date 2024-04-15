@@ -112,20 +112,17 @@ static int SW_CreateTexture(SDL_Renderer *renderer, SDL_Texture *texture, SDL_Pr
     g = (Uint8)SDL_roundf(SDL_clamp(texture->color.g, 0.0f, 1.0f) * 255.0f);
     b = (Uint8)SDL_roundf(SDL_clamp(texture->color.b, 0.0f, 1.0f) * 255.0f);
     a = (Uint8)SDL_roundf(SDL_clamp(texture->color.a, 0.0f, 1.0f) * 255.0f);
-    SDL_SetSurfaceColorMod(texture->driverdata, r, g, b);
-    SDL_SetSurfaceAlphaMod(texture->driverdata, a);
-    SDL_SetSurfaceBlendMode(texture->driverdata, texture->blendMode);
+    SDL_SetSurfaceColorMod(surface, r, g, b);
+    SDL_SetSurfaceAlphaMod(surface, a);
+    SDL_SetSurfaceBlendMode(surface, texture->blendMode);
 
     /* Only RLE encode textures without an alpha channel since the RLE coder
      * discards the color values of pixels with an alpha value of zero.
      */
     if (texture->access == SDL_TEXTUREACCESS_STATIC && !surface->format->Amask) {
-        SDL_SetSurfaceRLE(texture->driverdata, 1);
+        SDL_SetSurfaceRLE(surface, 1);
     }
 
-    if (!texture->driverdata) {
-        return -1;
-    }
     return 0;
 }
 
@@ -1024,7 +1021,7 @@ static void SW_DestroyRenderer(SDL_Renderer *renderer)
     SDL_free(renderer);
 }
 
-static void SW_SelectBestFormats(SDL_Renderer *renderer, Uint32 format)
+static void SW_SelectBestFormats(SDL_Renderer *renderer, SDL_PixelFormatEnum format)
 {
     /* Prefer the format used by the framebuffer by default. */
     renderer->info.texture_formats[renderer->info.num_texture_formats++] = format;
@@ -1080,6 +1077,8 @@ static void SW_SelectBestFormats(SDL_Renderer *renderer, Uint32 format)
     case SDL_PIXELFORMAT_BGRA8888:
         renderer->info.texture_formats[renderer->info.num_texture_formats++] = SDL_PIXELFORMAT_BGRX8888;
         break;
+    default:
+        break;
     }
 
     /* Ensure that we always have a SDL_PACKEDLAYOUT_8888 format. Having a matching component order increases the
@@ -1117,7 +1116,7 @@ static void SW_SelectBestFormats(SDL_Renderer *renderer, Uint32 format)
     }
 }
 
-SDL_Renderer *SW_CreateRendererForSurface(SDL_Surface *surface)
+SDL_Renderer *SW_CreateRendererForSurface(SDL_Surface *surface, SDL_PropertiesID create_props)
 {
     SDL_Renderer *renderer;
     SW_RenderData *data;
@@ -1132,6 +1131,7 @@ SDL_Renderer *SW_CreateRendererForSurface(SDL_Surface *surface)
         return NULL;
     }
     renderer->magic = &SDL_renderer_magic;
+    renderer->software = SDL_TRUE;
 
     data = (SW_RenderData *)SDL_calloc(1, sizeof(*data));
     if (!data) {
@@ -1169,12 +1169,19 @@ SDL_Renderer *SW_CreateRendererForSurface(SDL_Surface *surface)
 
     SW_SelectBestFormats(renderer, surface->format->format);
 
+    SDL_SetupRendererColorspace(renderer, create_props);
+
+    if (renderer->output_colorspace != SDL_COLORSPACE_SRGB) {
+        SDL_SetError("Unsupported output colorspace");
+        SW_DestroyRenderer(renderer);
+        return NULL;
+    }
+
     return renderer;
 }
 
 static SDL_Renderer *SW_CreateRenderer(SDL_Window *window, SDL_PropertiesID create_props)
 {
-    SDL_Renderer *renderer;
     const char *hint;
     SDL_Surface *surface;
     SDL_bool no_hint_set;
@@ -1206,26 +1213,13 @@ static SDL_Renderer *SW_CreateRenderer(SDL_Window *window, SDL_PropertiesID crea
         return NULL;
     }
 
-    renderer = SW_CreateRendererForSurface(surface);
-    if (!renderer) {
-        return NULL;
-    }
-
-    SDL_SetupRendererColorspace(renderer, create_props);
-
-    if (renderer->output_colorspace != SDL_COLORSPACE_SRGB) {
-        SDL_SetError("Unsupported output colorspace");
-        SW_DestroyRenderer(renderer);
-        return NULL;
-    }
-
-    return renderer;
+    return SW_CreateRendererForSurface(surface, create_props);
 }
 
 SDL_RenderDriver SW_RenderDriver = {
     SW_CreateRenderer,
-    { "software",
-      (SDL_RENDERER_SOFTWARE | SDL_RENDERER_PRESENTVSYNC),
+    { SDL_SOFTWARE_RENDERER,
+      SDL_RENDERER_PRESENTVSYNC,
       0,
       { /* formats filled in later */
         SDL_PIXELFORMAT_UNKNOWN },
