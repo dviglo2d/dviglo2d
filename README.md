@@ -19,3 +19,7 @@
 * Исходники движка находятся в папке [libs/dviglo](libs/dviglo)
 * Сторонние библиотеки находятся в папке [libs/third_party](libs/third_party)
 * Документация находится в папке [docs](docs)
+
+## Библиотеки
+
+* [Длинная арифметика](https://github.com/dviglo2d/big_int)
