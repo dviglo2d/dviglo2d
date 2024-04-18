@@ -17,8 +17,9 @@
 ## Структура репозитория
 
 * Исходники движка находятся в папке [libs/dviglo](libs/dviglo)
-* Сторонние библиотеки находятся в папке [libs/third_party](libs/third_party)
-* Документация находится в папке [docs](docs)
+* Сторонние библиотеки — в папке [libs/third_party](libs/third_party)
+* Документация — в папке [docs](docs)
+* Примеры — в папке [samples](samples)
 
 ## Библиотеки
 
