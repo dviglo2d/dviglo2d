@@ -5,4 +5,4 @@
 include_guard(GLOBAL)
 
 # Минимальная версия CMake
-set(DV_CMAKE_MIN_VERSION 3.16)
+set(dv_cmake_min_version 3.16)

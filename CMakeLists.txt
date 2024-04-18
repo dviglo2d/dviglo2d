@@ -3,7 +3,7 @@
 
 # Указываем минимальную версию CMake
 include(cmake/cmake_min_version.cmake)
-cmake_minimum_required(VERSION ${DV_CMAKE_MIN_VERSION})
+cmake_minimum_required(VERSION ${dv_cmake_min_version})
 
 # Название проекта
 project(dviglo)
