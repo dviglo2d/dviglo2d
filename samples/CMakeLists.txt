@@ -1,7 +1,7 @@
 # Copyright (c) the Dviglo project
 # License: MIT
 
-if(DV_IS_SUBPROJECT)
+if(dv_is_subproject)
     return()
 endif()
 

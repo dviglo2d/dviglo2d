@@ -10,9 +10,9 @@ project(dviglo)
 
 # Определяем, подключён ли движок как поддиректория
 if(CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
-    set(DV_IS_SUBPROJECT OFF)
+    set(dv_is_subproject OFF)
 else()
-    set(DV_IS_SUBPROJECT ON)
+    set(dv_is_subproject ON)
 endif()
 
 include(cmake/common.cmake)
