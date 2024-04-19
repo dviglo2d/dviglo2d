@@ -27,6 +27,8 @@ public:
 
     SDL_Window* window() const { return window_; }
     SDL_GLContext gl_context() const { return gl_context_; }
+
+    glm::ivec2 get_size_in_pixels() const;
 };
 
 #define DV_OS_WINDOW (dviglo::OsWindow::instance())

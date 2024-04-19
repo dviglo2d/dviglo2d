@@ -12,6 +12,7 @@
 #include <cassert>
 #include <format>
 
+using namespace glm;
 using namespace std;
 
 
@@ -110,6 +111,13 @@ OsWindow::~OsWindow()
         SDL_DestroyWindow(window_);
 
     DV_LOG->write_debug("OsWindow destructed");
+}
+
+ivec2 OsWindow::get_size_in_pixels() const
+{
+    ivec2 ret;
+    SDL_GetWindowSizeInPixels(window_, &ret.x, &ret.y);
+    return ret;
 }
 
 } // namespace dviglo
