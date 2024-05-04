@@ -36,7 +36,28 @@
 extern "C" {
 #endif
 
-#ifndef SDL_ASSERT_LEVEL
+#ifdef SDL_WIKI_DOCUMENTATION_SECTION
+
+/**
+ * The level of assertion aggressiveness.
+ *
+ * This value changes depending on compiler options and other preprocessor
+ * defines.
+ *
+ * It is currently one of the following values, but future SDL releases might
+ * add more:
+ *
+ * - 0: All SDL assertion macros are disabled.
+ * - 1: Release settings: SDL_assert disabled, SDL_assert_release enabled.
+ * - 2: Debug settings: SDL_assert and SDL_assert_release enabled.
+ * - 3: Paranoid settings: All SDL assertion macros enabled, including
+ *   SDL_assert_paranoid.
+ *
+ * \since This macro is available since SDL 3.0.0.
+ */
+#define SDL_ASSERT_LEVEL SomeNumberBasedOnVariousFactors
+
+#elif !defined(SDL_ASSERT_LEVEL)
 #ifdef SDL_DEFAULT_ASSERT_LEVEL
 #define SDL_ASSERT_LEVEL SDL_DEFAULT_ASSERT_LEVEL
 #elif defined(_DEBUG) || defined(DEBUG) || \
@@ -45,7 +66,7 @@ extern "C" {
 #else
 #define SDL_ASSERT_LEVEL 1
 #endif
-#endif /* SDL_ASSERT_LEVEL */
+#endif
 
 #ifdef SDL_WIKI_DOCUMENTATION_SECTION
 
@@ -55,9 +76,9 @@ extern "C" {
  * This allows an app to programmatically halt ("break") the debugger as if it
  * had hit a breakpoint, allowing the developer to examine program state, etc.
  *
- * This is a macro and not first class functions so that the debugger breaks
- * on the source code line that used SDL_TriggerBreakpoint and not in some
- * random guts of SDL. SDL_assert uses this macro for the same reason.
+ * This is a macro--not a function--so that the debugger breaks on the source
+ * code line that used SDL_TriggerBreakpoint and not in some random guts of
+ * SDL. SDL_assert uses this macro for the same reason.
  *
  * If the program is not running under a debugger, SDL_TriggerBreakpoint will
  * likely terminate the app, possibly without warning. If the current platform
@@ -68,7 +89,7 @@ extern "C" {
  *
  * \since This macro is available since SDL 3.0.0.
  */
-#define SDL_TriggerBreakpoint() __asm__ __volatile__ ( "int $3\n\t" )
+#define SDL_TriggerBreakpoint() TriggerABreakpointInAPlatformSpecificManner
 
 #elif defined(_MSC_VER)
     /* Don't include intrin.h here because it contains C++ code */
@@ -166,19 +187,19 @@ typedef enum SDL_AssertState
  */
 typedef struct SDL_AssertData
 {
-    SDL_bool always_ignore;
-    unsigned int trigger_count;
-    const char *condition;
-    const char *filename;
-    int linenum;
-    const char *function;
-    const struct SDL_AssertData *next;
+    SDL_bool always_ignore;  /**< SDL_TRUE if app should always continue when assertion is triggered. */
+    unsigned int trigger_count; /**< Number of times this assertion has been triggered. */
+    const char *condition;  /**< A string of this assert's test code. */
+    const char *filename;  /**< The source file where this assert lives. */
+    int linenum;  /**< The line in `filename` where this assert lives. */
+    const char *function;  /**< The name of the function where this assert lives. */
+    const struct SDL_AssertData *next;  /**< next item in the linked list. */
 } SDL_AssertData;
 
 /**
  * Never call this directly.
  *
- * Use the SDL_assert* macros.
+ * Use the SDL_assert* macros instead.
  *
  * \param data assert data structure
  * \param func function name
@@ -233,7 +254,6 @@ extern DECLSPEC SDL_AssertState SDLCALL SDL_ReportAssertion(SDL_AssertData *data
         } \
     } while (SDL_NULL_WHILE_LOOP_CONDITION)
 
-/* Enable various levels of assertions. */
 #ifdef SDL_WIKI_DOCUMENTATION_SECTION
 
 /**
@@ -333,6 +353,7 @@ extern DECLSPEC SDL_AssertState SDLCALL SDL_ReportAssertion(SDL_AssertData *data
 #define SDL_assert_paranoid(condition) SDL_disabled_assert(condition)
 #endif
 
+/* Enable various levels of assertions. */
 #if SDL_ASSERT_LEVEL == 0   /* assertions disabled */
 #   define SDL_assert(condition) SDL_disabled_assert(condition)
 #   define SDL_assert_release(condition) SDL_disabled_assert(condition)
@@ -385,6 +406,8 @@ extern DECLSPEC SDL_AssertState SDLCALL SDL_ReportAssertion(SDL_AssertData *data
  *             current assertion
  * \param userdata what was passed as `userdata` to SDL_SetAssertionHandler()
  * \returns an SDL_AssertState value indicating how to handle the failure.
+ *
+ * \since This datatype is available since SDL 3.0.0.
  */
 typedef SDL_AssertState (SDLCALL *SDL_AssertionHandler)(
                                  const SDL_AssertData* data, void* userdata);

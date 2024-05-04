@@ -196,6 +196,7 @@ extern DECLSPEC const char *SDLCALL SDL_GetRenderDriver(int index);
 /**
  * Create a window and default renderer.
  *
+ * \param title the title of the window, in UTF-8 encoding
  * \param width the width of the window
  * \param height the height of the window
  * \param window_flags the flags used to create the window (see
@@ -210,7 +211,7 @@ extern DECLSPEC const char *SDLCALL SDL_GetRenderDriver(int index);
  * \sa SDL_CreateRenderer
  * \sa SDL_CreateWindow
  */
-extern DECLSPEC int SDLCALL SDL_CreateWindowAndRenderer(int width, int height, SDL_WindowFlags window_flags, SDL_Window **window, SDL_Renderer **renderer);
+extern DECLSPEC int SDLCALL SDL_CreateWindowAndRenderer(const char *title, int width, int height, SDL_WindowFlags window_flags, SDL_Window **window, SDL_Renderer **renderer);
 
 /**
  * Create a 2D rendering context for a window.
@@ -493,9 +494,6 @@ extern DECLSPEC int SDLCALL SDL_GetCurrentRenderOutputSize(SDL_Renderer *rendere
 
 /**
  * Create a texture for a rendering context.
- *
- * You can set the texture scaling method by setting
- * `SDL_HINT_RENDER_SCALE_QUALITY` before creating the texture.
  *
  * \param renderer the rendering context
  * \param format one of the enumerated values in SDL_PixelFormatEnum
@@ -2033,10 +2031,6 @@ extern DECLSPEC void SDLCALL SDL_DestroyTexture(SDL_Texture *texture);
  *
  * If `renderer` is NULL, this function will return immediately after setting
  * the SDL error message to "Invalid renderer". See SDL_GetError().
- *
- * Note that destroying a window implicitly destroys the associated renderer,
- * so this should not be called if the window associated with the renderer has
- * already been destroyed.
  *
  * \param renderer the rendering context
  *

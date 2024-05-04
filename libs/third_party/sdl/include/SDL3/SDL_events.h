@@ -313,8 +313,6 @@ typedef struct SDL_KeyboardEvent
     SDL_Keysym keysym;  /**< The key that was pressed or released */
 } SDL_KeyboardEvent;
 
-#define SDL_TEXTEDITINGEVENT_TEXT_SIZE 64
-
 /**
  * Keyboard text editing event structure (event.edit.*)
  *
@@ -348,7 +346,7 @@ typedef struct SDL_TextInputEvent
     Uint32 reserved;
     Uint64 timestamp;   /**< In nanoseconds, populated using SDL_GetTicksNS() */
     SDL_WindowID windowID; /**< The window with keyboard focus, if any */
-    char *text;         /**< The input text */
+    char *text;         /**< The input text, UTF-8 encoded */
 } SDL_TextInputEvent;
 
 /**
@@ -641,9 +639,6 @@ typedef struct SDL_CameraDeviceEvent
     Uint32 reserved;
     Uint64 timestamp;   /**< In nanoseconds, populated using SDL_GetTicksNS() */
     SDL_CameraDeviceID which;       /**< SDL_CameraDeviceID for the device being added or removed or changing */
-    Uint8 padding1;
-    Uint8 padding2;
-    Uint8 padding3;
 } SDL_CameraDeviceEvent;
 
 /**
@@ -666,8 +661,6 @@ typedef struct SDL_TouchFingerEvent
     SDL_WindowID windowID; /**< The window underneath the finger, if any */
 } SDL_TouchFingerEvent;
 
-
-#define SDL_DROPEVENT_DATA_SIZE 64
 
 /**
  * Pressure-sensitive pen touched or stopped touching surface (event.ptip.*)
@@ -903,7 +896,7 @@ SDL_COMPILE_TIME_ASSERT(SDL_Event, sizeof(SDL_Event) == sizeof(((SDL_Event *)NUL
 extern DECLSPEC void SDLCALL SDL_PumpEvents(void);
 
 /* @{ */
-typedef enum SDL_eventaction
+typedef enum SDL_EventAction
 {
     SDL_ADDEVENT,
     SDL_PEEKEVENT,

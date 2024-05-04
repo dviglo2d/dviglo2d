@@ -45,19 +45,20 @@ extern "C" {
 typedef Uint32 SDL_DisplayID;
 typedef Uint32 SDL_WindowID;
 
-/*
- *  Global video properties.
+/* Global video properties... */
+
+/**
+ * The pointer to the global `wl_display` object used by the Wayland video
+ * backend.
  *
- *  - `SDL_PROP_GLOBAL_VIDEO_WAYLAND_WL_DISPLAY_POINTER`: the pointer to
- *    the global `wl_display` object used by the Wayland video backend. Can be
- *    set before the video subsystem is initialized to import an external
- *    `wl_display` object from an application or toolkit for use in SDL, or
- *    read after initialization to export the `wl_display` used by the
- *    Wayland video backend. Setting this property after the video subsystem
- *    has been initialized has no effect, and reading it when the video
- *    subsystem is uninitialized will either return the user provided value,
- *    if one was set prior to initialization, or NULL. See
- *    docs/README-wayland.md for more information.
+ * Can be set before the video subsystem is initialized to import an external
+ * `wl_display` object from an application or toolkit for use in SDL, or read
+ * after initialization to export the `wl_display` used by the Wayland video
+ * backend. Setting this property after the video subsystem has been
+ * initialized has no effect, and reading it when the video subsystem is
+ * uninitialized will either return the user provided value, if one was set
+ * prior to initialization, or NULL. See docs/README-wayland.md for more
+ * information.
  */
 #define SDL_PROP_GLOBAL_VIDEO_WAYLAND_WL_DISPLAY_POINTER "SDL.video.wayland.wl_display"
 
@@ -144,17 +145,19 @@ typedef Uint32 SDL_WindowFlags;
 #define SDL_WINDOW_INPUT_FOCUS          0x00000200U /**< window has input focus */
 #define SDL_WINDOW_MOUSE_FOCUS          0x00000400U /**< window has mouse focus */
 #define SDL_WINDOW_EXTERNAL             0x00000800U /**< window not created by SDL */
+#define SDL_WINDOW_MODAL                0x00001000U /**< window is modal */
 #define SDL_WINDOW_HIGH_PIXEL_DENSITY   0x00002000U /**< window uses high pixel density back buffer if possible */
 #define SDL_WINDOW_MOUSE_CAPTURE        0x00004000U /**< window has mouse captured (unrelated to MOUSE_GRABBED) */
 #define SDL_WINDOW_ALWAYS_ON_TOP        0x00008000U /**< window should always be above others */
 #define SDL_WINDOW_UTILITY              0x00020000U /**< window should be treated as a utility window, not showing in the task bar and window list */
-#define SDL_WINDOW_TOOLTIP              0x00040000U /**< window should be treated as a tooltip */
-#define SDL_WINDOW_POPUP_MENU           0x00080000U /**< window should be treated as a popup menu */
+#define SDL_WINDOW_TOOLTIP              0x00040000U /**< window should be treated as a tooltip and does not get mouse or keyboard focus, requires a parent window */
+#define SDL_WINDOW_POPUP_MENU           0x00080000U /**< window should be treated as a popup menu, requires a parent window */
 #define SDL_WINDOW_KEYBOARD_GRABBED     0x00100000U /**< window has grabbed keyboard input */
 #define SDL_WINDOW_VULKAN               0x10000000U /**< window usable for Vulkan surface */
 #define SDL_WINDOW_METAL                0x20000000U /**< window usable for Metal view */
 #define SDL_WINDOW_TRANSPARENT          0x40000000U /**< window with transparent buffer */
 #define SDL_WINDOW_NOT_FOCUSABLE        0x80000000U /**< window should not be focusable */
+
 
 /**
  * Used to indicate that you don't care what the window position is.
@@ -906,13 +909,15 @@ extern DECLSPEC SDL_Window *SDLCALL SDL_CreatePopupWindow(SDL_Window *parent, in
  *   with Metal rendering
  * - `SDL_PROP_WINDOW_CREATE_MINIMIZED_BOOLEAN`: true if the window should
  *   start minimized
+ * - `SDL_PROP_WINDOW_CREATE_MODAL_BOOLEAN`: true if the window is modal to
+ *   its parent
  * - `SDL_PROP_WINDOW_CREATE_MOUSE_GRABBED_BOOLEAN`: true if the window starts
  *   with grabbed mouse focus
  * - `SDL_PROP_WINDOW_CREATE_OPENGL_BOOLEAN`: true if the window will be used
  *   with OpenGL rendering
  * - `SDL_PROP_WINDOW_CREATE_PARENT_POINTER`: an SDL_Window that will be the
- *   parent of this window, required for windows with the "toolip" and "menu"
- *   properties
+ *   parent of this window, required for windows with the "toolip", "menu",
+ *   and "modal" properties
  * - `SDL_PROP_WINDOW_CREATE_RESIZABLE_BOOLEAN`: true if the window should be
  *   resizable
  * - `SDL_PROP_WINDOW_CREATE_TITLE_STRING`: the title of the window, in UTF-8
@@ -957,13 +962,14 @@ extern DECLSPEC SDL_Window *SDLCALL SDL_CreatePopupWindow(SDL_Window *parent, in
  * - `SDL_PROP_WINDOW_CREATE_WAYLAND_SURFACE_ROLE_CUSTOM_BOOLEAN` - true if
  *   the application wants to use the Wayland surface for a custom role and
  *   does not want it attached to an XDG toplevel window. See
- *   docs/README-wayland.md for more information on using custom surfaces.
- * - `SDL_PROP_WINDOW_CREATE_WAYLAND_CREATE_EGL_WINDOW_BOOLEAN - true if the
+ *   [README/wayland](README/wayland) for more information on using custom
+ *   surfaces.
+ * - `SDL_PROP_WINDOW_CREATE_WAYLAND_CREATE_EGL_WINDOW_BOOLEAN` - true if the
  *   application wants an associated `wl_egl_window` object to be created,
  *   even if the window does not have the OpenGL property or flag set.
  * - `SDL_PROP_WINDOW_CREATE_WAYLAND_WL_SURFACE_POINTER` - the wl_surface
  *   associated with the window, if you want to wrap an existing window. See
- *   docs/README-wayland.md for more information.
+ *   [README/wayland](README/wayland) for more information.
  *
  * These are additional supported properties on Windows:
  *
@@ -980,7 +986,7 @@ extern DECLSPEC SDL_Window *SDLCALL SDL_CreatePopupWindow(SDL_Window *parent, in
  * The window is implicitly shown if the "hidden" property is not set.
  *
  * Windows with the "tooltip" and "menu" properties are popup windows and have
- * the behaviors and guidelines outlined in `SDL_CreatePopupWindow()`.
+ * the behaviors and guidelines outlined in SDL_CreatePopupWindow().
  *
  * \param props the properties to use
  * \returns the window that was created or NULL on failure; call
@@ -1006,6 +1012,7 @@ extern DECLSPEC SDL_Window *SDLCALL SDL_CreateWindowWithProperties(SDL_Propertie
 #define SDL_PROP_WINDOW_CREATE_MENU_BOOLEAN                        "menu"
 #define SDL_PROP_WINDOW_CREATE_METAL_BOOLEAN                       "metal"
 #define SDL_PROP_WINDOW_CREATE_MINIMIZED_BOOLEAN                   "minimized"
+#define SDL_PROP_WINDOW_CREATE_MODAL_BOOLEAN                       "modal"
 #define SDL_PROP_WINDOW_CREATE_MOUSE_GRABBED_BOOLEAN               "mouse_grabbed"
 #define SDL_PROP_WINDOW_CREATE_OPENGL_BOOLEAN                      "opengl"
 #define SDL_PROP_WINDOW_CREATE_PARENT_POINTER                      "parent"
@@ -1171,7 +1178,7 @@ extern DECLSPEC SDL_Window *SDLCALL SDL_GetWindowParent(SDL_Window *window);
  * \since This function is available since SDL 3.0.0.
  *
  * \sa SDL_GetProperty
- * \sa SDL_SetProperty
+ * \sa SDL_GetNumberProperty
  */
 extern DECLSPEC SDL_PropertiesID SDLCALL SDL_GetWindowProperties(SDL_Window *window);
 
@@ -1998,7 +2005,14 @@ extern DECLSPEC int SDLCALL SDL_SetWindowOpacity(SDL_Window *window, float opaci
 extern DECLSPEC int SDLCALL SDL_GetWindowOpacity(SDL_Window *window, float *out_opacity);
 
 /**
- * Set the window as a modal for another window.
+ * Set the window as a modal to a parent window.
+ *
+ * If the window is already modal to an existing window, it will be reparented
+ * to the new owner. Setting the parent window to null unparents the modal
+ * window and removes modal status.
+ *
+ * Setting a window as modal to a parent that is a descendent of the modal
+ * window results in undefined behavior.
  *
  * \param modal_window the window that should be set modal
  * \param parent_window the parent window for the modal window
@@ -2179,7 +2193,7 @@ extern DECLSPEC int SDLCALL SDL_FlashWindow(SDL_Window *window, SDL_FlashOperati
 /**
  * Destroy a window.
  *
- * If the window has an associated SDL_Renderer, it will be implicitly
+ * Any popups or modal windows owned by the window will be recursively
  * destroyed as well.
  *
  * If `window` is NULL, this function will return immediately after setting
@@ -2232,7 +2246,8 @@ extern DECLSPEC int SDLCALL SDL_EnableScreenSaver(void);
  * If you disable the screensaver, it is automatically re-enabled when SDL
  * quits.
  *
- * The screensaver is disabled by default.
+ * The screensaver is disabled by default, but this may by changed by
+ * SDL_HINT_VIDEO_ALLOW_SCREENSAVER.
  *
  * \returns 0 on success or a negative error code on failure; call
  *          SDL_GetError() for more information.

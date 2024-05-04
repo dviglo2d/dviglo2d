@@ -354,7 +354,6 @@
 #define KMOD_NUM SDL_KMOD_NUM
 #define KMOD_RALT SDL_KMOD_RALT
 #define KMOD_RCTRL SDL_KMOD_RCTRL
-#define KMOD_RESERVED SDL_KMOD_RESERVED
 #define KMOD_RGUI SDL_KMOD_RGUI
 #define KMOD_RSHIFT SDL_KMOD_RSHIFT
 #define KMOD_SCROLL SDL_KMOD_SCROLL
@@ -493,6 +492,7 @@
 #define SDL_SensorUpdate SDL_UpdateSensors
 
 /* ##SDL_stdinc.h */
+#define SDL_TABLESIZE SDL_arraysize
 #define SDL_strtokr SDL_strtok_r
 
 /* ##SDL_surface.h */
@@ -862,7 +862,6 @@
 #define KMOD_NUM KMOD_NUM_renamed_SDL_KMOD_NUM
 #define KMOD_RALT KMOD_RALT_renamed_SDL_KMOD_RALT
 #define KMOD_RCTRL KMOD_RCTRL_renamed_SDL_KMOD_RCTRL
-#define KMOD_RESERVED KMOD_RESERVED_renamed_SDL_KMOD_RESERVED
 #define KMOD_RGUI KMOD_RGUI_renamed_SDL_KMOD_RGUI
 #define KMOD_RSHIFT KMOD_RSHIFT_renamed_SDL_KMOD_RSHIFT
 #define KMOD_SCROLL KMOD_SCROLL_renamed_SDL_KMOD_SCROLL
@@ -1001,6 +1000,7 @@
 #define SDL_SensorUpdate SDL_SensorUpdate_renamed_SDL_UpdateSensors
 
 /* ##SDL_stdinc.h */
+#define SDL_TABLESIZE SDL_TABLESIZE_renamed_SDL_arraysize
 #define SDL_strtokr SDL_strtokr_renamed_SDL_strtok_r
 
 /* ##SDL_surface.h */

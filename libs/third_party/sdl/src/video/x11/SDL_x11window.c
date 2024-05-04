@@ -138,6 +138,7 @@ void X11_SetNetWMState(SDL_VideoDevice *_this, Window xwindow, SDL_WindowFlags f
     Atom _NET_WM_STATE_ABOVE = videodata->_NET_WM_STATE_ABOVE;
     Atom _NET_WM_STATE_SKIP_TASKBAR = videodata->_NET_WM_STATE_SKIP_TASKBAR;
     Atom _NET_WM_STATE_SKIP_PAGER = videodata->_NET_WM_STATE_SKIP_PAGER;
+    Atom _NET_WM_STATE_MODAL = videodata->_NET_WM_STATE_MODAL;
     Atom atoms[16];
     int count = 0;
 
@@ -166,6 +167,9 @@ void X11_SetNetWMState(SDL_VideoDevice *_this, Window xwindow, SDL_WindowFlags f
     }
     if (flags & SDL_WINDOW_FULLSCREEN) {
         atoms[count++] = _NET_WM_STATE_FULLSCREEN;
+    }
+    if (flags & SDL_WINDOW_MODAL) {
+        atoms[count++] = _NET_WM_STATE_MODAL;
     }
 
     SDL_assert(count <= SDL_arraysize(atoms));
@@ -875,7 +879,7 @@ static int X11_CatchAnyError(Display *d, XErrorEvent *e)
 
 /* Wait a brief time, or not, to see if the window manager decided to move/resize the window.
  * Send MOVED and RESIZED window events */
-static int X11_SyncWindowTimeout(SDL_VideoDevice *_this, SDL_Window *window, int param_timeout)
+static int X11_SyncWindowTimeout(SDL_VideoDevice *_this, SDL_Window *window, Uint64 param_timeout)
 {
     SDL_WindowData *data = window->driverdata;
     Display *display = data->videodata->display;
@@ -888,7 +892,7 @@ static int X11_SyncWindowTimeout(SDL_VideoDevice *_this, SDL_Window *window, int
     prev_handler = X11_XSetErrorHandler(X11_CatchAnyError);
 
     if (param_timeout) {
-        timeout = SDL_GetTicks() + param_timeout;
+        timeout = SDL_GetTicksNS() + param_timeout;
     }
 
     while (SDL_TRUE) {
@@ -916,7 +920,7 @@ static int X11_SyncWindowTimeout(SDL_VideoDevice *_this, SDL_Window *window, int
             force_exit = SDL_TRUE;
         }
 
-        if (SDL_GetTicks() >= timeout) {
+        if (SDL_GetTicksNS() >= timeout) {
             /* Timed out without the expected values. Update the requested data so future sync calls won't block. */
             data->expected.x = window->x;
             data->expected.y = window->y;
@@ -1204,10 +1208,43 @@ int X11_SetWindowOpacity(SDL_VideoDevice *_this, SDL_Window *window, float opaci
 int X11_SetWindowModalFor(SDL_VideoDevice *_this, SDL_Window *modal_window, SDL_Window *parent_window)
 {
     SDL_WindowData *data = modal_window->driverdata;
-    SDL_WindowData *parent_data = parent_window->driverdata;
-    Display *display = data->videodata->display;
+    SDL_WindowData *parent_data = parent_window ? parent_window->driverdata : NULL;
+    SDL_VideoData *video_data = _this->driverdata;
+    SDL_DisplayData *displaydata = SDL_GetDisplayDriverDataForWindow(modal_window);
+    Display *display = video_data->display;
+    Uint32 flags = modal_window->flags;
+    Atom _NET_WM_STATE = data->videodata->_NET_WM_STATE;
+    Atom _NET_WM_STATE_MODAL = data->videodata->_NET_WM_STATE_MODAL;
 
-    X11_XSetTransientForHint(display, data->xwindow, parent_data->xwindow);
+    if (parent_data) {
+        flags |= SDL_WINDOW_MODAL;
+        X11_XSetTransientForHint(display, data->xwindow, parent_data->xwindow);
+    } else {
+        flags &= ~SDL_WINDOW_MODAL;
+        X11_XDeleteProperty(display, data->xwindow, video_data->WM_TRANSIENT_FOR);
+    }
+
+    if (X11_IsWindowMapped(_this, modal_window)) {
+        XEvent e;
+
+        SDL_zero(e);
+        e.xany.type = ClientMessage;
+        e.xclient.message_type = _NET_WM_STATE;
+        e.xclient.format = 32;
+        e.xclient.window = data->xwindow;
+        e.xclient.data.l[0] =
+            parent_data ? _NET_WM_STATE_ADD : _NET_WM_STATE_REMOVE;
+        e.xclient.data.l[1] = _NET_WM_STATE_MODAL;
+        e.xclient.data.l[3] = 0l;
+
+        X11_XSendEvent(display, RootWindow(display, displaydata->screen), 0,
+                       SubstructureNotifyMask | SubstructureRedirectMask, &e);
+    } else {
+        X11_SetNetWMState(_this, data->xwindow, flags);
+    }
+
+    X11_XFlush(display);
+
     return 0;
 }
 
@@ -1369,18 +1406,23 @@ void X11_ShowWindow(SDL_VideoDevice *_this, SDL_Window *window)
     X11_XSync(display, False);
     X11_PumpEvents(_this);
 
-    int x = data->last_xconfigure.x;
-    int y = data->last_xconfigure.y;
-    SDL_GlobalToRelativeForWindow(data->window, x, y, &x, &y);
+    /* If a configure event was received (type is non-zero), send the final window size and coordinates. */
+    if (data->last_xconfigure.type) {
+        int x = data->last_xconfigure.x;
+        int y = data->last_xconfigure.y;
+        SDL_GlobalToRelativeForWindow(data->window, x, y, &x, &y);
 
-    /* If the borders appeared, this happened automatically in the event system, otherwise, set the position now. */
-    if (data->disable_size_position_events && (window->x != x || window->y != y)) {
-        data->pending_operation = X11_PENDING_OP_MOVE;
-        X11_XMoveWindow(display, data->xwindow, window->x, window->y);
+        /* If the borders appeared, this happened automatically in the event system, otherwise, set the position now. */
+        if (data->disable_size_position_events && (window->x != x || window->y != y)) {
+            data->pending_operation = X11_PENDING_OP_MOVE;
+            X11_XMoveWindow(display, data->xwindow, window->x, window->y);
+        }
+
+        SDL_SendWindowEvent(window, SDL_EVENT_WINDOW_RESIZED, data->last_xconfigure.width, data->last_xconfigure.height);
+        SDL_SendWindowEvent(window, SDL_EVENT_WINDOW_MOVED, x, y);
     }
+
     data->disable_size_position_events = SDL_FALSE;
-    SDL_SendWindowEvent(window, SDL_EVENT_WINDOW_RESIZED, data->last_xconfigure.width, data->last_xconfigure.height);
-    SDL_SendWindowEvent(window, SDL_EVENT_WINDOW_MOVED, x, y);
 }
 
 void X11_HideWindow(SDL_VideoDevice *_this, SDL_Window *window)
@@ -2024,10 +2066,22 @@ void X11_ShowWindowSystemMenu(SDL_Window *window, int x, int y)
 
 int X11_SyncWindow(SDL_VideoDevice *_this, SDL_Window *window)
 {
+    const Uint64 current_time = SDL_GetTicksNS();
+    Uint64 timeout = 0;
+
+    /* Allow time for any pending mode switches to complete. */
+    for (int i = 0; i < _this->num_displays; ++i) {
+        if (_this->displays[i]->driverdata->mode_switch_deadline_ns &&
+            current_time < _this->displays[i]->driverdata->mode_switch_deadline_ns) {
+            timeout = SDL_max(_this->displays[i]->driverdata->mode_switch_deadline_ns - current_time, timeout);
+        }
+    }
+
     /* 100ms is fine for most cases, but, for some reason, maximizing
      * a window can take a very long time.
      */
-    const int timeout = window->driverdata->pending_operation & SDL_WINDOW_MAXIMIZED ? 1000 : 100;
+    timeout += window->driverdata->pending_operation & X11_PENDING_OP_MAXIMIZE ? SDL_MS_TO_NS(1000) : SDL_MS_TO_NS(100);
+
     return X11_SyncWindowTimeout(_this, window, timeout);
 }
 
