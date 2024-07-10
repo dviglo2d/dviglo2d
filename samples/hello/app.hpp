@@ -3,8 +3,6 @@
 
 #pragma once
 
-//#include "ecs/systems/s_test.hpp"
-
 #include <dviglo/graphics/sprite_batch.hpp>
 #include <dviglo/main/application.hpp>
 
@@ -16,9 +14,6 @@ using namespace std;
 
 class App : public Application
 {
-    //entt::registry ecs_;
-    //STest s_test_;
-
     Texture* texture_ = nullptr;
     unique_ptr<SpriteBatch> sprite_batch_;
     unique_ptr<SpriteFont> font_;
@@ -28,8 +23,6 @@ class App : public Application
 public:
     App(const vector<StrUtf8>& args);
     ~App() override;
-
-    //entt::registry& ecs() { return ecs_; }
 
     void setup() override;
     void start() override;

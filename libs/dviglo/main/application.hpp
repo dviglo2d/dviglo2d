@@ -5,7 +5,6 @@
 
 #include "../fs/log.hpp"
 
-#include <entt/entt.hpp>
 #include <SDL3/SDL.h>
 
 

@@ -37,24 +37,6 @@ void App::start()
     sprite_batch_ = make_unique<SpriteBatch>();
     font_ = make_unique<SpriteFont>(base_path + "samples_data/fonts/ubuntu-r_20_simple.fnt");
 
-    /*
-    entt::entity ent1 = ecs_.create();
-
-    CName& ent1_name = ecs_.emplace<CName>(ent1);
-    ent1_name.value = "entity 1";
-
-    CCounter& ent1_counter = ecs_.emplace<CCounter>(ent1);
-    ent1_counter.value = 10;
-
-    entt::entity ent2 = ecs_.create();
-
-    CName& ent2_name = ecs_.emplace<CName>(ent2);
-    ent2_name.value = "entity 2";
-
-    CCounter& ent2_counter = ecs_.emplace<CCounter>(ent2);
-    ent2_counter.value = 100;
-    */
-
     StrUtf8 music_path = base_path + "samples_data/audio/in_the_field.mp3";
     music_ = Mix_LoadMUS(music_path.c_str());
 
@@ -121,8 +103,6 @@ void App::update(u64 ns)
         scale_sign = 1.f;
 
     scale += scale_sign * ns * 0.0000000005f;
-
-    //s_test_.update(ecs_, ns);
 }
 
 void App::draw()
