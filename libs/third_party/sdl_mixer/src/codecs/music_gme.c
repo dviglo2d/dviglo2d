@@ -218,6 +218,7 @@ static void *GME_CreateFromIO(struct SDL_IOStream *src, SDL_bool closeio)
     music->tempo = 1.0;
     music->gain = 1.0;
 
+    SDL_zero(srcspec);
     srcspec.format = SDL_AUDIO_S16;
     srcspec.channels = 2;
     srcspec.freq = music_spec.freq;
@@ -230,7 +231,6 @@ static void *GME_CreateFromIO(struct SDL_IOStream *src, SDL_bool closeio)
     music->buffer_size = 4096/*music_spec.samples*/ * sizeof(Sint16) * 2/*channels*/ * music_spec.channels;
     music->buffer = SDL_malloc(music->buffer_size);
     if (!music->buffer) {
-        SDL_OutOfMemory();
         GME_Delete(music);
         return NULL;
     }
@@ -246,7 +246,6 @@ static void *GME_CreateFromIO(struct SDL_IOStream *src, SDL_bool closeio)
             return NULL;
         }
     } else {
-        SDL_OutOfMemory();
         GME_Delete(music);
         return NULL;
     }

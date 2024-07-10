@@ -99,7 +99,7 @@ SDL_X11_SYM(Status,XInitThreads,(void),(),return)
 SDL_X11_SYM(int,XPeekEvent,(Display* a,XEvent* b),(a,b),return)
 SDL_X11_SYM(int,XPending,(Display* a),(a),return)
 SDL_X11_SYM(int,XPutImage,(Display* a,Drawable b,GC c,XImage* d,int e,int f,int g,int h,unsigned int i,unsigned int j),(a,b,c,d,e,f,g,h,i,j),return)
-SDL_X11_SYM(int,XQueryKeymap,(Display* a,char *b),(a,b),return)
+SDL_X11_SYM(int,XQueryKeymap,(Display* a,char b[32]),(a,b),return)
 SDL_X11_SYM(Bool,XQueryPointer,(Display* a,Window b,Window* c,Window* d,int* e,int* f,int* g,int* h,unsigned int* i),(a,b,c,d,e,f,g,h,i),return)
 SDL_X11_SYM(int,XRaiseWindow,(Display* a,Window b),(a,b),return)
 SDL_X11_SYM(int,XReparentWindow,(Display* a,Window b,Window c,int d,int e),(a,b,c,d,e),return)
@@ -164,7 +164,6 @@ SDL_X11_SYM(XrmDatabase,XrmGetStringDatabase,(char *data),(data),)
 SDL_X11_SYM(void,XrmDestroyDatabase,(XrmDatabase db),(db),)
 SDL_X11_SYM(Bool,XrmGetResource,(XrmDatabase db, char* str_name, char* str_class, char **str_type_return, XrmValue *),(db, str_name, str_class,str_type_return,value_return),)
 
-
 #ifdef SDL_VIDEO_DRIVER_X11_XFIXES
 SDL_X11_MODULE(XFIXES)
 SDL_X11_SYM(PointerBarrier, XFixesCreatePointerBarrier, (Display* a, Window b, int c, int d, int e, int f, int g, int h, int *i),(a,b,c,d,e,f,g,h,i),return)
@@ -179,12 +178,12 @@ SDL_X11_SYM(Bool,XGetEventData,(Display* a,XGenericEventCookie* b),(a,b),return)
 SDL_X11_SYM(void,XFreeEventData,(Display* a,XGenericEventCookie* b),(a,b),)
 #endif
 
-#ifdef SDL_VIDEO_DRIVER_X11_HAS_XKBKEYCODETOKEYSYM
+#ifdef SDL_VIDEO_DRIVER_X11_HAS_XKBLOOKUPKEYSYM
 SDL_X11_SYM(Bool,XkbQueryExtension,(Display* a,int * b,int * c,int * d,int * e, int *f),(a,b,c,d,e,f),return)
 #if NeedWidePrototypes
-SDL_X11_SYM(KeySym,XkbKeycodeToKeysym,(Display* a,unsigned int b,int c,int d),(a,b,c,d),return)
+SDL_X11_SYM(Bool,XkbLookupKeySym,(Display* a, unsigned int b, unsigned int c, unsigned int* d, KeySym* e),(a,b,c,d,e),return)
 #else
-SDL_X11_SYM(KeySym,XkbKeycodeToKeysym,(Display* a,KeyCode b,int c,int d),(a,b,c,d),return)
+SDL_X11_SYM(Bool,XkbLookupKeySym,(Display* a, KeyCode b, unsigned int c, unsigned int* d, KeySym* e),(a,b,c,d,e),return)
 #endif
 SDL_X11_SYM(Status,XkbGetState,(Display* a,unsigned int b,XkbStatePtr c),(a,b,c),return)
 SDL_X11_SYM(Status,XkbGetUpdatedMap,(Display* a,unsigned int b,XkbDescPtr c),(a,b,c),return)

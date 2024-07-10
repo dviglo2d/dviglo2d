@@ -227,7 +227,7 @@ SDL_PenSubtype SDL_GetPenType(SDL_PenID instance_id)
     return result;
 }
 
-Uint32 SDL_GetPenCapabilities(SDL_PenID instance_id, SDL_PenCapabilityInfo *info)
+SDL_PenCapabilityFlags SDL_GetPenCapabilities(SDL_PenID instance_id, SDL_PenCapabilityInfo *info)
 {
     Uint32 result;
     SDL_LOAD_LOCK_PEN(pen, instance_id, 0u);
@@ -629,6 +629,11 @@ int SDL_SendPenTipEvent(Uint64 timestamp, SDL_PenID instance_id, Uint8 state)
         mouse_button = pen->last_mouse_button;
         if (mouse_button == 0) {
             mouse_button = SDL_BUTTON_LEFT; /* No current button? Instead report left mouse button */
+        }
+        /* A button may get released while drawing, but SDL_SendPenButton doesn't reset last_mouse_button
+           while touching the surface, so release and reset last_mouse_button on pen tip release */
+        if (pen->last.buttons == 0 && state == SDL_RELEASED) {
+            pen->last_mouse_button = 0;
         }
     }
 

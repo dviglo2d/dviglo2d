@@ -64,7 +64,7 @@ typedef struct CameraFormatAddData
     int allocated_specs;
 } CameraFormatAddData;
 
-int SDL_AddCameraFormat(CameraFormatAddData *data, SDL_PixelFormatEnum fmt, int w, int h, int interval_numerator, int interval_denominator);
+int SDL_AddCameraFormat(CameraFormatAddData *data, SDL_PixelFormat format, SDL_Colorspace colorspace, int w, int h, int framerate_numerator, int framerate_denominator);
 
 typedef struct SurfaceList
 {
@@ -204,6 +204,7 @@ typedef struct CameraBootStrap
 
 // Not all of these are available in a given build. Use #ifdefs, etc.
 extern CameraBootStrap DUMMYCAMERA_bootstrap;
+extern CameraBootStrap PIPEWIRECAMERA_bootstrap;
 extern CameraBootStrap V4L2_bootstrap;
 extern CameraBootStrap COREMEDIA_bootstrap;
 extern CameraBootStrap ANDROIDCAMERA_bootstrap;

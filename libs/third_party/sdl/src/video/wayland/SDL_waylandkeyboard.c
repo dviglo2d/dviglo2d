@@ -51,28 +51,16 @@ void Wayland_QuitKeyboard(SDL_VideoDevice *_this)
 #endif
 }
 
-void Wayland_StartTextInput(SDL_VideoDevice *_this)
+int Wayland_StartTextInput(SDL_VideoDevice *_this, SDL_Window *window)
 {
     SDL_VideoData *driverdata = _this->driverdata;
+    struct SDL_WaylandInput *input = driverdata->input;
 
     if (driverdata->text_input_manager) {
-        struct SDL_WaylandInput *input = driverdata->input;
         if (input && input->text_input) {
             const SDL_Rect *rect = &input->text_input->cursor_rect;
 
-            /* Don't re-enable if we're already enabled. */
-            if (input->text_input->is_enabled) {
-                return;
-            }
-
-            /* For some reason this has to be done twice, it appears to be a
-             * bug in mutter? Maybe?
-             * -flibit
-             */
             zwp_text_input_v3_enable(input->text_input->text_input);
-            zwp_text_input_v3_commit(input->text_input->text_input);
-            zwp_text_input_v3_enable(input->text_input->text_input);
-            zwp_text_input_v3_commit(input->text_input->text_input);
 
             /* Now that it's enabled, set the input properties */
             zwp_text_input_v3_set_content_type(input->text_input->text_input,
@@ -87,44 +75,54 @@ void Wayland_StartTextInput(SDL_VideoDevice *_this)
                                                        rect->h);
             }
             zwp_text_input_v3_commit(input->text_input->text_input);
-            input->text_input->is_enabled = SDL_TRUE;
         }
     }
+
+    if (input && input->xkb.compose_state) {
+        /* Reset compose state so composite and dead keys don't carry over */
+        WAYLAND_xkb_compose_state_reset(input->xkb.compose_state);
+    }
+
+    return Wayland_UpdateTextInputArea(_this, window);
 }
 
-void Wayland_StopTextInput(SDL_VideoDevice *_this)
+int Wayland_StopTextInput(SDL_VideoDevice *_this, SDL_Window *window)
 {
     SDL_VideoData *driverdata = _this->driverdata;
+    struct SDL_WaylandInput *input = driverdata->input;
 
     if (driverdata->text_input_manager) {
-        struct SDL_WaylandInput *input = driverdata->input;
         if (input && input->text_input) {
             zwp_text_input_v3_disable(input->text_input->text_input);
             zwp_text_input_v3_commit(input->text_input->text_input);
-            input->text_input->is_enabled = SDL_FALSE;
         }
     }
-
 #ifdef SDL_USE_IME
     else {
         SDL_IME_Reset();
     }
 #endif
+
+    if (input && input->xkb.compose_state) {
+        /* Reset compose state so composite and dead keys don't carry over */
+        WAYLAND_xkb_compose_state_reset(input->xkb.compose_state);
+    }
+    return 0;
 }
 
-int Wayland_SetTextInputRect(SDL_VideoDevice *_this, const SDL_Rect *rect)
+int Wayland_UpdateTextInputArea(SDL_VideoDevice *_this, SDL_Window *window)
 {
     SDL_VideoData *driverdata = _this->driverdata;
     if (driverdata->text_input_manager) {
         struct SDL_WaylandInput *input = driverdata->input;
         if (input && input->text_input) {
-            if (!SDL_RectsEqual(rect, &input->text_input->cursor_rect)) {
-                SDL_copyp(&input->text_input->cursor_rect, rect);
+            if (!SDL_RectsEqual(&window->text_input_rect, &input->text_input->cursor_rect)) {
+                SDL_copyp(&input->text_input->cursor_rect, &window->text_input_rect);
                 zwp_text_input_v3_set_cursor_rectangle(input->text_input->text_input,
-                                                       rect->x,
-                                                       rect->y,
-                                                       rect->w,
-                                                       rect->h);
+                                                       window->text_input_rect.x,
+                                                       window->text_input_rect.y,
+                                                       window->text_input_rect.w,
+                                                       window->text_input_rect.h);
                 zwp_text_input_v3_commit(input->text_input->text_input);
             }
         }
@@ -132,7 +130,7 @@ int Wayland_SetTextInputRect(SDL_VideoDevice *_this, const SDL_Rect *rect)
 
 #ifdef SDL_USE_IME
     else {
-        SDL_IME_UpdateTextRect(rect);
+        SDL_IME_UpdateTextInputArea(window);
     }
 #endif
     return 0;

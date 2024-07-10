@@ -266,7 +266,7 @@ static SDL_Cursor *KMSDRM_CreateCursor(SDL_Surface *surface, int hot_x, int hot_
        alpha-premultiplied, but the SDL surface we receive has
        straight-alpha pixels, so we always have to convert. */
     SDL_PremultiplyAlpha(surface->w, surface->h,
-                         surface->format->format, surface->pixels, surface->pitch,
+                         surface->format, surface->pixels, surface->pitch,
                          SDL_PIXELFORMAT_ARGB8888, curdata->buffer, surface->w * 4);
 
     cursor->driverdata = curdata;
@@ -422,7 +422,7 @@ static int KMSDRM_MoveCursor(SDL_Cursor *cursor)
             return SDL_SetError("Cursor not initialized properly.");
         }
 
-        ret = KMSDRM_drmModeMoveCursor(dispdata->cursor_bo_drm_fd, dispdata->crtc->crtc_id, mouse->x, mouse->y);
+        ret = KMSDRM_drmModeMoveCursor(dispdata->cursor_bo_drm_fd, dispdata->crtc->crtc_id, (int)mouse->x, (int)mouse->y);
 
         if (ret) {
             return SDL_SetError("drmModeMoveCursor() failed.");

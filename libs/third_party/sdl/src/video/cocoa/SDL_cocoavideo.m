@@ -161,6 +161,7 @@ static SDL_VideoDevice *Cocoa_CreateDevice(void)
         device->Vulkan_UnloadLibrary = Cocoa_Vulkan_UnloadLibrary;
         device->Vulkan_GetInstanceExtensions = Cocoa_Vulkan_GetInstanceExtensions;
         device->Vulkan_CreateSurface = Cocoa_Vulkan_CreateSurface;
+        device->Vulkan_DestroySurface = Cocoa_Vulkan_DestroySurface;
 #endif
 
 #ifdef SDL_VIDEO_METAL
@@ -171,7 +172,7 @@ static SDL_VideoDevice *Cocoa_CreateDevice(void)
 
         device->StartTextInput = Cocoa_StartTextInput;
         device->StopTextInput = Cocoa_StopTextInput;
-        device->SetTextInputRect = Cocoa_SetTextInputRect;
+        device->UpdateTextInputArea = Cocoa_UpdateTextInputArea;
 
         device->SetClipboardData = Cocoa_SetClipboardData;
         device->GetClipboardData = Cocoa_GetClipboardData;
@@ -255,7 +256,7 @@ NSImage *Cocoa_CreateImage(SDL_Surface *surface)
     int i;
     NSImage *img;
 
-    converted = SDL_ConvertSurfaceFormat(surface, SDL_PIXELFORMAT_RGBA32);
+    converted = SDL_ConvertSurface(surface, SDL_PIXELFORMAT_RGBA32);
     if (!converted) {
         return nil;
     }
@@ -269,7 +270,7 @@ NSImage *Cocoa_CreateImage(SDL_Surface *surface)
                                                        isPlanar:NO
                                                  colorSpaceName:NSDeviceRGBColorSpace
                                                     bytesPerRow:converted->pitch
-                                                   bitsPerPixel:converted->format->bits_per_pixel];
+                                                   bitsPerPixel:SDL_BITSPERPIXEL(converted->format)];
     if (imgrep == nil) {
         SDL_DestroySurface(converted);
         return nil;

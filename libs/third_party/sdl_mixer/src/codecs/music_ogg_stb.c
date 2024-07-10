@@ -142,6 +142,7 @@ static int OGG_UpdateSection(OGG_music *music)
         music->stream = NULL;
     }
 
+    SDL_zero(srcspec);
     srcspec.format = SDL_AUDIO_F32;
     srcspec.channels = vi.channels;
     srcspec.freq = (int)vi.sample_rate;
@@ -173,7 +174,6 @@ static void *OGG_CreateFromIO(SDL_IOStream *src, SDL_bool closeio)
 
     music = (OGG_music *)SDL_calloc(1, sizeof *music);
     if (!music) {
-        SDL_OutOfMemory();
         return NULL;
     }
     music->src = src;

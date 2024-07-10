@@ -191,6 +191,7 @@ static int OPUS_UpdateSection(OPUS_music *music)
         music->stream = NULL;
     }
 
+    SDL_zero(srcspec);
     srcspec.format = SDL_AUDIO_S16;
     srcspec.channels = op_info->channel_count;
     srcspec.freq = 48000;
@@ -219,7 +220,6 @@ static void *OPUS_CreateFromIO(SDL_IOStream *src, SDL_bool closeio)
 
     music = (OPUS_music *)SDL_calloc(1, sizeof *music);
     if (!music) {
-        SDL_OutOfMemory();
         return NULL;
     }
     music->src = src;

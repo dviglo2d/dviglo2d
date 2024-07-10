@@ -165,7 +165,6 @@ static void *DRFLAC_CreateFromIO(SDL_IOStream *src, SDL_bool closeio)
 
     music = (DRFLAC_Music *)SDL_calloc(1, sizeof(DRFLAC_Music));
     if (!music) {
-        SDL_OutOfMemory();
         return NULL;
     }
     music->volume = MIX_MAX_VOLUME;
@@ -185,12 +184,12 @@ static void *DRFLAC_CreateFromIO(SDL_IOStream *src, SDL_bool closeio)
     }
 
     /* We should have channels and sample rate set up here */
+    SDL_zero(srcspec);
     srcspec.format = SDL_AUDIO_S16;
     srcspec.channels = music->channels;
     srcspec.freq = music->sample_rate;
     music->stream = SDL_CreateAudioStream(&srcspec, &music_spec);
     if (!music->stream) {
-        SDL_OutOfMemory();
         drflac_close(music->dec);
         SDL_free(music);
         return NULL;
@@ -200,7 +199,6 @@ static void *DRFLAC_CreateFromIO(SDL_IOStream *src, SDL_bool closeio)
     music->buffer = (drflac_int16*)SDL_calloc(1, music->buffer_size);
     if (!music->buffer) {
         drflac_close(music->dec);
-        SDL_OutOfMemory();
         SDL_free(music);
         return NULL;
     }

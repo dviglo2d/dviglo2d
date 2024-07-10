@@ -185,7 +185,7 @@ static char *CaseFoldUtf8String(const char *fname)
     Uint32 codepoint;
     char *ptr = retval;
     size_t remaining = allocation;
-    while ((codepoint = SDL_StepUTF8(&fname, 4)) != 0) {
+    while ((codepoint = SDL_StepUTF8(&fname, NULL)) != 0) {
         Uint32 folded[3];
         const int num_folded = SDL_CaseFoldUnicode(codepoint, folded);
         SDL_assert(num_folded > 0);
@@ -221,7 +221,7 @@ typedef struct GlobDirCallbackData
     SDL_bool (*matcher)(const char *pattern, const char *str, SDL_bool *matched_to_dir);
     const char *pattern;
     int num_entries;
-    Uint32 flags;
+    SDL_GlobFlags flags;
     SDL_GlobEnumeratorFunc enumerator;
     SDL_GlobGetPathInfoFunc getpathinfo;
     void *fsuserdata;
@@ -286,7 +286,7 @@ static int SDLCALL GlobDirectoryCallback(void *userdata, const char *dirname, co
     return retval;
 }
 
-char **SDL_InternalGlobDirectory(const char *path, const char *pattern, Uint32 flags, int *count, SDL_GlobEnumeratorFunc enumerator, SDL_GlobGetPathInfoFunc getpathinfo, void *userdata)
+char **SDL_InternalGlobDirectory(const char *path, const char *pattern, SDL_GlobFlags flags, int *count, SDL_GlobEnumeratorFunc enumerator, SDL_GlobGetPathInfoFunc getpathinfo, void *userdata)
 {
     int dummycount;
     if (!count) {
@@ -394,7 +394,7 @@ static int GlobDirectoryEnumerator(const char *path, SDL_EnumerateDirectoryCallb
     return SDL_EnumerateDirectory(path, cb, cbuserdata);
 }
 
-char **SDL_GlobDirectory(const char *path, const char *pattern, Uint32 flags, int *count)
+char **SDL_GlobDirectory(const char *path, const char *pattern, SDL_GlobFlags flags, int *count)
 {
     //SDL_Log("SDL_GlobDirectory('%s', '%s') ...", path, pattern);
     return SDL_InternalGlobDirectory(path, pattern, flags, count, GlobDirectoryEnumerator, GlobDirectoryGetPathInfo, NULL);

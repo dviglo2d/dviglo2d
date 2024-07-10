@@ -20,25 +20,4 @@
 */
 #include "SDL_internal.h"
 
-/* Most platforms that use/need SDL_main have their own SDL_RunApp() implementation.
- * If not, you can special case it here by appending || defined(__YOUR_PLATFORM__) */
-#if ( !defined(SDL_MAIN_NEEDED) && !defined(SDL_MAIN_AVAILABLE) ) || defined(SDL_PLATFORM_ANDROID)
-
-DECLSPEC int
-SDL_RunApp(int argc, char* argv[], SDL_main_func mainFunction, void * reserved)
-{
-    (void)reserved;
-
-    if(!argv)
-    {
-        /* make sure argv isn't NULL, in case some user code doesn't like that */
-        static char dummyargv0[] = { 'S', 'D', 'L', '_', 'a', 'p', 'p', '\0' };
-        static char* argvdummy[2] = { dummyargv0, NULL };
-        argc = 1;
-        argv = argvdummy;
-    }
-
-    return mainFunction(argc, argv);
-}
-
-#endif
+extern void SDL_FreeEnvironmentMemory(void);

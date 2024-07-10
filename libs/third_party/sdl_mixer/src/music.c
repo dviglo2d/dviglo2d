@@ -46,8 +46,8 @@
 #include "utils.h"
 
 /* Check to make sure we are building with a new enough SDL */
-#if SDL_COMPILEDVERSION < SDL_VERSIONNUM(2, 0, 7)
-#error You need SDL 2.0.7 or newer from http://www.libsdl.org
+#if !SDL_VERSION_ATLEAST(3, 0, 0)
+#error You need SDL 3.0.0 or newer from http://www.libsdl.org
 #endif
 
 /* Set this hint to true if you want verbose logging of music interfaces */
@@ -317,7 +317,7 @@ int music_pcm_getaudio(void *context, void *data, int bytes, int volume,
         if (volume == MIX_MAX_VOLUME) {
             dst += consumed;
         } else {
-            SDL_MixAudioFormat(snd, dst, music_spec.format, (Uint32)consumed, volume);
+            SDL_MixAudio(snd, dst, music_spec.format, (Uint32)consumed, volume/(float)MIX_MAX_VOLUME);
             snd += consumed;
         }
         len -= consumed;
@@ -661,7 +661,6 @@ Mix_Music *Mix_LoadMUS(const char *file)
             /* Allocate memory for the music structure */
             Mix_Music *music = (Mix_Music *)SDL_calloc(1, sizeof(Mix_Music));
             if (music == NULL) {
-                Mix_OutOfMemory();
                 return NULL;
             }
             music->interface = interface;
@@ -780,7 +779,6 @@ Mix_Music *Mix_LoadMUSType_IO(SDL_IOStream *src, Mix_MusicType type, SDL_bool cl
                 Mix_Music *music = (Mix_Music *)SDL_calloc(1, sizeof(Mix_Music));
                 if (music == NULL) {
                     interface->Delete(context);
-                    Mix_OutOfMemory();
                     return NULL;
                 }
                 music->interface = interface;
@@ -1195,8 +1193,8 @@ int Mix_VolumeMusic(int volume)
     if (volume < 0) {
         return prev_volume;
     }
-    if (volume > SDL_MIX_MAXVOLUME) {
-        volume = SDL_MIX_MAXVOLUME;
+    if (volume > MIX_MAX_VOLUME) {
+        volume = MIX_MAX_VOLUME;
     }
     music_volume = volume;
     Mix_LockAudio();
@@ -1401,7 +1399,7 @@ int Mix_SetMusicCMD(const char *command)
         size_t length = SDL_strlen(command) + 1;
         music_cmd = (char *)SDL_malloc(length);
         if (music_cmd == NULL) {
-            return SDL_OutOfMemory();
+            return -1;
         }
         SDL_memcpy(music_cmd, command, length);
     }
@@ -1545,7 +1543,7 @@ const char* Mix_GetSoundFonts(void)
     return NULL;
 }
 
-int Mix_EachSoundFont(int (SDLCALL *function)(const char*, void*), void *data)
+int Mix_EachSoundFont(Mix_EachSoundFontCallback function, void *data)
 {
     char *context, *path, *paths;
     const char* cpaths = Mix_GetSoundFonts();

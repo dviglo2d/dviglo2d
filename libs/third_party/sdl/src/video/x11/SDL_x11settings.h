@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2024 Sam Lantinga <slouken@libsdl.org>
+  Copyright 2024 Igalia S.L.
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -21,29 +21,19 @@
 
 #include "SDL_internal.h"
 
-#ifdef SDL_PLATFORM_3DS
+#ifndef SDL_x11settings_h_
+#define SDL_x11settings_h_
 
-#include <3ds.h>
+#include <X11/Xlib.h>
+#include "xsettings-client.h"
 
-DECLSPEC int
-SDL_RunApp(int argc, char* argv[], SDL_main_func mainFunction, void * reserved)
-{
-    int result;
-    /* init */
-    osSetSpeedupEnable(true);
-    romfsInit();
+typedef struct X11_SettingsData {
+    XSettingsClient *xsettings;
+} SDLX11_SettingsData;
 
-    SDL_SetMainReady();
-    result = mainFunction(argc, argv);
+extern void X11_InitXsettings(SDL_VideoDevice *_this);
+extern void X11_QuitXsettings(SDL_VideoDevice *_this);
+extern void X11_HandleXsettings(SDL_VideoDevice *_this, const XEvent *xevent);
+extern int X11_GetXsettingsIntKey(SDL_VideoDevice *_this, const char *key, int fallback_value);
 
-    /* quit */
-    romfsExit();
-
-    return result;
-}
-
-#ifdef __cplusplus
-} /* extern "C" */
-#endif
-
-#endif
+#endif /* SDL_x11settings_h_ */

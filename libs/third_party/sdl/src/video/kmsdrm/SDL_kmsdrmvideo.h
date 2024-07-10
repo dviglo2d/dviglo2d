@@ -33,6 +33,10 @@
 #include <gbm.h>
 #include <EGL/egl.h>
 
+#ifndef DRM_MODE_FB_MODIFIERS
+#define DRM_MODE_FB_MODIFIERS	2
+#endif
+
 #ifndef DRM_MODE_PAGE_FLIP_ASYNC
 #define DRM_MODE_PAGE_FLIP_ASYNC    2
 #endif
@@ -156,7 +160,7 @@ int KMSDRM_CreateWindow(SDL_VideoDevice *_this, SDL_Window *window, SDL_Properti
 void KMSDRM_SetWindowTitle(SDL_VideoDevice *_this, SDL_Window *window);
 int KMSDRM_SetWindowPosition(SDL_VideoDevice *_this, SDL_Window *window);
 void KMSDRM_SetWindowSize(SDL_VideoDevice *_this, SDL_Window *window);
-int KMSDRM_SetWindowFullscreen(SDL_VideoDevice *_this, SDL_Window *window, SDL_VideoDisplay *_display, SDL_bool fullscreen);
+int KMSDRM_SetWindowFullscreen(SDL_VideoDevice *_this, SDL_Window *window, SDL_VideoDisplay *_display, SDL_FullscreenOp fullscreen);
 void KMSDRM_ShowWindow(SDL_VideoDevice *_this, SDL_Window *window);
 void KMSDRM_HideWindow(SDL_VideoDevice *_this, SDL_Window *window);
 void KMSDRM_RaiseWindow(SDL_VideoDevice *_this, SDL_Window *window);

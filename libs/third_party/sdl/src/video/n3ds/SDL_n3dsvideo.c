@@ -53,7 +53,7 @@ struct SDL_DisplayModeData
 
 static const struct
 {
-    SDL_PixelFormatEnum pixfmt;
+    SDL_PixelFormat pixfmt;
     GSPGPU_FramebufferFormat gspfmt;
 } format_map[] = {
     { SDL_PIXELFORMAT_RGBA8888, GSP_RGBA8_OES },
@@ -85,7 +85,6 @@ static SDL_VideoDevice *N3DS_CreateDevice(void)
     /* Initialize internal data */
     phdata = (SDL_VideoData *)SDL_calloc(1, sizeof(SDL_VideoData));
     if (!phdata) {
-        SDL_OutOfMemory();
         SDL_free(device);
         return NULL;
     }

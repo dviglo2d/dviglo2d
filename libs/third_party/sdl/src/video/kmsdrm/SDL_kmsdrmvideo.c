@@ -310,6 +310,7 @@ static SDL_VideoDevice *KMSDRM_CreateDevice(void)
     device->Vulkan_UnloadLibrary = KMSDRM_Vulkan_UnloadLibrary;
     device->Vulkan_GetInstanceExtensions = KMSDRM_Vulkan_GetInstanceExtensions;
     device->Vulkan_CreateSurface = KMSDRM_Vulkan_CreateSurface;
+    device->Vulkan_DestroySurface = KMSDRM_Vulkan_DestroySurface;
 #endif
 
     device->PumpEvents = KMSDRM_PumpEvents;
@@ -351,8 +352,9 @@ KMSDRM_FBInfo *KMSDRM_FBFromBO(SDL_VideoDevice *_this, struct gbm_bo *bo)
 {
     SDL_VideoData *viddata = _this->driverdata;
     unsigned w, h;
-    int ret;
-    Uint32 stride, handle;
+    int ret, num_planes = 0;
+    Uint32 format, strides[4] = { 0 }, handles[4] = { 0 }, offsets[4] = { 0 }, flags = 0;
+    uint64_t modifiers[4] = { 0 };
 
     /* Check for an existing framebuffer */
     KMSDRM_FBInfo *fb_info = (KMSDRM_FBInfo *)KMSDRM_gbm_bo_get_user_data(bo);
@@ -371,20 +373,33 @@ KMSDRM_FBInfo *KMSDRM_FBFromBO(SDL_VideoDevice *_this, struct gbm_bo *bo)
 
     fb_info->drm_fd = viddata->drm_fd;
 
-    /* Create framebuffer object for the buffer */
+    /* Create framebuffer object for the buffer using the modifiers requested by GBM.
+       Use of the modifiers is necessary on some platforms. */
     w = KMSDRM_gbm_bo_get_width(bo);
     h = KMSDRM_gbm_bo_get_height(bo);
-    stride = KMSDRM_gbm_bo_get_stride(bo);
-    handle = KMSDRM_gbm_bo_get_handle(bo).u32;
-    ret = KMSDRM_drmModeAddFB(viddata->drm_fd, w, h, 24, 32, stride, handle,
-                              &fb_info->fb_id);
+    format = KMSDRM_gbm_bo_get_format(bo);
+
+    modifiers[0] = KMSDRM_gbm_bo_get_modifier(bo);
+    num_planes = KMSDRM_gbm_bo_get_plane_count(bo);
+    for (int i = 0; i < num_planes; i++) {
+        strides[i] = KMSDRM_gbm_bo_get_stride_for_plane(bo, i);
+        handles[i] = KMSDRM_gbm_bo_get_handle(bo).u32;
+        offsets[i] = KMSDRM_gbm_bo_get_offset(bo, i);
+        modifiers[i] = modifiers[0];
+    }
+
+    if (modifiers[0]) {
+        flags = DRM_MODE_FB_MODIFIERS;
+    }
+
+    ret = KMSDRM_drmModeAddFB2WithModifiers(viddata->drm_fd, w, h, format, handles, strides, offsets, modifiers, &fb_info->fb_id, flags);
     if (ret) {
         SDL_free(fb_info);
         return NULL;
     }
 
-    SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO, "New DRM FB (%u): %ux%u, stride %u from BO %p",
-                 fb_info->fb_id, w, h, stride, (void *)bo);
+    SDL_LogDebug(SDL_LOG_CATEGORY_VIDEO, "New DRM FB (%u): %ux%u, from BO %p",
+                 fb_info->fb_id, w, h, (void *)bo);
 
     /* Associate our DRM framebuffer with this buffer object */
     KMSDRM_gbm_bo_set_user_data(bo, fb_info, KMSDRM_FBDestroyCallback);
@@ -673,6 +688,77 @@ static SDL_bool KMSDRM_CrtcGetVrr(uint32_t drm_fd, uint32_t crtc_id)
     return SDL_FALSE;
 }
 
+static SDL_bool KMSDRM_OrientationPropId(uint32_t drm_fd, uint32_t crtc_id, uint32_t *orientation_prop_id)
+{
+    drmModeObjectPropertiesPtr drm_props;
+
+    drm_props = KMSDRM_drmModeObjectGetProperties(drm_fd,
+                                                  crtc_id,
+                                                  DRM_MODE_OBJECT_CONNECTOR);
+
+    if (!drm_props) {
+        return SDL_FALSE;
+    }
+
+    *orientation_prop_id = KMSDRM_CrtcGetPropId(drm_fd,
+                                                drm_props,
+                                                "panel orientation");
+
+    KMSDRM_drmModeFreeObjectProperties(drm_props);
+
+    return SDL_TRUE;
+}
+
+static int KMSDRM_CrtcGetOrientation(uint32_t drm_fd, uint32_t crtc_id)
+{
+    uint32_t orientation_prop_id;
+    drmModeObjectPropertiesPtr props;
+    int i;
+    SDL_bool done = SDL_FALSE;
+    int orientation = 0;
+
+    if (!KMSDRM_OrientationPropId(drm_fd, crtc_id, &orientation_prop_id)) {
+        return orientation;
+    }
+
+    props = KMSDRM_drmModeObjectGetProperties(drm_fd,
+                                              crtc_id,
+                                              DRM_MODE_OBJECT_CONNECTOR);
+
+    if (!props) {
+        return orientation;
+    }
+
+    for (i = 0; i < props->count_props && !done; ++i) {
+        drmModePropertyPtr drm_prop = KMSDRM_drmModeGetProperty(drm_fd, props->props[i]);
+
+        if (!drm_prop) {
+            continue;
+        }
+
+        if (drm_prop->prop_id == orientation_prop_id && (drm_prop->flags & DRM_MODE_PROP_ENUM)) {
+            if (drm_prop->count_enums) {
+                /* "Normal" is the default of no rotation (0 degrees) */
+                if (SDL_strcmp(drm_prop->enums[0].name, "Left Side Up") == 0) {
+                    orientation = 90;
+                } else if (SDL_strcmp(drm_prop->enums[0].name, "Upside Down") == 0) {
+                    orientation = 180;
+                } else if (SDL_strcmp(drm_prop->enums[0].name, "Right Side Up") == 0) {
+                    orientation = 270;
+                }
+            }
+
+            done = SDL_TRUE;
+        }
+
+        KMSDRM_drmModeFreeProperty(drm_prop);
+    }
+
+    KMSDRM_drmModeFreeObjectProperties(props);
+
+    return orientation;
+}
+
 /* Gets a DRM connector, builds an SDL_Display with it, and adds it to the
    list of SDL Displays in _this->displays[]  */
 static void KMSDRM_AddDisplay(SDL_VideoDevice *_this, drmModeConnector *connector, drmModeRes *resources)
@@ -683,6 +769,9 @@ static void KMSDRM_AddDisplay(SDL_VideoDevice *_this, drmModeConnector *connecto
     SDL_DisplayModeData *modedata = NULL;
     drmModeEncoder *encoder = NULL;
     drmModeCrtc *crtc = NULL;
+    SDL_DisplayID display_id;
+    SDL_PropertiesID display_properties;
+    int orientation;
     int mode_index;
     int i, j;
     int ret = 0;
@@ -867,10 +956,15 @@ static void KMSDRM_AddDisplay(SDL_VideoDevice *_this, drmModeConnector *connecto
     display.desktop_mode.driverdata = modedata;
 
     /* Add the display to the list of SDL displays. */
-    if (SDL_AddVideoDisplay(&display, SDL_FALSE) == 0) {
+    display_id = SDL_AddVideoDisplay(&display, SDL_FALSE);
+    if (!display_id) {
         ret = -1;
         goto cleanup;
     }
+
+    orientation = KMSDRM_CrtcGetOrientation(viddata->drm_fd, crtc->crtc_id);
+    display_properties = SDL_GetDisplayProperties(display_id);
+    SDL_SetNumberProperty(display_properties, SDL_PROP_DISPLAY_KMSDRM_PANEL_ORIENTATION_NUMBER, orientation);
 
 cleanup:
     if (encoder) {
@@ -1600,7 +1694,7 @@ void KMSDRM_SetWindowSize(SDL_VideoDevice *_this, SDL_Window *window)
         KMSDRM_DirtySurfaces(window);
     }
 }
-int KMSDRM_SetWindowFullscreen(SDL_VideoDevice *_this, SDL_Window *window, SDL_VideoDisplay *display, SDL_bool fullscreen)
+int KMSDRM_SetWindowFullscreen(SDL_VideoDevice *_this, SDL_Window *window, SDL_VideoDisplay *display, SDL_FullscreenOp fullscreen)
 {
     SDL_VideoData *viddata = _this->driverdata;
     if (!viddata->vulkan_mode) {

@@ -194,10 +194,10 @@ static SDL_VideoDevice *X11_CreateDevice(void)
     device->SetWindowSize = X11_SetWindowSize;
     device->SetWindowMinimumSize = X11_SetWindowMinimumSize;
     device->SetWindowMaximumSize = X11_SetWindowMaximumSize;
+    device->SetWindowAspectRatio = X11_SetWindowAspectRatio;
     device->GetWindowBordersSize = X11_GetWindowBordersSize;
     device->SetWindowOpacity = X11_SetWindowOpacity;
     device->SetWindowModalFor = X11_SetWindowModalFor;
-    device->SetWindowInputFocus = X11_SetWindowInputFocus;
     device->ShowWindow = X11_ShowWindow;
     device->HideWindow = X11_HideWindow;
     device->RaiseWindow = X11_RaiseWindow;
@@ -266,7 +266,7 @@ static SDL_VideoDevice *X11_CreateDevice(void)
     device->HasPrimarySelectionText = X11_HasPrimarySelectionText;
     device->StartTextInput = X11_StartTextInput;
     device->StopTextInput = X11_StopTextInput;
-    device->SetTextInputRect = X11_SetTextInputRect;
+    device->UpdateTextInputArea = X11_UpdateTextInputArea;
     device->HasScreenKeyboardSupport = X11_HasScreenKeyboardSupport;
     device->ShowScreenKeyboard = X11_ShowScreenKeyboard;
     device->HideScreenKeyboard = X11_HideScreenKeyboard;
@@ -279,6 +279,7 @@ static SDL_VideoDevice *X11_CreateDevice(void)
     device->Vulkan_UnloadLibrary = X11_Vulkan_UnloadLibrary;
     device->Vulkan_GetInstanceExtensions = X11_Vulkan_GetInstanceExtensions;
     device->Vulkan_CreateSurface = X11_Vulkan_CreateSurface;
+    device->Vulkan_DestroySurface = X11_Vulkan_DestroySurface;
 #endif
 
 #ifdef SDL_USE_LIBDBUS
@@ -291,7 +292,8 @@ static SDL_VideoDevice *X11_CreateDevice(void)
 
     data->is_xwayland = X11_IsXWayland(x11_display);
     if (data->is_xwayland) {
-        device->device_caps |= VIDEO_DEVICE_CAPS_MODE_SWITCHING_EMULATED;
+        device->device_caps |= VIDEO_DEVICE_CAPS_MODE_SWITCHING_EMULATED |
+                               VIDEO_DEVICE_CAPS_DISABLE_MOUSE_WARP_ON_FULLSCREEN_TRANSITIONS;
     }
 
     return device;
@@ -440,6 +442,8 @@ int X11_VideoInit(SDL_VideoDevice *_this)
     X11_InitXfixes(_this);
 #endif /* SDL_VIDEO_DRIVER_X11_XFIXES */
 
+    X11_InitXsettings(_this);
+
 #ifndef X_HAVE_UTF8_STRING
 #warning X server does not support UTF8_STRING, a feature introduced in 2000! This is likely to become a hard error in a future libSDL3.
 #endif
@@ -466,6 +470,10 @@ void X11_VideoQuit(SDL_VideoDevice *_this)
         X11_XDestroyWindow(data->display, data->clipboard_window);
     }
 
+    if (data->xsettings_window) {
+        X11_XDestroyWindow(data->display, data->xsettings_window);
+    }
+
 #ifdef X_HAVE_UTF8_STRING
     if (data->im) {
         X11_XCloseIM(data->im);
@@ -477,6 +485,7 @@ void X11_VideoQuit(SDL_VideoDevice *_this)
     X11_QuitMouse(_this);
     X11_QuitTouch(_this);
     X11_QuitClipboard(_this);
+    X11_QuitXsettings(_this);
 }
 
 SDL_bool X11_UseDirectColorVisuals(void)

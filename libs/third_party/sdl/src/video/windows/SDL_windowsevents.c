@@ -43,7 +43,9 @@
 #include <tpcshrd.h>
 #endif /* HAVE_TPCSHRD_H */
 
-/* #define WMMSG_DEBUG */
+#if 0
+#define WMMSG_DEBUG
+#endif
 #ifdef WMMSG_DEBUG
 #include <stdio.h>
 #include "wmmsg.h"
@@ -73,6 +75,9 @@
 #endif
 #ifndef WM_MOUSEHWHEEL
 #define WM_MOUSEHWHEEL 0x020E
+#endif
+#ifndef RI_MOUSE_HWHEEL
+#define RI_MOUSE_HWHEEL 0x0800
 #endif
 #ifndef WM_POINTERUPDATE
 #define WM_POINTERUPDATE 0x0245
@@ -152,7 +157,7 @@ static Uint64 WIN_GetEventTimestamp()
     return timestamp;
 }
 
-static SDL_Scancode WindowsScanCodeToSDLScanCode(LPARAM lParam, WPARAM wParam, SDL_bool *virtual_key)
+static SDL_Scancode WindowsScanCodeToSDLScanCode(LPARAM lParam, WPARAM wParam, Uint16 *rawcode, SDL_bool *virtual_key)
 {
     SDL_Scancode code;
     Uint8 index;
@@ -191,6 +196,7 @@ static SDL_Scancode WindowsScanCodeToSDLScanCode(LPARAM lParam, WPARAM wParam, S
     /* Pack scan code into one byte to make the index. */
     index = LOBYTE(scanCode) | (HIBYTE(scanCode) ? 0x80 : 0x00);
     code = windows_scancode_table[index];
+    *rawcode = scanCode;
 
     return code;
 }
@@ -237,7 +243,7 @@ static void WIN_CheckWParamMouseButton(Uint64 timestamp, SDL_bool bwParamMousePr
 static void WIN_CheckWParamMouseButtons(Uint64 timestamp, WPARAM wParam, SDL_WindowData *data, SDL_MouseID mouseID)
 {
     if (wParam != data->mouse_button_flags) {
-        Uint32 mouseFlags = SDL_GetMouseState(NULL, NULL);
+        SDL_MouseButtonFlags mouseFlags = SDL_GetMouseState(NULL, NULL);
 
         /* WM_LBUTTONDOWN and friends handle button swapping for us. No need to check SM_SWAPBUTTON here.  */
         WIN_CheckWParamMouseButton(timestamp, (wParam & MK_LBUTTON), mouseFlags, SDL_FALSE, data, SDL_BUTTON_LEFT, mouseID);
@@ -366,6 +372,21 @@ static SDL_bool ShouldGenerateWindowCloseOnAltF4(void)
     return SDL_GetHintBoolean(SDL_HINT_WINDOWS_CLOSE_ON_ALT_F4, SDL_TRUE);
 }
 
+static SDL_bool ShouldClearWindowOnEraseBackground(SDL_WindowData *data)
+{
+    switch (data->hint_erase_background_mode) {
+    case SDL_ERASEBACKGROUNDMODE_NEVER:
+        return SDL_FALSE;
+    case SDL_ERASEBACKGROUNDMODE_INITIAL:
+        return !data->videodata->cleared;
+    case SDL_ERASEBACKGROUNDMODE_ALWAYS:
+        return SDL_TRUE;
+    default:
+        // Unexpected value, fallback to default behaviour
+        return !data->videodata->cleared;
+    }
+}
+
 #if !defined(SDL_PLATFORM_XBOXONE) && !defined(SDL_PLATFORM_XBOXSERIES)
 /* We want to generate mouse events from mouse and pen, and touch events from touchscreens */
 #define MI_WP_SIGNATURE      0xFF515700
@@ -430,6 +451,10 @@ WIN_KeyboardHookProc(int nCode, WPARAM wParam, LPARAM lParam)
     if (nCode < 0 || nCode != HC_ACTION) {
         return CallNextHookEx(NULL, nCode, wParam, lParam);
     }
+    if (hookData->scanCode == 0x21d) {
+        // Skip fake LCtrl when RAlt is pressed
+        return 1;
+    }
 
     switch (hookData->vkCode) {
     case VK_LWIN:
@@ -465,11 +490,11 @@ WIN_KeyboardHookProc(int nCode, WPARAM wParam, LPARAM lParam)
 
     if (wParam == WM_KEYDOWN || wParam == WM_SYSKEYDOWN) {
         if (!data->raw_keyboard_enabled) {
-            SDL_SendKeyboardKey(0, SDL_GLOBAL_KEYBOARD_ID, SDL_PRESSED, scanCode);
+            SDL_SendKeyboardKey(0, SDL_GLOBAL_KEYBOARD_ID, hookData->scanCode, scanCode, SDL_PRESSED);
         }
     } else {
         if (!data->raw_keyboard_enabled) {
-            SDL_SendKeyboardKey(0, SDL_GLOBAL_KEYBOARD_ID, SDL_RELEASED, scanCode);
+            SDL_SendKeyboardKey(0, SDL_GLOBAL_KEYBOARD_ID, hookData->scanCode, scanCode, SDL_RELEASED);
         }
 
         /* If the key was down prior to our hook being installed, allow the
@@ -665,9 +690,25 @@ static void WIN_HandleRawKeyboardInput(Uint64 timestamp, SDL_VideoData *data, HA
         return;
     }
 
+    if ((rawkeyboard->Flags & RI_KEY_E0) && rawkeyboard->MakeCode == 0x2A) {
+        // 0xE02A make code prefix, ignored
+        return;
+    }
+
+#if !defined(SDL_PLATFORM_XBOXONE) && !defined(SDL_PLATFORM_XBOXSERIES)
+    if (!rawkeyboard->MakeCode) {
+        rawkeyboard->MakeCode = LOWORD(MapVirtualKey(rawkeyboard->VKey, WIN_IsWindowsXP() ? MAPVK_VK_TO_VSC : MAPVK_VK_TO_VSC_EX));
+    }
+#endif
+    if (!rawkeyboard->MakeCode) {
+        return;
+    }
+
     Uint8 state = (rawkeyboard->Flags & RI_KEY_BREAK) ? SDL_RELEASED : SDL_PRESSED;
     SDL_Scancode code;
+    USHORT rawcode = rawkeyboard->MakeCode;
     if (data->pending_E1_key_sequence) {
+        rawcode |= 0xE100;
         if (rawkeyboard->MakeCode == 0x45) {
             // Ctrl+NumLock == Pause
             code = SDL_SCANCODE_PAUSE;
@@ -680,14 +721,19 @@ static void WIN_HandleRawKeyboardInput(Uint64 timestamp, SDL_VideoData *data, HA
         // The code is in the lower 7 bits, the high bit is set for the E0 prefix
         Uint8 index = (Uint8)rawkeyboard->MakeCode;
         if (rawkeyboard->Flags & RI_KEY_E0) {
+            rawcode |= 0xE000;
             index |= 0x80;
         }
         code = windows_scancode_table[index];
     }
-    if (state && !SDL_GetKeyboardFocus()) {
-        return;
+    if (state) {
+        SDL_Window *focus = SDL_GetKeyboardFocus();
+        if (!focus || focus->text_input_active) {
+            return;
+        }
     }
-    SDL_SendKeyboardKey(timestamp, keyboardID, state, code);
+
+    SDL_SendKeyboardKey(timestamp, keyboardID, rawcode, code, state);
 }
 
 void WIN_PollRawInput(SDL_VideoDevice *_this)
@@ -926,13 +972,13 @@ void WIN_CheckKeyboardAndMouseHotplug(SDL_VideoDevice *_this, SDL_bool initial_c
 
     for (int i = old_keyboard_count; i--;) {
         if (!HasDeviceID(old_keyboards[i], new_keyboards, new_keyboard_count)) {
-            SDL_RemoveKeyboard(old_keyboards[i]);
+            SDL_RemoveKeyboard(old_keyboards[i], send_event);
         }
     }
 
     for (int i = old_mouse_count; i--;) {
         if (!HasDeviceID(old_mice[i], new_mice, new_mouse_count)) {
-            SDL_RemoveMouse(old_mice[i]);
+            SDL_RemoveMouse(old_mice[i], send_event);
         }
     }
 
@@ -946,6 +992,36 @@ void WIN_CheckKeyboardAndMouseHotplug(SDL_VideoDevice *_this, SDL_bool initial_c
     SDL_free(raw_devices);
 }
 #endif /*!defined(SDL_PLATFORM_XBOXONE) && !defined(SDL_PLATFORM_XBOXSERIES)*/
+
+// Return SDL_TRUE if spurious LCtrl is pressed
+// LCtrl is sent when RAltGR is pressed
+static SDL_bool SkipAltGrLeftControl(WPARAM wParam, LPARAM lParam)
+{
+    if (wParam != VK_CONTROL) {
+        return SDL_FALSE;
+    }
+
+    // Is this an extended key (i.e. right key)?
+    if (lParam & 0x01000000) {
+        return SDL_FALSE;
+    }
+
+    // Here is a trick: "Alt Gr" sends LCTRL, then RALT. We only
+    // want the RALT message, so we try to see if the next message
+    // is a RALT message. In that case, this is a false LCTRL!
+    MSG next_msg;
+    DWORD msg_time = GetMessageTime();
+    if (PeekMessage(&next_msg, NULL, 0, 0, PM_NOREMOVE)) {
+        if (next_msg.message == WM_KEYDOWN ||
+            next_msg.message == WM_SYSKEYDOWN) {
+            if (next_msg.wParam == VK_MENU && (next_msg.lParam & 0x01000000) && next_msg.time == msg_time) {
+                // Next message is a RALT down message, which means that this is NOT a proper LCTRL message!
+                return SDL_TRUE;
+            }
+        }
+    }
+    return SDL_FALSE;
+}
 
 LRESULT CALLBACK WIN_WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
@@ -977,7 +1053,7 @@ LRESULT CALLBACK WIN_WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
 #endif /* WMMSG_DEBUG */
 
 #if !defined(SDL_PLATFORM_XBOXONE) && !defined(SDL_PLATFORM_XBOXSERIES)
-    if (IME_HandleMessage(hwnd, msg, wParam, &lParam, data->videodata)) {
+    if (WIN_HandleIMEMessage(hwnd, msg, wParam, &lParam, data->videodata)) {
         return 0;
     }
 #endif
@@ -1155,20 +1231,25 @@ LRESULT CALLBACK WIN_WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
     case WM_KEYDOWN:
     case WM_SYSKEYDOWN:
     {
+        if (SkipAltGrLeftControl(wParam, lParam)) {
+            returnCode = 0;
+            break;
+        }
+
         SDL_bool virtual_key = SDL_FALSE;
-        SDL_Scancode code = WindowsScanCodeToSDLScanCode(lParam, wParam, &virtual_key);
-        const Uint8 *keyboardState = SDL_GetKeyboardState(NULL);
+        Uint16 rawcode = 0;
+        SDL_Scancode code = WindowsScanCodeToSDLScanCode(lParam, wParam, &rawcode, &virtual_key);
 
         /* Detect relevant keyboard shortcuts */
-        if (keyboardState[SDL_SCANCODE_LALT] == SDL_PRESSED || keyboardState[SDL_SCANCODE_RALT] == SDL_PRESSED) {
+        if (code == SDL_SCANCODE_F4 && (SDL_GetModState() & SDL_KMOD_ALT)) {
             /* ALT+F4: Close window */
-            if (code == SDL_SCANCODE_F4 && ShouldGenerateWindowCloseOnAltF4()) {
+            if (ShouldGenerateWindowCloseOnAltF4()) {
                 SDL_SendWindowEvent(data->window, SDL_EVENT_WINDOW_CLOSE_REQUESTED, 0, 0);
             }
         }
 
-        if ((virtual_key || !data->videodata->raw_keyboard_enabled) && code != SDL_SCANCODE_UNKNOWN) {
-            SDL_SendKeyboardKey(WIN_GetEventTimestamp(), SDL_GLOBAL_KEYBOARD_ID, SDL_PRESSED, code);
+        if (virtual_key || !data->videodata->raw_keyboard_enabled || data->window->text_input_active) {
+            SDL_SendKeyboardKey(WIN_GetEventTimestamp(), SDL_GLOBAL_KEYBOARD_ID, rawcode, code, SDL_PRESSED);
         }
     }
 
@@ -1178,16 +1259,22 @@ LRESULT CALLBACK WIN_WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
     case WM_SYSKEYUP:
     case WM_KEYUP:
     {
+        if (SkipAltGrLeftControl(wParam, lParam)) {
+            returnCode = 0;
+            break;
+        }
+
         SDL_bool virtual_key = SDL_FALSE;
-        SDL_Scancode code = WindowsScanCodeToSDLScanCode(lParam, wParam, &virtual_key);
+        Uint16 rawcode = 0;
+        SDL_Scancode code = WindowsScanCodeToSDLScanCode(lParam, wParam, &rawcode, &virtual_key);
         const Uint8 *keyboardState = SDL_GetKeyboardState(NULL);
 
-        if ((virtual_key || !data->videodata->raw_keyboard_enabled) && code != SDL_SCANCODE_UNKNOWN) {
+        if (virtual_key || !data->videodata->raw_keyboard_enabled || data->window->text_input_active) {
             if (code == SDL_SCANCODE_PRINTSCREEN &&
                 keyboardState[code] == SDL_RELEASED) {
-                SDL_SendKeyboardKey(WIN_GetEventTimestamp(), SDL_GLOBAL_KEYBOARD_ID, SDL_PRESSED, code);
+                SDL_SendKeyboardKey(WIN_GetEventTimestamp(), SDL_GLOBAL_KEYBOARD_ID, rawcode, code, SDL_PRESSED);
             }
-            SDL_SendKeyboardKey(WIN_GetEventTimestamp(), SDL_GLOBAL_KEYBOARD_ID, SDL_RELEASED, code);
+            SDL_SendKeyboardKey(WIN_GetEventTimestamp(), SDL_GLOBAL_KEYBOARD_ID, rawcode, code, SDL_RELEASED);
         }
     }
         returnCode = 0;
@@ -1197,36 +1284,34 @@ LRESULT CALLBACK WIN_WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
         if (wParam == UNICODE_NOCHAR) {
             returnCode = 1;
         } else {
-            if (SDL_TextInputActive()) {
+            if (SDL_TextInputActive(data->window)) {
                 char text[5];
-                if (SDL_UCS4ToUTF8((Uint32)wParam, text) != text) {
-                    SDL_SendKeyboardText(text);
-                }
+                char *end = SDL_UCS4ToUTF8((Uint32)wParam, text);
+                *end = '\0';
+                SDL_SendKeyboardText(text);
             }
             returnCode = 0;
         }
         break;
 
     case WM_CHAR:
-        if (SDL_TextInputActive()) {
+        if (SDL_TextInputActive(data->window)) {
             /* Characters outside Unicode Basic Multilingual Plane (BMP)
              * are coded as so called "surrogate pair" in two separate UTF-16 character events.
              * Cache high surrogate until next character event. */
             if (IS_HIGH_SURROGATE(wParam)) {
                 data->high_surrogate = (WCHAR)wParam;
             } else {
-                if (SDL_TextInputActive()) {
-                    WCHAR utf16[3];
+                WCHAR utf16[3];
 
-                    utf16[0] = data->high_surrogate ? data->high_surrogate : (WCHAR)wParam;
-                    utf16[1] = data->high_surrogate ? (WCHAR)wParam : L'\0';
-                    utf16[2] = L'\0';
+                utf16[0] = data->high_surrogate ? data->high_surrogate : (WCHAR)wParam;
+                utf16[1] = data->high_surrogate ? (WCHAR)wParam : L'\0';
+                utf16[2] = L'\0';
 
-                    char utf8[5];
-                    int result = WIN_WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, utf16, -1, utf8, sizeof(utf8), NULL, NULL);
-                    if (result > 0) {
-                        SDL_SendKeyboardText(utf8);
-                    }
+                char utf8[5];
+                int result = WIN_WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, utf16, -1, utf8, sizeof(utf8), NULL, NULL);
+                if (result > 0) {
+                    SDL_SendKeyboardText(utf8);
                 }
                 data->high_surrogate = L'\0';
             }
@@ -1476,6 +1561,134 @@ LRESULT CALLBACK WIN_WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
         KillTimer(hwnd, (UINT_PTR)SDL_IterateMainCallbacks);
     } break;
 
+    case WM_SIZING:
+        {
+            WPARAM edge = wParam;
+            RECT* dragRect = (RECT*)lParam;
+            RECT clientDragRect = *dragRect;
+            SDL_bool lock_aspect_ratio = (data->window->max_aspect == data->window->min_aspect) ? SDL_TRUE : SDL_FALSE;
+            RECT rc;
+            LONG w, h;
+            float new_aspect;
+
+            /* if aspect ratio constraints are not enabled then skip this message */
+            if (data->window->min_aspect <= 0 && data->window->max_aspect <= 0) {
+                break;
+            }
+
+            /* unadjust the dragRect from the window rect to the client rect */
+            SetRectEmpty(&rc);
+            if (!AdjustWindowRectEx(&rc, GetWindowStyle(hwnd), GetMenu(hwnd) != NULL, GetWindowExStyle(hwnd))) {
+                break;
+            }
+
+            clientDragRect.left -= rc.left;
+            clientDragRect.top -= rc.top;
+            clientDragRect.right -= rc.right;
+            clientDragRect.bottom -= rc.bottom;
+
+            w = clientDragRect.right - clientDragRect.left;
+            h = clientDragRect.bottom - clientDragRect.top;
+            new_aspect = w / (float)h;
+
+            /* handle the special case in which the min ar and max ar are the same so the window can size symmetrically */
+            if (lock_aspect_ratio) {
+                switch (edge) {
+                case WMSZ_LEFT:
+                case WMSZ_RIGHT:
+                    h = (int)(w / data->window->max_aspect);
+                    break;
+                default:
+                    /* resizing via corners or top or bottom */
+                    w = (int)(h*data->window->max_aspect);
+                    break;
+                }
+            } else {
+                switch (edge) {
+                case WMSZ_LEFT:
+                case WMSZ_RIGHT:
+                    if (data->window->max_aspect > 0.0f && new_aspect > data->window->max_aspect) {
+                        w = (int)SDL_roundf(h * data->window->max_aspect);
+                    } else if (data->window->min_aspect > 0.0f && new_aspect < data->window->min_aspect) {
+                        w = (int)SDL_roundf(h * data->window->min_aspect);
+                    }
+                    break;
+                case WMSZ_TOP:
+                case WMSZ_BOTTOM:
+                    if (data->window->min_aspect > 0.0f && new_aspect < data->window->min_aspect) {
+                        h = (int)SDL_roundf(w / data->window->min_aspect);
+                    } else if (data->window->max_aspect > 0.0f && new_aspect > data->window->max_aspect) {
+                        h = (int)SDL_roundf(w / data->window->max_aspect);
+                    }
+                    break;
+
+                default:
+                    /* resizing via corners */
+                    if (data->window->max_aspect > 0.0f && new_aspect > data->window->max_aspect) {
+                        w = (int)SDL_roundf(h * data->window->max_aspect);
+                    } else if (data->window->min_aspect > 0.0f && new_aspect < data->window->min_aspect) {
+                        h = (int)SDL_roundf(w / data->window->min_aspect);
+                    }
+                    break;
+                }
+            }
+
+            switch (edge) {
+            case WMSZ_LEFT:
+                clientDragRect.left = clientDragRect.right - w;
+                if (lock_aspect_ratio) {
+                    clientDragRect.top = (clientDragRect.bottom + clientDragRect.top - h) / 2;
+                }
+                clientDragRect.bottom = h + clientDragRect.top;
+                break;
+            case WMSZ_BOTTOMLEFT:
+                clientDragRect.left = clientDragRect.right - w;
+                clientDragRect.bottom = h + clientDragRect.top;
+                break;
+            case WMSZ_RIGHT:
+                clientDragRect.right = w + clientDragRect.left;
+                if (lock_aspect_ratio) {
+                    clientDragRect.top = (clientDragRect.bottom + clientDragRect.top - h) / 2;
+                }
+                clientDragRect.bottom = h + clientDragRect.top;
+                break;
+            case WMSZ_TOPRIGHT:
+                clientDragRect.right = w + clientDragRect.left;
+                clientDragRect.top = clientDragRect.bottom - h;
+                break;
+            case WMSZ_TOP:
+                if (lock_aspect_ratio) {
+                    clientDragRect.left = (clientDragRect.right + clientDragRect.left - w) / 2;
+                }
+                clientDragRect.right = w + clientDragRect.left;
+                clientDragRect.top = clientDragRect.bottom - h;
+                break;
+            case WMSZ_TOPLEFT:
+                clientDragRect.left = clientDragRect.right - w;
+                clientDragRect.top = clientDragRect.bottom - h;
+                break;
+            case WMSZ_BOTTOM:
+                if (lock_aspect_ratio) {
+                    clientDragRect.left = (clientDragRect.right + clientDragRect.left - w) / 2;
+                }
+                clientDragRect.right = w + clientDragRect.left;
+                clientDragRect.bottom = h + clientDragRect.top;
+                break;
+            case WMSZ_BOTTOMRIGHT:
+                clientDragRect.right = w + clientDragRect.left;
+                clientDragRect.bottom = h + clientDragRect.top;
+                break;
+            }
+
+            /* convert the client rect to a window rect */
+            if (!AdjustWindowRectEx(&clientDragRect, GetWindowStyle(hwnd), GetMenu(hwnd) != NULL, GetWindowExStyle(hwnd))) {
+                break;
+            }
+
+            *dragRect = clientDragRect;
+        }
+        break;
+
     case WM_SETCURSOR:
     {
         Uint16 hittest;
@@ -1514,7 +1727,7 @@ LRESULT CALLBACK WIN_WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
 
         /* We'll do our own drawing, prevent flicker */
     case WM_ERASEBKGND:
-        if (!data->videodata->cleared) {
+        if (ShouldClearWindowOnEraseBackground(data)) {
             RECT client_rect;
             HBRUSH brush;
             data->videodata->cleared = SDL_TRUE;
@@ -1882,7 +2095,7 @@ static void WIN_UpdateClipCursorForWindows()
     SDL_VideoDevice *_this = SDL_GetVideoDevice();
     SDL_Window *window;
     Uint64 now = SDL_GetTicks();
-    const int CLIPCURSOR_UPDATE_INTERVAL_MS = 3000;
+    const int CLIPCURSOR_UPDATE_INTERVAL_MS = SDL_GetMouse()->relative_mode_clip_interval;
 
     if (_this) {
         for (window = _this->windows; window; window = window->next) {
@@ -1891,7 +2104,7 @@ static void WIN_UpdateClipCursorForWindows()
                 if (data->skip_update_clipcursor) {
                     data->skip_update_clipcursor = SDL_FALSE;
                     WIN_UpdateClipCursor(window);
-                } else if (now >= (data->last_updated_clipcursor + CLIPCURSOR_UPDATE_INTERVAL_MS)) {
+                } else if (CLIPCURSOR_UPDATE_INTERVAL_MS > 0 && now >= (data->last_updated_clipcursor + CLIPCURSOR_UPDATE_INTERVAL_MS)) {
                     WIN_UpdateClipCursor(window);
                 }
             }
@@ -2061,10 +2274,10 @@ void WIN_PumpEvents(SDL_VideoDevice *_this)
        and if we think a key is pressed when Windows doesn't, unstick it in SDL's state. */
     keystate = SDL_GetKeyboardState(NULL);
     if ((keystate[SDL_SCANCODE_LSHIFT] == SDL_PRESSED) && !(GetKeyState(VK_LSHIFT) & 0x8000)) {
-        SDL_SendKeyboardKey(0, SDL_GLOBAL_KEYBOARD_ID, SDL_RELEASED, SDL_SCANCODE_LSHIFT);
+        SDL_SendKeyboardKey(0, SDL_GLOBAL_KEYBOARD_ID, 0, SDL_SCANCODE_LSHIFT, SDL_RELEASED);
     }
     if ((keystate[SDL_SCANCODE_RSHIFT] == SDL_PRESSED) && !(GetKeyState(VK_RSHIFT) & 0x8000)) {
-        SDL_SendKeyboardKey(0, SDL_GLOBAL_KEYBOARD_ID, SDL_RELEASED, SDL_SCANCODE_RSHIFT);
+        SDL_SendKeyboardKey(0, SDL_GLOBAL_KEYBOARD_ID, 0, SDL_SCANCODE_RSHIFT, SDL_RELEASED);
     }
 
     /* The Windows key state gets lost when using Windows+Space or Windows+G shortcuts and
@@ -2073,10 +2286,10 @@ void WIN_PumpEvents(SDL_VideoDevice *_this)
     focusWindow = SDL_GetKeyboardFocus();
     if (!focusWindow || !(focusWindow->flags & SDL_WINDOW_KEYBOARD_GRABBED)) {
         if ((keystate[SDL_SCANCODE_LGUI] == SDL_PRESSED) && !(GetKeyState(VK_LWIN) & 0x8000)) {
-            SDL_SendKeyboardKey(0, SDL_GLOBAL_KEYBOARD_ID, SDL_RELEASED, SDL_SCANCODE_LGUI);
+            SDL_SendKeyboardKey(0, SDL_GLOBAL_KEYBOARD_ID, 0, SDL_SCANCODE_LGUI, SDL_RELEASED);
         }
         if ((keystate[SDL_SCANCODE_RGUI] == SDL_PRESSED) && !(GetKeyState(VK_RWIN) & 0x8000)) {
-            SDL_SendKeyboardKey(0, SDL_GLOBAL_KEYBOARD_ID, SDL_RELEASED, SDL_SCANCODE_RGUI);
+            SDL_SendKeyboardKey(0, SDL_GLOBAL_KEYBOARD_ID, 0, SDL_SCANCODE_RGUI, SDL_RELEASED);
         }
     }
 
@@ -2089,6 +2302,8 @@ void WIN_PumpEvents(SDL_VideoDevice *_this)
     WIN_CheckKeyboardAndMouseHotplug(_this, SDL_FALSE);
 
 #endif /*!defined(SDL_PLATFORM_XBOXONE) && !defined(SDL_PLATFORM_XBOXSERIES)*/
+
+    WIN_UpdateIMECandidates(_this);
 
 #ifdef SDL_PLATFORM_GDK
     GDK_DispatchTaskQueue();
@@ -2114,6 +2329,7 @@ static void WIN_CleanRegisterApp(WNDCLASSEX wcex)
     SDL_Appname = NULL;
 }
 
+#if !defined(SDL_PLATFORM_XBOXONE) && !defined(SDL_PLATFORM_XBOXSERIES)
 static BOOL CALLBACK WIN_ResourceNameCallback(HMODULE hModule, LPCTSTR lpType, LPTSTR lpName, LONG_PTR lParam)
 {
     WNDCLASSEX *wcex = (WNDCLASSEX *)lParam;
@@ -2127,6 +2343,7 @@ static BOOL CALLBACK WIN_ResourceNameCallback(HMODULE hModule, LPCTSTR lpType, L
     /* Do not bother enumerating any more. */
     return FALSE;
 }
+#endif /*!defined(SDL_PLATFORM_XBOXONE) && !defined(SDL_PLATFORM_XBOXSERIES)*/
 
 /* Register the class for this application */
 int SDL_RegisterApp(const char *name, Uint32 style, void *hInst)

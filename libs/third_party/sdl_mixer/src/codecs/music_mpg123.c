@@ -241,7 +241,6 @@ static void *MPG123_CreateFromIO(SDL_IOStream *src, SDL_bool closeio)
 
     music = (MPG123_Music*)SDL_calloc(1, sizeof(*music));
     if (!music) {
-        SDL_OutOfMemory();
         return NULL;
     }
     music->volume = MIX_MAX_VOLUME;
@@ -262,7 +261,6 @@ static void *MPG123_CreateFromIO(SDL_IOStream *src, SDL_bool closeio)
     music->buffer = (unsigned char *)SDL_malloc(music->buffer_size);
     if (!music->buffer) {
         MPG123_Delete(music);
-        SDL_OutOfMemory();
         return NULL;
     }
 
@@ -324,6 +322,7 @@ static void *MPG123_CreateFromIO(SDL_IOStream *src, SDL_bool closeio)
     SDL_assert(format != -1);
     music->sample_rate = rate;
 
+    SDL_zero(srcspec);
     srcspec.format = (SDL_AudioFormat)format;
     srcspec.channels = channels;
     srcspec.freq = (int)rate;
@@ -412,6 +411,7 @@ static int MPG123_GetSome(void *context, void *data, int bytes, SDL_bool *done)
             SDL_DestroyAudioStream(music->stream);
         }
 
+        SDL_zero(srcspec);
         srcspec.format = (SDL_AudioFormat)format;
         srcspec.channels = channels;
         srcspec.freq = (int)rate;

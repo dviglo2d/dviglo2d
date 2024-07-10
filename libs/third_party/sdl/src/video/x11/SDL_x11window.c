@@ -654,21 +654,20 @@ int X11_CreateWindow(SDL_VideoDevice *_this, SDL_Window *window, SDL_PropertiesI
         return SDL_SetError("Couldn't create window");
     }
 
-    /* Do not set borderless window if in desktop fullscreen, this causes
-       flickering in multi-monitor setups */
-    if (!((window->pending_flags & SDL_WINDOW_FULLSCREEN) &&
-          (window->flags & SDL_WINDOW_BORDERLESS) &&
-          !window->fullscreen_exclusive)) {
-        SetWindowBordered(display, screen, w,
-                          !(window->flags & SDL_WINDOW_BORDERLESS));
+    /* Don't set the borderless flag if we're about to go fullscreen.
+     * This prevents the window manager from moving a full-screen borderless
+     * window to a different display before we actually go fullscreen.
+     */
+    if (!(window->pending_flags & SDL_WINDOW_FULLSCREEN)) {
+        SetWindowBordered(display, screen, w, !(window->flags & SDL_WINDOW_BORDERLESS));
     }
 
     sizehints = X11_XAllocSizeHints();
     /* Setup the normal size hints */
     sizehints->flags = 0;
     if (!(window->flags & SDL_WINDOW_RESIZABLE)) {
-        sizehints->min_width = sizehints->max_width = window->w;
-        sizehints->min_height = sizehints->max_height = window->h;
+        sizehints->min_width = sizehints->max_width = window->floating.w;
+        sizehints->min_height = sizehints->max_height = window->floating.h;
         sizehints->flags |= (PMaxSize | PMinSize);
     }
     if (!undefined_position) {
@@ -754,6 +753,10 @@ int X11_CreateWindow(SDL_VideoDevice *_this, SDL_Window *window, SDL_PropertiesI
         return -1;
     }
     windowdata = window->driverdata;
+
+    /* Set the flag if the borders were forced on when creating a fullscreen window for later removal. */
+    windowdata->fullscreen_borders_forced_on = !!(window->pending_flags & SDL_WINDOW_FULLSCREEN) &&
+                                               !!(window->flags & SDL_WINDOW_BORDERLESS);
 
 #if defined(SDL_VIDEO_OPENGL_ES) || defined(SDL_VIDEO_OPENGL_ES2) || defined(SDL_VIDEO_OPENGL_EGL)
     if ((window->flags & SDL_WINDOW_OPENGL) &&
@@ -964,7 +967,7 @@ int X11_SetWindowIcon(SDL_VideoDevice *_this, SDL_Window *window, SDL_Surface *i
         long *dst;
 
         /* Set the _NET_WM_ICON property */
-        SDL_assert(icon->format->format == SDL_PIXELFORMAT_ARGB8888);
+        SDL_assert(icon->format == SDL_PIXELFORMAT_ARGB8888);
         propsize = 2 + (icon->w * icon->h);
         propdata = SDL_malloc(propsize * sizeof(long));
 
@@ -1040,7 +1043,7 @@ int X11_SetWindowPosition(SDL_VideoDevice *_this, SDL_Window *window)
         }
         X11_UpdateWindowPosition(window, SDL_FALSE);
     } else {
-        SDL_UpdateFullscreenMode(window, SDL_TRUE, SDL_TRUE);
+        SDL_UpdateFullscreenMode(window, SDL_FULLSCREEN_OP_UPDATE, SDL_TRUE);
     }
     return 0;
 }
@@ -1086,7 +1089,7 @@ void X11_SetWindowMinMax(SDL_Window *window, SDL_bool use_current)
     long hint_flags = 0;
 
     X11_XGetWMNormalHints(display, data->xwindow, sizehints, &hint_flags);
-    sizehints->flags &= ~(PMinSize | PMaxSize);
+    sizehints->flags &= ~(PMinSize | PMaxSize | PAspect);
 
     if (data->window->flags & SDL_WINDOW_RESIZABLE) {
         if (data->window->min_w || data->window->min_h) {
@@ -1098,6 +1101,11 @@ void X11_SetWindowMinMax(SDL_Window *window, SDL_bool use_current)
             sizehints->flags |= PMaxSize;
             sizehints->max_width = data->window->max_w;
             sizehints->max_height = data->window->max_h;
+        }
+        if (data->window->min_aspect > 0.0f || data->window->max_aspect > 0.0f) {
+            sizehints->flags |= PAspect;
+            SDL_CalculateFraction(data->window->min_aspect, &sizehints->min_aspect.x, &sizehints->min_aspect.y);
+            SDL_CalculateFraction(data->window->max_aspect, &sizehints->max_aspect.x, &sizehints->max_aspect.y);
         }
     } else {
         /* Set the min/max to the same values to make the window non-resizable */
@@ -1122,6 +1130,17 @@ void X11_SetWindowMinimumSize(SDL_VideoDevice *_this, SDL_Window *window)
 }
 
 void X11_SetWindowMaximumSize(SDL_VideoDevice *_this, SDL_Window *window)
+{
+    if (window->driverdata->pending_operation & X11_PENDING_OP_FULLSCREEN) {
+        X11_SyncWindow(_this, window);
+    }
+
+    if (!(window->flags & SDL_WINDOW_FULLSCREEN)) {
+        X11_SetWindowMinMax(window, SDL_TRUE);
+    }
+}
+
+void X11_SetWindowAspectRatio(SDL_VideoDevice *_this, SDL_Window *window)
 {
     if (window->driverdata->pending_operation & X11_PENDING_OP_FULLSCREEN) {
         X11_SyncWindow(_this, window);
@@ -1248,18 +1267,6 @@ int X11_SetWindowModalFor(SDL_VideoDevice *_this, SDL_Window *modal_window, SDL_
     return 0;
 }
 
-int X11_SetWindowInputFocus(SDL_VideoDevice *_this, SDL_Window *window)
-{
-    if (X11_IsWindowMapped(_this, window)) {
-        SDL_WindowData *data = window->driverdata;
-        Display *display = data->videodata->display;
-        X11_XSetInputFocus(display, data->xwindow, RevertToNone, CurrentTime);
-        X11_XFlush(display);
-        return 0;
-    }
-    return -1;
-}
-
 void X11_SetWindowBordered(SDL_VideoDevice *_this, SDL_Window *window, SDL_bool bordered)
 {
     const SDL_bool focused = (window->flags & SDL_WINDOW_INPUT_FOCUS) ? SDL_TRUE : SDL_FALSE;
@@ -1304,6 +1311,7 @@ void X11_SetWindowBordered(SDL_VideoDevice *_this, SDL_Window *window, SDL_bool 
     } else {
         /* If fullscreen, set a flag to toggle the borders when returning to windowed mode. */
         data->toggle_borders = SDL_TRUE;
+        data->fullscreen_borders_forced_on = SDL_FALSE;
     }
 }
 
@@ -1609,7 +1617,7 @@ void X11_RestoreWindow(SDL_VideoDevice *_this, SDL_Window *window)
 }
 
 /* This asks the Window Manager to handle fullscreen for us. This is the modern way. */
-static int X11_SetWindowFullscreenViaWM(SDL_VideoDevice *_this, SDL_Window *window, SDL_VideoDisplay *_display, SDL_bool fullscreen)
+static int X11_SetWindowFullscreenViaWM(SDL_VideoDevice *_this, SDL_Window *window, SDL_VideoDisplay *_display, SDL_FullscreenOp fullscreen)
 {
     CHECK_WINDOW_DATA(window);
     CHECK_DISPLAY_DATA(_display);
@@ -1628,9 +1636,14 @@ static int X11_SetWindowFullscreenViaWM(SDL_VideoDevice *_this, SDL_Window *wind
             X11_SyncWindow(_this, window);
         }
 
-        /* Nothing to do */
-        if (!fullscreen && !(window->flags & SDL_WINDOW_FULLSCREEN)) {
-            return 0;
+        if (!(window->flags & SDL_WINDOW_FULLSCREEN)) {
+            if (fullscreen == SDL_FULLSCREEN_OP_UPDATE) {
+                /* Request was out of date; set -1 to signal the video core to undo a mode switch. */
+                return -1;
+            } else if (fullscreen == SDL_FULLSCREEN_OP_LEAVE) {
+                /* Nothing to do. */
+                return 0;
+            }
         }
 
         if (fullscreen && !(window->flags & SDL_WINDOW_RESIZABLE)) {
@@ -1640,7 +1653,7 @@ static int X11_SetWindowFullscreenViaWM(SDL_VideoDevice *_this, SDL_Window *wind
             long flags = 0;
             X11_XGetWMNormalHints(display, data->xwindow, sizehints, &flags);
             /* we are going fullscreen so turn the flags off */
-            sizehints->flags &= ~(PMinSize | PMaxSize);
+            sizehints->flags &= ~(PMinSize | PMaxSize | PAspect);
             X11_XSetWMNormalHints(display, data->xwindow, sizehints);
             X11_XFree(sizehints);
         }
@@ -1724,7 +1737,7 @@ static int X11_SetWindowFullscreenViaWM(SDL_VideoDevice *_this, SDL_Window *wind
     return 1;
 }
 
-int X11_SetWindowFullscreen(SDL_VideoDevice *_this, SDL_Window *window, SDL_VideoDisplay *_display, SDL_bool fullscreen)
+int X11_SetWindowFullscreen(SDL_VideoDevice *_this, SDL_Window *window, SDL_VideoDisplay *_display, SDL_FullscreenOp fullscreen)
 {
     return X11_SetWindowFullscreenViaWM(_this, window, _display, fullscreen);
 }
@@ -1828,6 +1841,15 @@ int X11_SetWindowMouseGrab(SDL_VideoDevice *_this, SDL_Window *window, SDL_bool 
            appropriate. */
         if (window->flags & SDL_WINDOW_HIDDEN) {
             return 0;
+        }
+
+        /* If XInput2 is enabled, it will grab the pointer on button presses,
+         * which results in XGrabPointer returning AlreadyGrabbed. If buttons
+         * are currently pressed, clear any existing grabs before attempting
+         * the confinement grab.
+         */
+        if (data->xinput2_mouse_enabled && SDL_GetMouseState(NULL, NULL)) {
+            X11_XUngrabPointer(display, CurrentTime);
         }
 
         /* Try to grab the mouse */
