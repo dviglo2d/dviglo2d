@@ -59,6 +59,10 @@ endif()
 # Включаем поддержку папок в IDE
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
+# Включаем опцию /MT для всех таргетов
+set(CMAKE_POLICY_DEFAULT_CMP0091 NEW)
+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+
 # ==================== Опции движка ====================
 
 # Получаем доступ к макросу cmake_dependent_option
