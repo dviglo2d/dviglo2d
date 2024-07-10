@@ -158,7 +158,7 @@ jobs:
         fi
 
   Linux_Native:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     strategy:
       fail-fast: false
@@ -175,8 +175,8 @@ jobs:
             ID: clang,
             #C: clang,
             #CXX: clang++,
-            C: clang-13,
-            CXX: clang++-13,
+            C: clang-16,
+            CXX: clang++-16,
           }
         BUILD_TYPE:
         - {
