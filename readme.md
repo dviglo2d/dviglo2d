@@ -6,7 +6,7 @@
 
 Поддерживаемые ОС: Linux и Windows.
 
-Лиценизя: [MIT](licenses/dviglo/LICENSE).
+Лиценизя: [MIT](licenses/dviglo/license.txt).
 
 ## Полезные ссылки
 
