@@ -20,9 +20,6 @@ if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)
   message(FATAL_ERROR "Prevented in-tree build. Please create a build directory outside of the SDL source code and run \"cmake -S ${CMAKE_SOURCE_DIR} -B .\" from there")
 endif()
 
-# MSVC runtime library flags are selected by an abstraction.
-set(CMAKE_POLICY_DEFAULT_CMP0091 NEW)
-
 # See docs/release_checklist.md
 project(SDL3 LANGUAGES C VERSION "3.1.2")
 
@@ -175,20 +172,6 @@ if(WINDOWS OR MACOS OR IOS OR TVOS OR VISIONOS OR WATCHOS)
 endif()
 
 if(MSVC)
-  dep_option(SDL_STATIC_VCRT "Use /MT for static VC runtimes" ON "NOT WINDOWS_STORE" OFF)
-  if(SDL_STATIC_VCRT)
-    if(NOT DEFINED CMAKE_MSVC_RUNTIME_LIBRARY)
-      set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
-    endif()
-    foreach(flag_var
-        CMAKE_C_FLAGS CMAKE_C_FLAGS_DEBUG CMAKE_C_FLAGS_RELEASE
-        CMAKE_C_FLAGS_MINSIZEREL CMAKE_C_FLAGS_RELWITHDEBINFO)
-      if(${flag_var} MATCHES "/MD")
-        string(REGEX REPLACE "/MD" "/MT" ${flag_var} "${${flag_var}}")
-      endif()
-    endforeach()
-  endif()
-
   if(NOT SDL_LIBC)
     # Make sure /RTC1 is disabled, otherwise it will use functions from the CRT
     foreach(flag_var
@@ -1372,6 +1355,10 @@ if(ANDROID)
       if(VULKAN_PASSED_ANDROID_CHECKS)
         set(SDL_VIDEO_VULKAN 1)
         set(HAVE_VULKAN TRUE)
+        if(SDL_RENDER_VULKAN)
+          set(SDL_VIDEO_RENDER_VULKAN 1)
+          set(HAVE_RENDER_VULKAN TRUE)
+        endif()
       endif()
     endif()
   endif()

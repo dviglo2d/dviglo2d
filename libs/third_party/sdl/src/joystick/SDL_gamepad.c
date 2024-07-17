@@ -558,7 +558,7 @@ static void PopMappingChangeTracking(void)
         for (i = 0; tracker->joysticks[i]; ++i) {
             /* Looking up the new mapping might create one and associate it with the gamepad (and generate events) */
             SDL_JoystickID joystick = tracker->joysticks[i];
-            SDL_Gamepad *gamepad = SDL_GetGamepadFromInstanceID(joystick);
+            SDL_Gamepad *gamepad = SDL_GetGamepadFromID(joystick);
             GamepadMapping_t *new_mapping = SDL_PrivateGetGamepadMapping(joystick, SDL_FALSE);
             GamepadMapping_t *old_mapping = gamepad ? gamepad->mapping : tracker->joystick_mappings[i];
 
@@ -1324,7 +1324,7 @@ static void SDL_UpdateGamepadType(SDL_Gamepad *gamepad)
         }
     }
     if (gamepad->type == SDL_GAMEPAD_TYPE_UNKNOWN) {
-        gamepad->type = SDL_GetRealGamepadInstanceType(gamepad->joystick->instance_id);
+        gamepad->type = SDL_GetRealGamepadTypeForID(gamepad->joystick->instance_id);
     }
 }
 
@@ -1778,8 +1778,8 @@ static GamepadMapping_t *SDL_PrivateGetGamepadMapping(SDL_JoystickID instance_id
 
     SDL_AssertJoysticksLocked();
 
-    name = SDL_GetJoystickInstanceName(instance_id);
-    guid = SDL_GetJoystickInstanceGUID(instance_id);
+    name = SDL_GetJoystickNameForID(instance_id);
+    guid = SDL_GetJoystickGUIDForID(instance_id);
     mapping = SDL_PrivateGetGamepadMappingForNameAndGUID(name, guid);
     if (!mapping && create_mapping) {
         SDL_GamepadMapping raw_map;
@@ -2125,7 +2125,7 @@ static char *CreateMappingString(GamepadMapping_t *mapping, SDL_JoystickGUID gui
     return pMappingString;
 }
 
-char **SDL_GetGamepadMappings(int *count)
+const char * const *SDL_GetGamepadMappings(int *count)
 {
     int num_mappings = 0;
     char **retval = NULL;
@@ -2198,13 +2198,14 @@ char **SDL_GetGamepadMappings(int *count)
         SDL_free(mappings);
     }
 
-    return retval;
+    SDL_FreeLater(retval);
+    return (const char * const *) retval;
 }
 
 /*
  * Get the mapping string for this GUID
  */
-char *SDL_GetGamepadMappingForGUID(SDL_JoystickGUID guid)
+const char *SDL_GetGamepadMappingForGUID(SDL_JoystickGUID guid)
 {
     char *retval;
 
@@ -2220,13 +2221,14 @@ char *SDL_GetGamepadMappingForGUID(SDL_JoystickGUID guid)
     }
     SDL_UnlockJoysticks();
 
+    SDL_FreeLater(retval);
     return retval;
 }
 
 /*
  * Get the mapping string for this device
  */
-char *SDL_GetGamepadMapping(SDL_Gamepad *gamepad)
+const char *SDL_GetGamepadMapping(SDL_Gamepad *gamepad)
 {
     char *retval;
 
@@ -2238,6 +2240,7 @@ char *SDL_GetGamepadMapping(SDL_Gamepad *gamepad)
     }
     SDL_UnlockJoysticks();
 
+    SDL_FreeLater(retval);
     return retval;
 }
 
@@ -2246,7 +2249,7 @@ char *SDL_GetGamepadMapping(SDL_Gamepad *gamepad)
  */
 int SDL_SetGamepadMapping(SDL_JoystickID instance_id, const char *mapping)
 {
-    SDL_JoystickGUID guid = SDL_GetJoystickInstanceGUID(instance_id);
+    SDL_JoystickGUID guid = SDL_GetJoystickGUIDForID(instance_id);
     int retval = -1;
 
     if (SDL_memcmp(&guid, &s_zeroGUID, sizeof(guid)) == 0) {
@@ -2313,7 +2316,7 @@ static SDL_bool SDL_GetGamepadMappingFilePath(char *path, size_t size)
     }
 
 #ifdef SDL_PLATFORM_ANDROID
-    return SDL_snprintf(path, size, "%s/gamepad_map.txt", SDL_AndroidGetInternalStoragePath()) < size;
+    return SDL_snprintf(path, size, "%s/gamepad_map.txt", SDL_GetAndroidInternalStoragePath()) < size;
 #else
     return SDL_FALSE;
 #endif
@@ -2420,7 +2423,7 @@ SDL_JoystickID *SDL_GetGamepads(int *count)
     return joysticks;
 }
 
-const char *SDL_GetGamepadInstanceName(SDL_JoystickID instance_id)
+const char *SDL_GetGamepadNameForID(SDL_JoystickID instance_id)
 {
     const char *retval = NULL;
 
@@ -2429,7 +2432,7 @@ const char *SDL_GetGamepadInstanceName(SDL_JoystickID instance_id)
         GamepadMapping_t *mapping = SDL_PrivateGetGamepadMapping(instance_id, SDL_TRUE);
         if (mapping) {
             if (SDL_strcmp(mapping->name, "*") == 0) {
-                retval = SDL_GetJoystickInstanceName(instance_id);
+                retval = SDL_GetJoystickNameForID(instance_id);
             } else {
                 retval = mapping->name;
             }
@@ -2440,37 +2443,37 @@ const char *SDL_GetGamepadInstanceName(SDL_JoystickID instance_id)
     return retval;
 }
 
-const char *SDL_GetGamepadInstancePath(SDL_JoystickID instance_id)
+const char *SDL_GetGamepadPathForID(SDL_JoystickID instance_id)
 {
-    return SDL_GetJoystickInstancePath(instance_id);
+    return SDL_GetJoystickPathForID(instance_id);
 }
 
-int SDL_GetGamepadInstancePlayerIndex(SDL_JoystickID instance_id)
+int SDL_GetGamepadPlayerIndexForID(SDL_JoystickID instance_id)
 {
-    return SDL_GetJoystickInstancePlayerIndex(instance_id);
+    return SDL_GetJoystickPlayerIndexForID(instance_id);
 }
 
-SDL_JoystickGUID SDL_GetGamepadInstanceGUID(SDL_JoystickID instance_id)
+SDL_JoystickGUID SDL_GetGamepadGUIDForID(SDL_JoystickID instance_id)
 {
-    return SDL_GetJoystickInstanceGUID(instance_id);
+    return SDL_GetJoystickGUIDForID(instance_id);
 }
 
-Uint16 SDL_GetGamepadInstanceVendor(SDL_JoystickID instance_id)
+Uint16 SDL_GetGamepadVendorForID(SDL_JoystickID instance_id)
 {
-    return SDL_GetJoystickInstanceVendor(instance_id);
+    return SDL_GetJoystickVendorForID(instance_id);
 }
 
-Uint16 SDL_GetGamepadInstanceProduct(SDL_JoystickID instance_id)
+Uint16 SDL_GetGamepadProductForID(SDL_JoystickID instance_id)
 {
-    return SDL_GetJoystickInstanceProduct(instance_id);
+    return SDL_GetJoystickProductForID(instance_id);
 }
 
-Uint16 SDL_GetGamepadInstanceProductVersion(SDL_JoystickID instance_id)
+Uint16 SDL_GetGamepadProductVersionForID(SDL_JoystickID instance_id)
 {
-    return SDL_GetJoystickInstanceProductVersion(instance_id);
+    return SDL_GetJoystickProductVersionForID(instance_id);
 }
 
-SDL_GamepadType SDL_GetGamepadInstanceType(SDL_JoystickID instance_id)
+SDL_GamepadType SDL_GetGamepadTypeForID(SDL_JoystickID instance_id)
 {
     SDL_GamepadType type = SDL_GAMEPAD_TYPE_UNKNOWN;
 
@@ -2497,21 +2500,21 @@ SDL_GamepadType SDL_GetGamepadInstanceType(SDL_JoystickID instance_id)
     if (type != SDL_GAMEPAD_TYPE_UNKNOWN) {
         return type;
     }
-    return SDL_GetRealGamepadInstanceType(instance_id);
+    return SDL_GetRealGamepadTypeForID(instance_id);
 }
 
-SDL_GamepadType SDL_GetRealGamepadInstanceType(SDL_JoystickID instance_id)
+SDL_GamepadType SDL_GetRealGamepadTypeForID(SDL_JoystickID instance_id)
 {
     SDL_GamepadType type = SDL_GAMEPAD_TYPE_UNKNOWN;
     const SDL_SteamVirtualGamepadInfo *info;
 
     SDL_LockJoysticks();
     {
-        info = SDL_GetJoystickInstanceVirtualGamepadInfo(instance_id);
+        info = SDL_GetJoystickVirtualGamepadInfoForID(instance_id);
         if (info) {
             type = info->type;
         } else {
-            type = SDL_GetGamepadTypeFromGUID(SDL_GetJoystickInstanceGUID(instance_id), SDL_GetJoystickInstanceName(instance_id));
+            type = SDL_GetGamepadTypeFromGUID(SDL_GetJoystickGUIDForID(instance_id), SDL_GetJoystickNameForID(instance_id));
         }
     }
     SDL_UnlockJoysticks();
@@ -2519,7 +2522,7 @@ SDL_GamepadType SDL_GetRealGamepadInstanceType(SDL_JoystickID instance_id)
     return type;
 }
 
-char *SDL_GetGamepadInstanceMapping(SDL_JoystickID instance_id)
+const char *SDL_GetGamepadMappingForID(SDL_JoystickID instance_id)
 {
     char *retval = NULL;
 
@@ -2528,12 +2531,14 @@ char *SDL_GetGamepadInstanceMapping(SDL_JoystickID instance_id)
         GamepadMapping_t *mapping = SDL_PrivateGetGamepadMapping(instance_id, SDL_TRUE);
         if (mapping) {
             char pchGUID[33];
-            const SDL_JoystickGUID guid = SDL_GetJoystickInstanceGUID(instance_id);
+            const SDL_JoystickGUID guid = SDL_GetJoystickGUIDForID(instance_id);
             SDL_GetJoystickGUIDString(guid, pchGUID, sizeof(pchGUID));
             SDL_asprintf(&retval, "%s,%s,%s", pchGUID, mapping->name, mapping->mapping);
         }
     }
     SDL_UnlockJoysticks();
+
+    SDL_FreeLater(retval);
     return retval;
 }
 
@@ -3272,14 +3277,14 @@ int SDL_GetGamepadSensorData(SDL_Gamepad *gamepad, SDL_SensorType type, float *d
     return SDL_Unsupported();
 }
 
-SDL_JoystickID SDL_GetGamepadInstanceID(SDL_Gamepad *gamepad)
+SDL_JoystickID SDL_GetGamepadID(SDL_Gamepad *gamepad)
 {
     SDL_Joystick *joystick = SDL_GetGamepadJoystick(gamepad);
 
     if (!joystick) {
         return 0;
     }
-    return SDL_GetJoystickInstanceID(joystick);
+    return SDL_GetJoystickID(joystick);
 }
 
 SDL_PropertiesID SDL_GetGamepadProperties(SDL_Gamepad *gamepad)
@@ -3336,7 +3341,7 @@ SDL_GamepadType SDL_GetGamepadType(SDL_Gamepad *gamepad)
     {
         CHECK_GAMEPAD_MAGIC(gamepad, SDL_GAMEPAD_TYPE_UNKNOWN);
 
-        info = SDL_GetJoystickInstanceVirtualGamepadInfo(gamepad->joystick->instance_id);
+        info = SDL_GetJoystickVirtualGamepadInfoForID(gamepad->joystick->instance_id);
         if (info) {
             type = info->type;
         } else {
@@ -3506,7 +3511,7 @@ SDL_Joystick *SDL_GetGamepadJoystick(SDL_Gamepad *gamepad)
 /*
  * Return the SDL_Gamepad associated with an instance id.
  */
-SDL_Gamepad *SDL_GetGamepadFromInstanceID(SDL_JoystickID joyid)
+SDL_Gamepad *SDL_GetGamepadFromID(SDL_JoystickID joyid)
 {
     SDL_Gamepad *gamepad;
 
@@ -3534,7 +3539,7 @@ SDL_Gamepad *SDL_GetGamepadFromPlayerIndex(int player_index)
     {
         SDL_Joystick *joystick = SDL_GetJoystickFromPlayerIndex(player_index);
         if (joystick) {
-            retval = SDL_GetGamepadFromInstanceID(joystick->instance_id);
+            retval = SDL_GetGamepadFromID(joystick->instance_id);
         }
     }
     SDL_UnlockJoysticks();

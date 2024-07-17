@@ -211,9 +211,6 @@ extern SDL_DECLSPEC void SDLCALL SDL_DestroySurface(SDL_Surface *surface);
  *          SDL_GetError() for more information.
  *
  * \since This function is available since SDL 3.0.0.
- *
- * \sa SDL_GetProperty
- * \sa SDL_SetProperty
  */
 extern SDL_DECLSPEC SDL_PropertiesID SDLCALL SDL_GetSurfaceProperties(SDL_Surface *surface);
 
@@ -256,6 +253,34 @@ extern SDL_DECLSPEC int SDLCALL SDL_SetSurfaceColorspace(SDL_Surface *surface, S
  * \sa SDL_SetSurfaceColorspace
  */
 extern SDL_DECLSPEC SDL_Colorspace SDLCALL SDL_GetSurfaceColorspace(SDL_Surface *surface);
+
+/**
+ * Create a palette and associate it with a surface.
+ *
+ * This function creates a palette compatible with the provided surface. The
+ * palette is then returned for you to modify, and the surface will
+ * automatically use the new palette in future operations. You do not need to
+ * destroy the returned palette, it will be freed when the reference count
+ * reaches 0, usually when the surface is destroyed.
+ *
+ * Bitmap surfaces (with format SDL_PIXELFORMAT_INDEX1LSB or
+ * SDL_PIXELFORMAT_INDEX1MSB) will have the palette initialized with 0 as
+ * white and 1 as black. Other surfaces will get a palette initialized with
+ * white in every entry.
+ *
+ * If this function is called for a surface that already has a palette, a new
+ * palette will be created to replace it.
+ *
+ * \param surface the SDL_Surface structure to update.
+ * \returns a new SDL_Palette structure on success or NULL on failure (e.g. if
+ *          the surface didn't have an index format); call SDL_GetError() for
+ *          more information.
+ *
+ * \since This function is available since SDL 3.0.0.
+ *
+ * \sa SDL_SetPaletteColors
+ */
+extern SDL_DECLSPEC SDL_Palette * SDLCALL SDL_CreateSurfacePalette(SDL_Surface *surface);
 
 /**
  * Set the palette used by a surface.
@@ -486,16 +511,14 @@ extern SDL_DECLSPEC SDL_bool SDLCALL SDL_SurfaceHasColorKey(SDL_Surface *surface
  * If the surface doesn't have color key enabled this function returns -1.
  *
  * \param surface the SDL_Surface structure to query.
- * \param key a pointer filled in with the transparent pixel.
- * \returns 0 on success or a negative error code on failure; call
- *          SDL_GetError() for more information.
+ * \returns the transparent pixel.
  *
  * \since This function is available since SDL 3.0.0.
  *
  * \sa SDL_SetSurfaceColorKey
  * \sa SDL_SurfaceHasColorKey
  */
-extern SDL_DECLSPEC int SDLCALL SDL_GetSurfaceColorKey(SDL_Surface *surface, Uint32 *key);
+extern SDL_DECLSPEC Uint32 SDLCALL SDL_GetSurfaceColorKey(SDL_Surface *surface);
 
 /**
  * Set an additional color value multiplied into blit operations.
@@ -595,15 +618,13 @@ extern SDL_DECLSPEC int SDLCALL SDL_SetSurfaceBlendMode(SDL_Surface *surface, SD
  * Get the blend mode used for blit operations.
  *
  * \param surface the SDL_Surface structure to query.
- * \param blendMode a pointer filled in with the current SDL_BlendMode.
- * \returns 0 on success or a negative error code on failure; call
- *          SDL_GetError() for more information.
+ * \returns the current SDL_BlendMode.
  *
  * \since This function is available since SDL 3.0.0.
  *
  * \sa SDL_SetSurfaceBlendMode
  */
-extern SDL_DECLSPEC int SDLCALL SDL_GetSurfaceBlendMode(SDL_Surface *surface, SDL_BlendMode *blendMode);
+extern SDL_DECLSPEC SDL_BlendMode SDLCALL SDL_GetSurfaceBlendMode(SDL_Surface *surface);
 
 /**
  * Set the clipping rectangle for a surface.
@@ -717,7 +738,7 @@ extern SDL_DECLSPEC SDL_Surface *SDLCALL SDL_ConvertSurface(SDL_Surface *surface
  * \sa SDL_ConvertSurface
  * \sa SDL_DestroySurface
  */
-extern SDL_DECLSPEC SDL_Surface *SDLCALL SDL_ConvertSurfaceAndColorspace(SDL_Surface *surface, SDL_PixelFormat format, const SDL_Palette *palette, SDL_Colorspace colorspace, SDL_PropertiesID props);
+extern SDL_DECLSPEC SDL_Surface *SDLCALL SDL_ConvertSurfaceAndColorspace(SDL_Surface *surface, SDL_PixelFormat format, SDL_Palette *palette, SDL_Colorspace colorspace, SDL_PropertiesID props);
 
 /**
  * Copy a block of pixels of one format to another format.

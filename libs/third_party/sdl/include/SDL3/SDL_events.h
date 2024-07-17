@@ -115,6 +115,8 @@ typedef enum SDL_EventType
     SDL_EVENT_DISPLAY_ADDED,                 /**< Display has been added to the system */
     SDL_EVENT_DISPLAY_REMOVED,               /**< Display has been removed from the system */
     SDL_EVENT_DISPLAY_MOVED,                 /**< Display has changed position */
+    SDL_EVENT_DISPLAY_DESKTOP_MODE_CHANGED,  /**< Display has changed desktop mode */
+    SDL_EVENT_DISPLAY_CURRENT_MODE_CHANGED,  /**< Display has changed current mode */
     SDL_EVENT_DISPLAY_CONTENT_SCALE_CHANGED, /**< Display has changed content scale */
     SDL_EVENT_DISPLAY_FIRST = SDL_EVENT_DISPLAY_ORIENTATION,
     SDL_EVENT_DISPLAY_LAST = SDL_EVENT_DISPLAY_CONTENT_SCALE_CHANGED,
@@ -151,7 +153,7 @@ typedef enum SDL_EventType
     SDL_EVENT_WINDOW_PEN_LEAVE,         /**< Window has lost focus of the pressure-sensitive pen with ID "data1" */
     SDL_EVENT_WINDOW_HDR_STATE_CHANGED, /**< Window HDR properties have changed */
     SDL_EVENT_WINDOW_FIRST = SDL_EVENT_WINDOW_SHOWN,
-    SDL_EVENT_WINDOW_LAST = SDL_EVENT_WINDOW_PEN_LEAVE,
+    SDL_EVENT_WINDOW_LAST = SDL_EVENT_WINDOW_HDR_STATE_CHANGED,
 
     /* Keyboard events */
     SDL_EVENT_KEY_DOWN        = 0x300, /**< Key pressed */
@@ -281,6 +283,7 @@ typedef struct SDL_DisplayEvent
     Uint64 timestamp;   /**< In nanoseconds, populated using SDL_GetTicksNS() */
     SDL_DisplayID displayID;/**< The associated display */
     Sint32 data1;       /**< event dependent data */
+    Sint32 data2;       /**< event dependent data */
 } SDL_DisplayEvent;
 
 /**
@@ -692,7 +695,7 @@ typedef struct SDL_CameraDeviceEvent
     SDL_EventType type; /**< SDL_EVENT_CAMERA_DEVICE_ADDED, SDL_EVENT_CAMERA_DEVICE_REMOVED, SDL_EVENT_CAMERA_DEVICE_APPROVED, SDL_EVENT_CAMERA_DEVICE_DENIED */
     Uint32 reserved;
     Uint64 timestamp;   /**< In nanoseconds, populated using SDL_GetTicksNS() */
-    SDL_CameraDeviceID which;       /**< SDL_CameraDeviceID for the device being added or removed or changing */
+    SDL_CameraID which;       /**< SDL_CameraID for the device being added or removed or changing */
 } SDL_CameraDeviceEvent;
 
 /**
@@ -1404,7 +1407,7 @@ extern SDL_DECLSPEC SDL_bool SDLCALL SDL_EventEnabled(Uint32 type);
 extern SDL_DECLSPEC Uint32 SDLCALL SDL_RegisterEvents(int numevents);
 
 /**
- * Allocate dynamic memory for an SDL event.
+ * Allocate temporary memory for an SDL event.
  *
  * You can use this to allocate memory for user events that will be
  * automatically freed after the event is processed.
@@ -1416,8 +1419,31 @@ extern SDL_DECLSPEC Uint32 SDLCALL SDL_RegisterEvents(int numevents);
  * \threadsafety It is safe to call this function from any thread.
  *
  * \since This function is available since SDL 3.0.0.
+ *
+ * \sa SDL_FreeEventMemory
  */
 extern SDL_DECLSPEC void * SDLCALL SDL_AllocateEventMemory(size_t size);
+
+/**
+ * Free temporary event memory allocated by SDL.
+ *
+ * This function frees temporary memory allocated for events and APIs that
+ * return temporary strings. This memory is local to the thread that creates
+ * it and is automatically freed for the main thread when pumping the event
+ * loop. For other threads you may want to call this function periodically to
+ * free any temporary memory created by that thread.
+ *
+ * Note that if you call SDL_AllocateEventMemory() on one thread and pass it
+ * to another thread, e.g. via a user event, then you should be sure the other
+ * thread has finished processing it before calling this function.
+ *
+ * \threadsafety It is safe to call this function from any thread.
+ *
+ * \since This function is available since SDL 3.0.0.
+ *
+ * \sa SDL_AllocateEventMemory
+ */
+extern SDL_DECLSPEC void SDLCALL SDL_FreeEventMemory(void);
 
 /* Ends C function definitions when using C++ */
 #ifdef __cplusplus

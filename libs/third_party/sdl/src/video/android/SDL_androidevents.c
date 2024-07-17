@@ -44,7 +44,7 @@ static void android_egl_context_restore(SDL_Window *window)
 {
     if (window) {
         SDL_Event event;
-        SDL_WindowData *data = window->driverdata;
+        SDL_WindowData *data = window->internal;
         SDL_GL_MakeCurrent(window, NULL);
         if (SDL_GL_MakeCurrent(window, (SDL_GLContext)data->egl_context) < 0) {
             /* The context is no longer valid, create a new one */
@@ -68,7 +68,7 @@ static void android_egl_context_backup(SDL_Window *window)
     if (window) {
         int interval = 0;
         /* Keep a copy of the EGL Context so we can try to restore it when we resume */
-        SDL_WindowData *data = window->driverdata;
+        SDL_WindowData *data = window->internal;
         data->egl_context = SDL_GL_GetCurrentContext();
 
         /* Save/Restore the swap interval / vsync */
@@ -93,12 +93,12 @@ static void android_egl_context_backup(SDL_Window *window)
 
 void Android_PumpEvents_Blocking(SDL_VideoDevice *_this)
 {
-    SDL_VideoData *videodata = _this->driverdata;
+    SDL_VideoData *videodata = _this->internal;
 
     if (videodata->isPaused) {
 #ifdef SDL_VIDEO_OPENGL_EGL
         /* Make sure this is the last thing we do before pausing */
-        if (!Android_Window->external_graphics_context) {
+        if (Android_Window && !Android_Window->external_graphics_context) {
             SDL_LockMutex(Android_ActivityMutex);
             android_egl_context_backup(Android_Window);
             SDL_UnlockMutex(Android_ActivityMutex);
@@ -122,7 +122,7 @@ void Android_PumpEvents_Blocking(SDL_VideoDevice *_this)
 
             /* Restore the GL Context from here, as this operation is thread dependent */
 #ifdef SDL_VIDEO_OPENGL_EGL
-            if (!Android_Window->external_graphics_context && !SDL_HasEvent(SDL_EVENT_QUIT)) {
+            if (Android_Window && !Android_Window->external_graphics_context && !SDL_HasEvent(SDL_EVENT_QUIT)) {
                 SDL_LockMutex(Android_ActivityMutex);
                 android_egl_context_restore(Android_Window);
                 SDL_UnlockMutex(Android_ActivityMutex);
@@ -130,7 +130,9 @@ void Android_PumpEvents_Blocking(SDL_VideoDevice *_this)
 #endif
 
             /* Make sure SW Keyboard is restored when an app becomes foreground */
-            Android_RestoreScreenKeyboardOnResume(_this, Android_Window);
+            if (Android_Window) {
+                Android_RestoreScreenKeyboardOnResume(_this, Android_Window);
+            }
 
             SDL_SendAppEvent(SDL_EVENT_DID_ENTER_FOREGROUND);
             SDL_SendWindowEvent(Android_Window, SDL_EVENT_WINDOW_RESTORED, 0, 0);
@@ -160,7 +162,7 @@ void Android_PumpEvents_Blocking(SDL_VideoDevice *_this)
 
 void Android_PumpEvents_NonBlocking(SDL_VideoDevice *_this)
 {
-    SDL_VideoData *videodata = _this->driverdata;
+    SDL_VideoData *videodata = _this->internal;
     static int backup_context = 0;
 
     if (videodata->isPaused) {
@@ -168,7 +170,7 @@ void Android_PumpEvents_NonBlocking(SDL_VideoDevice *_this)
         if (backup_context) {
 
 #ifdef SDL_VIDEO_OPENGL_EGL
-            if (!Android_Window->external_graphics_context) {
+            if (Android_Window && !Android_Window->external_graphics_context) {
                 SDL_LockMutex(Android_ActivityMutex);
                 android_egl_context_backup(Android_Window);
                 SDL_UnlockMutex(Android_ActivityMutex);
@@ -199,7 +201,7 @@ void Android_PumpEvents_NonBlocking(SDL_VideoDevice *_this)
 
 #ifdef SDL_VIDEO_OPENGL_EGL
             /* Restore the GL Context from here, as this operation is thread dependent */
-            if (!Android_Window->external_graphics_context && !SDL_HasEvent(SDL_EVENT_QUIT)) {
+            if (Android_Window && !Android_Window->external_graphics_context && !SDL_HasEvent(SDL_EVENT_QUIT)) {
                 SDL_LockMutex(Android_ActivityMutex);
                 android_egl_context_restore(Android_Window);
                 SDL_UnlockMutex(Android_ActivityMutex);
@@ -207,7 +209,9 @@ void Android_PumpEvents_NonBlocking(SDL_VideoDevice *_this)
 #endif
 
             /* Make sure SW Keyboard is restored when an app becomes foreground */
-            Android_RestoreScreenKeyboardOnResume(_this, Android_Window);
+            if (Android_Window) {
+                Android_RestoreScreenKeyboardOnResume(_this, Android_Window);
+            }
 
             SDL_SendAppEvent(SDL_EVENT_DID_ENTER_FOREGROUND);
             SDL_SendWindowEvent(Android_Window, SDL_EVENT_WINDOW_RESTORED, 0, 0);

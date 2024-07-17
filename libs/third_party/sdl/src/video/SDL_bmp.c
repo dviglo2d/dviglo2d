@@ -203,7 +203,6 @@ SDL_Surface *SDL_LoadBMP_IO(SDL_IOStream *src, SDL_bool closeio)
     Uint32 Gmask = 0;
     Uint32 Bmask = 0;
     Uint32 Amask = 0;
-    SDL_Palette *palette;
     Uint8 *bits;
     Uint8 *top, *end;
     SDL_bool topDown;
@@ -439,8 +438,12 @@ SDL_Surface *SDL_LoadBMP_IO(SDL_IOStream *src, SDL_bool closeio)
     }
 
     /* Load the palette, if any */
-    palette = SDL_GetSurfacePalette(surface);
-    if (palette) {
+    if (SDL_ISPIXELFORMAT_INDEXED(surface->format)) {
+        SDL_Palette *palette = SDL_CreateSurfacePalette(surface);
+        if (!palette) {
+            goto done;
+        }
+
         if (SDL_SeekIO(src, fp_offset + 14 + biSize, SDL_IO_SEEK_SET) < 0) {
             SDL_SetError("Error seeking in datastream");
             goto done;
@@ -462,9 +465,10 @@ SDL_Surface *SDL_LoadBMP_IO(SDL_IOStream *src, SDL_bool closeio)
                 goto done;
             }
         }
+        palette->ncolors = biClrUsed;
 
         if (biSize == 12) {
-            for (i = 0; i < (int)biClrUsed; ++i) {
+            for (i = 0; i < palette->ncolors; ++i) {
                 if (!SDL_ReadU8(src, &palette->colors[i].b) ||
                     !SDL_ReadU8(src, &palette->colors[i].g) ||
                     !SDL_ReadU8(src, &palette->colors[i].r)) {
@@ -473,7 +477,7 @@ SDL_Surface *SDL_LoadBMP_IO(SDL_IOStream *src, SDL_bool closeio)
                 palette->colors[i].a = SDL_ALPHA_OPAQUE;
             }
         } else {
-            for (i = 0; i < (int)biClrUsed; ++i) {
+            for (i = 0; i < palette->ncolors; ++i) {
                 if (!SDL_ReadU8(src, &palette->colors[i].b) ||
                     !SDL_ReadU8(src, &palette->colors[i].g) ||
                     !SDL_ReadU8(src, &palette->colors[i].r) ||
@@ -488,7 +492,6 @@ SDL_Surface *SDL_LoadBMP_IO(SDL_IOStream *src, SDL_bool closeio)
                 palette->colors[i].a = SDL_ALPHA_OPAQUE;
             }
         }
-        palette->ncolors = biClrUsed;
     }
 
     /* Read the surface pixels.  Note that the bmp image is upside down */
@@ -515,7 +518,7 @@ SDL_Surface *SDL_LoadBMP_IO(SDL_IOStream *src, SDL_bool closeio)
         if (SDL_ReadIO(src, bits, surface->pitch) != (size_t)surface->pitch) {
             goto done;
         }
-        if (biBitCount == 8 && palette && biClrUsed < (1u << biBitCount)) {
+        if (biBitCount == 8 && surface->internal->palette && biClrUsed < (1u << biBitCount)) {
             for (i = 0; i < surface->w; ++i) {
                 if (bits[i] >= biClrUsed) {
                     SDL_SetError("A BMP image contains a pixel with a color out of the palette");

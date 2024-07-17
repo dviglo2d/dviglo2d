@@ -105,7 +105,7 @@ OsWindow::~OsWindow()
     instance_ = nullptr;
 
     if (gl_context_)
-        SDL_GL_DeleteContext(gl_context_);
+        SDL_GL_DestroyContext(gl_context_);
 
     if (window_)
         SDL_DestroyWindow(window_);

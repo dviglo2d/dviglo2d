@@ -593,9 +593,7 @@ static int SDL_InitPixelFormatDetails(SDL_PixelFormatDetails *details, SDL_Pixel
     SDL_zerop(details);
     details->format = format;
     details->bits_per_pixel = (Uint8)bpp;
-    SDL_assert(SDL_BITSPERPIXEL(format) == details->bits_per_pixel);
     details->bytes_per_pixel = (Uint8)((bpp + 7) / 8);
-    SDL_assert(SDL_BYTESPERPIXEL(format) == details->bytes_per_pixel);
 
     details->Rmask = Rmask;
     details->Rshift = 0;
@@ -663,7 +661,7 @@ const SDL_PixelFormatDetails *SDL_GetPixelFormatDetails(SDL_PixelFormat format)
     }
 
     if (SDL_FindInHashTable(SDL_format_details, (const void *)(uintptr_t)format, (const void **)&details)) {
-        return details;
+        goto done;
     }
 
     /* Allocate an empty pixel format structure, and initialize it */
@@ -1024,8 +1022,7 @@ SDL_Palette *SDL_CreatePalette(int ncolors)
     if (!palette) {
         return NULL;
     }
-    palette->colors =
-        (SDL_Color *)SDL_malloc(ncolors * sizeof(*palette->colors));
+    palette->colors = (SDL_Color *)SDL_malloc(ncolors * sizeof(*palette->colors));
     if (!palette->colors) {
         SDL_free(palette);
         return NULL;
@@ -1080,28 +1077,28 @@ void SDL_DestroyPalette(SDL_Palette *palette)
 /*
  * Calculate an 8-bit (3 red, 3 green, 2 blue) dithered palette of colors
  */
-void SDL_DitherColors(SDL_Color *colors, int bpp)
+void SDL_DitherPalette(SDL_Palette *palette)
 {
     int i;
-    if (bpp != 8) {
+    if (palette->ncolors != 256) {
         return; /* only 8bpp supported right now */
     }
 
-    for (i = 0; i < 256; i++) {
+    for (i = 0; i < palette->ncolors; i++) {
         int r, g, b;
         /* map each bit field to the full [0, 255] interval,
            so 0 is mapped to (0, 0, 0) and 255 to (255, 255, 255) */
         r = i & 0xe0;
         r |= r >> 3 | r >> 6;
-        colors[i].r = (Uint8)r;
+        palette->colors[i].r = (Uint8)r;
         g = (i << 3) & 0xe0;
         g |= g >> 3 | g >> 6;
-        colors[i].g = (Uint8)g;
+        palette->colors[i].g = (Uint8)g;
         b = i & 0x3;
         b |= b << 2;
         b |= b << 4;
-        colors[i].b = (Uint8)b;
-        colors[i].a = SDL_ALPHA_OPAQUE;
+        palette->colors[i].b = (Uint8)b;
+        palette->colors[i].a = SDL_ALPHA_OPAQUE;
     }
 }
 
@@ -1382,6 +1379,11 @@ static Uint8 *Map1toN(const SDL_Palette *pal, Uint8 Rmod, Uint8 Gmod, Uint8 Bmod
     int i;
     int bpp;
 
+    if (!pal) {
+        SDL_SetError("src does not have a palette set");
+        return NULL;
+    }
+
     bpp = ((SDL_BYTESPERPIXEL(dst->format) == 3) ? 4 : SDL_BYTESPERPIXEL(dst->format));
     map = (Uint8 *)SDL_calloc(256, bpp);
     if (!map) {
@@ -1407,9 +1409,14 @@ static Uint8 *MapNto1(const SDL_PixelFormatDetails *src, const SDL_Palette *pal,
     SDL_Palette dithered;
     SDL_Color colors[256];
 
-    dithered.ncolors = 256;
-    SDL_DitherColors(colors, 8);
+    if (!pal) {
+        SDL_SetError("dst does not have a palette set");
+        return NULL;
+    }
+
     dithered.colors = colors;
+    dithered.ncolors = SDL_arraysize(colors);
+    SDL_DitherPalette(&dithered);
     return Map1to1(&dithered, pal, identical);
 }
 
@@ -1469,8 +1476,11 @@ int SDL_MapSurface(SDL_Surface *src, SDL_Surface *dst)
     if (SDL_ISPIXELFORMAT_INDEXED(srcfmt->format)) {
         if (SDL_ISPIXELFORMAT_INDEXED(dstfmt->format)) {
             /* Palette --> Palette */
-            map->info.table =
-                Map1to1(srcpal, dstpal, &map->identity);
+            if (srcpal && dstpal) {
+                map->info.table = Map1to1(srcpal, dstpal, &map->identity);
+            } else {
+                map->identity = 1;
+            }
             if (!map->identity) {
                 if (!map->info.table) {
                     return -1;

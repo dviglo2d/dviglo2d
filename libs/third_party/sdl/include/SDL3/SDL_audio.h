@@ -43,7 +43,12 @@
  * if you aren't reading from a file) as a basic means to load sound data into
  * your program.
  *
- * ## Channel layouts as SDL expects them
+ * ## Channel layouts
+ *
+ * Audio data passing through SDL is uncompressed PCM data, interleaved. One
+ * can provide their own decompression through an MP3, etc, decoder, but SDL
+ * does not provide this directly. Each interleaved channel of data is meant
+ * to be in a specific order.
  *
  * Abbreviations:
  *
@@ -76,7 +81,7 @@
  * platforms; SDL will swizzle the channels as necessary if a platform expects
  * something different.
  *
- * SDL_AudioStream can also be provided a channel map to change this ordering
+ * SDL_AudioStream can also be provided channel maps to change this ordering
  * to whatever is necessary, in other audio processing scenarios.
  */
 
@@ -97,27 +102,19 @@
 extern "C" {
 #endif
 
+/* masks for different parts of SDL_AudioFormat. */
+#define SDL_AUDIO_MASK_BITSIZE       (0xFFu)
+#define SDL_AUDIO_MASK_FLOAT         (1u<<8)
+#define SDL_AUDIO_MASK_BIG_ENDIAN    (1u<<12)
+#define SDL_AUDIO_MASK_SIGNED        (1u<<15)
+
+#define SDL_DEFINE_AUDIO_FORMAT(signed, bigendian, float, size) \
+    (((Uint16)(signed) << 15) | ((Uint16)(bigendian) << 12) | ((Uint16)(float) << 8) | ((size) & SDL_AUDIO_MASK_BITSIZE))
+
 /**
- * Audio format flags.
+ * Audio format.
  *
- * These are what the 16 bits in SDL_AudioFormat currently mean...
- * (Unspecified bits are always zero).
- *
- * ```
- * ++-----------------------sample is signed if set
- * ||
- * ||       ++-----------sample is bigendian if set
- * ||       ||
- * ||       ||          ++---sample is float if set
- * ||       ||          ||
- * ||       ||          || +=--sample bit size--++
- * ||       ||          || ||                   ||
- * 15 14 13 12 11 10 09 08 07 06 05 04 03 02 01 00
- * ```
- *
- * There are macros to query these bits.
- *
- * \since This datatype is available since SDL 3.0.0.
+ * \since This enum is available since SDL 3.0.0.
  *
  * \sa SDL_AUDIO_BITSIZE
  * \sa SDL_AUDIO_BYTESIZE
@@ -128,16 +125,25 @@ extern "C" {
  * \sa SDL_AUDIO_ISSIGNED
  * \sa SDL_AUDIO_ISUNSIGNED
  */
-typedef Uint16 SDL_AudioFormat;
-
-#define SDL_AUDIO_U8        0x0008u /**< Unsigned 8-bit samples */
-#define SDL_AUDIO_S8        0x8008u /**< Signed 8-bit samples */
-#define SDL_AUDIO_S16LE     0x8010u /**< Signed 16-bit samples */
-#define SDL_AUDIO_S16BE     0x9010u /**< As above, but big-endian byte order */
-#define SDL_AUDIO_S32LE     0x8020u /**< 32-bit integer samples */
-#define SDL_AUDIO_S32BE     0x9020u /**< As above, but big-endian byte order */
-#define SDL_AUDIO_F32LE     0x8120u /**< 32-bit floating point samples */
-#define SDL_AUDIO_F32BE     0x9120u /**< As above, but big-endian byte order */
+typedef enum SDL_AudioFormat
+{
+    SDL_AUDIO_U8        = 0x0008u,  /**< Unsigned 8-bit samples */
+        /* SDL_DEFINE_AUDIO_FORMAT(0, 0, 0, 8), */
+    SDL_AUDIO_S8        = 0x8008u,  /**< Signed 8-bit samples */
+        /* SDL_DEFINE_AUDIO_FORMAT(1, 0, 0, 8), */
+    SDL_AUDIO_S16LE     = 0x8010u,  /**< Signed 16-bit samples */
+        /* SDL_DEFINE_AUDIO_FORMAT(1, 0, 0, 16), */
+    SDL_AUDIO_S16BE     = 0x9010u,  /**< As above, but big-endian byte order */
+        /* SDL_DEFINE_AUDIO_FORMAT(1, 1, 0, 16), */
+    SDL_AUDIO_S32LE     = 0x8020u,  /**< 32-bit integer samples */
+        /* SDL_DEFINE_AUDIO_FORMAT(1, 0, 0, 32), */
+    SDL_AUDIO_S32BE     = 0x9020u,  /**< As above, but big-endian byte order */
+        /* SDL_DEFINE_AUDIO_FORMAT(1, 1, 0, 32), */
+    SDL_AUDIO_F32LE     = 0x8120u,  /**< 32-bit floating point samples */
+        /* SDL_DEFINE_AUDIO_FORMAT(1, 0, 1, 32), */
+    SDL_AUDIO_F32BE     = 0x9120u,  /**< As above, but big-endian byte order */
+        /* SDL_DEFINE_AUDIO_FORMAT(1, 1, 1, 32), */
+} SDL_AudioFormat;
 
 #if SDL_BYTEORDER == SDL_LIL_ENDIAN
 #define SDL_AUDIO_S16    SDL_AUDIO_S16LE
@@ -148,13 +154,6 @@ typedef Uint16 SDL_AudioFormat;
 #define SDL_AUDIO_S32    SDL_AUDIO_S32BE
 #define SDL_AUDIO_F32    SDL_AUDIO_F32BE
 #endif
-
-
-/* masks for different parts of SDL_AudioFormat. */
-#define SDL_AUDIO_MASK_BITSIZE       (0xFFu)
-#define SDL_AUDIO_MASK_FLOAT         (1u<<8)
-#define SDL_AUDIO_MASK_BIG_ENDIAN    (1u<<12)
-#define SDL_AUDIO_MASK_SIGNED        (1u<<15)
 
 
 /**
@@ -302,18 +301,6 @@ typedef Uint32 SDL_AudioDeviceID;
 #define SDL_AUDIO_DEVICE_DEFAULT_RECORDING ((SDL_AudioDeviceID) 0xFFFFFFFE)
 
 /**
- * Maximum channels that an SDL_AudioSpec channel map can handle.
- *
- * This is (currently) double the number of channels that SDL supports, to
- * allow for future expansion while maintaining binary compatibility.
- *
- * \since This macro is available since SDL 3.0.0.
- *
- * \sa SDL_AudioSpec
- */
-#define SDL_MAX_CHANNEL_MAP_SIZE 16
-
-/**
  * Format specifier for audio data.
  *
  * \since This struct is available since SDL 3.0.0.
@@ -325,8 +312,6 @@ typedef struct SDL_AudioSpec
     SDL_AudioFormat format;     /**< Audio data format */
     int channels;               /**< Number of channels: 1 mono, 2 stereo, etc */
     int freq;                   /**< sample rate: sample frames per second */
-    SDL_bool use_channel_map;   /**< If SDL_FALSE, ignore `channel_map` and use default order. */
-    Uint8 channel_map[SDL_MAX_CHANNEL_MAP_SIZE];      /**< `channels` items of channel order. */
 } SDL_AudioSpec;
 
 /**
@@ -560,6 +545,30 @@ extern SDL_DECLSPEC const char *SDLCALL SDL_GetAudioDeviceName(SDL_AudioDeviceID
  */
 extern SDL_DECLSPEC int SDLCALL SDL_GetAudioDeviceFormat(SDL_AudioDeviceID devid, SDL_AudioSpec *spec, int *sample_frames);
 
+/**
+ * Get the current channel map of an audio device.
+ *
+ * Channel maps are optional; most things do not need them, instead passing
+ * data in the [order that SDL expects](CategoryAudio#channel-layouts).
+ *
+ * Audio devices usually have no remapping applied. This is represented by
+ * returning NULL, and does not signify an error.
+ *
+ * The returned array follows the SDL_GetStringRule (even though, strictly
+ * speaking, it isn't a string, it has the same memory manangement rules).
+ *
+ * \param devid the instance ID of the device to query.
+ * \param count On output, set to number of channels in the map. Can be NULL.
+ * \returns an array of the current channel mapping, with as many elements as
+ *          the current output spec's channels, or NULL if default.
+ *
+ * \threadsafety It is safe to call this function from any thread.
+ *
+ * \since This function is available since SDL 3.0.0.
+ *
+ * \sa SDL_SetAudioStreamInputChannelMap
+ */
+extern SDL_DECLSPEC const int * SDLCALL SDL_GetAudioDeviceChannelMap(SDL_AudioDeviceID devid, int *count);
 
 /**
  * Open a specific audio device.
@@ -938,9 +947,6 @@ extern SDL_DECLSPEC SDL_AudioStream *SDLCALL SDL_CreateAudioStream(const SDL_Aud
  *          SDL_GetError() for more information.
  *
  * \since This function is available since SDL 3.0.0.
- *
- * \sa SDL_GetProperty
- * \sa SDL_SetProperty
  */
 extern SDL_DECLSPEC SDL_PropertiesID SDLCALL SDL_GetAudioStreamProperties(SDL_AudioStream *stream);
 
@@ -1081,6 +1087,153 @@ extern SDL_DECLSPEC float SDLCALL SDL_GetAudioStreamGain(SDL_AudioStream *stream
  */
 extern SDL_DECLSPEC int SDLCALL SDL_SetAudioStreamGain(SDL_AudioStream *stream, float gain);
 
+/**
+ * Get the current input channel map of an audio stream.
+ *
+ * Channel maps are optional; most things do not need them, instead passing
+ * data in the [order that SDL expects](CategoryAudio#channel-layouts).
+ *
+ * Audio streams default to no remapping applied. This is represented by
+ * returning NULL, and does not signify an error.
+ *
+ * The returned array follows the SDL_GetStringRule (even though, strictly
+ * speaking, it isn't a string, it has the same memory manangement rules).
+ *
+ * \param stream the SDL_AudioStream to query.
+ * \param count On output, set to number of channels in the map. Can be NULL.
+ * \returns an array of the current channel mapping, with as many elements as
+ *          the current output spec's channels, or NULL if default.
+ *
+ * \threadsafety It is safe to call this function from any thread, as it holds
+ *               a stream-specific mutex while running.
+ *
+ * \since This function is available since SDL 3.0.0.
+ *
+ * \sa SDL_SetAudioStreamInputChannelMap
+ */
+extern SDL_DECLSPEC const int * SDLCALL SDL_GetAudioStreamInputChannelMap(SDL_AudioStream *stream, int *count);
+
+/**
+ * Get the current output channel map of an audio stream.
+ *
+ * Channel maps are optional; most things do not need them, instead passing
+ * data in the [order that SDL expects](CategoryAudio#channel-layouts).
+ *
+ * Audio streams default to no remapping applied. This is represented by
+ * returning NULL, and does not signify an error.
+ *
+ * The returned array follows the SDL_GetStringRule (even though, strictly
+ * speaking, it isn't a string, it has the same memory manangement rules).
+ *
+ * \param stream the SDL_AudioStream to query.
+ * \param count On output, set to number of channels in the map. Can be NULL.
+ * \returns an array of the current channel mapping, with as many elements as
+ *          the current output spec's channels, or NULL if default.
+ *
+ * \threadsafety It is safe to call this function from any thread, as it holds
+ *               a stream-specific mutex while running.
+ *
+ * \since This function is available since SDL 3.0.0.
+ *
+ * \sa SDL_SetAudioStreamInputChannelMap
+ */
+extern SDL_DECLSPEC const int * SDLCALL SDL_GetAudioStreamOutputChannelMap(SDL_AudioStream *stream, int *count);
+
+/**
+ * Set the current input channel map of an audio stream.
+ *
+ * Channel maps are optional; most things do not need them, instead passing
+ * data in the [order that SDL expects](CategoryAudio#channel-layouts).
+ *
+ * The input channel map reorders data that is added to a stream via
+ * SDL_PutAudioStreamData. Future calls to SDL_PutAudioStreamData must provide
+ * data in the new channel order.
+ *
+ * Each item in the array represents an input channel, and its value is the
+ * channel that it should be remapped to. To reverse a stereo signal's left
+ * and right values, you'd have an array of `{ 1, 0 }`. It is legal to remap
+ * multiple channels to the same thing, so `{ 1, 1 }` would duplicate the
+ * right channel to both channels of a stereo signal. You cannot change the
+ * number of channels through a channel map, just reorder them.
+ *
+ * Data that was previously queued in the stream will still be operated on in
+ * the order that was current when it was added, which is to say you can put
+ * the end of a sound file in one order to a stream, change orders for the
+ * next sound file, and start putting that new data while the previous sound
+ * file is still queued, and everything will still play back correctly.
+ *
+ * Audio streams default to no remapping applied. Passing a NULL channel map
+ * is legal, and turns off remapping.
+ *
+ * SDL will copy the channel map; the caller does not have to save this array
+ * after this call.
+ *
+ * If `count` is not equal to the current number of channels in the audio
+ * stream's format, this will fail. This is a safety measure to make sure a a
+ * race condition hasn't changed the format while you this call is setting the
+ * channel map.
+ *
+ * \param stream the SDL_AudioStream to change.
+ * \param chmap the new channel map, NULL to reset to default.
+ * \param count The number of channels in the map.
+ * \returns 0 on success, -1 on error.
+ *
+ * \threadsafety It is safe to call this function from any thread, as it holds
+ *               a stream-specific mutex while running. Don't change the
+ *               stream's format to have a different number of channels from a
+ *               a different thread at the same time, though!
+ *
+ * \since This function is available since SDL 3.0.0.
+ *
+ * \sa SDL_SetAudioStreamInputChannelMap
+ */
+extern SDL_DECLSPEC int SDLCALL SDL_SetAudioStreamInputChannelMap(SDL_AudioStream *stream, const int *chmap, int count);
+
+/**
+ * Set the current output channel map of an audio stream.
+ *
+ * Channel maps are optional; most things do not need them, instead passing
+ * data in the [order that SDL expects](CategoryAudio#channel-layouts).
+ *
+ * The output channel map reorders data that leaving a stream via
+ * SDL_GetAudioStreamData.
+ *
+ * Each item in the array represents an output channel, and its value is the
+ * channel that it should be remapped to. To reverse a stereo signal's left
+ * and right values, you'd have an array of `{ 1, 0 }`. It is legal to remap
+ * multiple channels to the same thing, so `{ 1, 1 }` would duplicate the
+ * right channel to both channels of a stereo signal. You cannot change the
+ * number of channels through a channel map, just reorder them.
+ *
+ * The output channel map can be changed at any time, as output remapping is
+ * applied during SDL_GetAudioStreamData.
+ *
+ * Audio streams default to no remapping applied. Passing a NULL channel map
+ * is legal, and turns off remapping.
+ *
+ * SDL will copy the channel map; the caller does not have to save this array
+ * after this call.
+ *
+ * If `count` is not equal to the current number of channels in the audio
+ * stream's format, this will fail. This is a safety measure to make sure a a
+ * race condition hasn't changed the format while you this call is setting the
+ * channel map.
+ *
+ * \param stream the SDL_AudioStream to change.
+ * \param chmap the new channel map, NULL to reset to default.
+ * \param count The number of channels in the map.
+ * \returns 0 on success, -1 on error.
+ *
+ * \threadsafety It is safe to call this function from any thread, as it holds
+ *               a stream-specific mutex while running. Don't change the
+ *               stream's format to have a different number of channels from a
+ *               a different thread at the same time, though!
+ *
+ * \since This function is available since SDL 3.0.0.
+ *
+ * \sa SDL_SetAudioStreamInputChannelMap
+ */
+extern SDL_DECLSPEC int SDLCALL SDL_SetAudioStreamOutputChannelMap(SDL_AudioStream *stream, const int *chmap, int count);
 
 /**
  * Add data to the stream.
@@ -1505,7 +1658,7 @@ extern SDL_DECLSPEC void SDLCALL SDL_DestroyAudioStream(SDL_AudioStream *stream)
  * Also unlike other functions, the audio device begins paused. This is to map
  * more closely to SDL2-style behavior, since there is no extra step here to
  * bind a stream to begin audio flowing. The audio device should be resumed
- * with `SDL_ResumeAudioDevice(SDL_GetAudioStreamDevice(stream));`
+ * with `SDL_ResumeAudioStreamDevice(stream);`
  *
  * This function works with both playback and recording devices.
  *
@@ -1547,7 +1700,7 @@ extern SDL_DECLSPEC void SDLCALL SDL_DestroyAudioStream(SDL_AudioStream *stream)
  * \since This function is available since SDL 3.0.0.
  *
  * \sa SDL_GetAudioStreamDevice
- * \sa SDL_ResumeAudioDevice
+ * \sa SDL_ResumeAudioStreamDevice
  */
 extern SDL_DECLSPEC SDL_AudioStream *SDLCALL SDL_OpenAudioDeviceStream(SDL_AudioDeviceID devid, const SDL_AudioSpec *spec, SDL_AudioStreamCallback callback, void *userdata);
 

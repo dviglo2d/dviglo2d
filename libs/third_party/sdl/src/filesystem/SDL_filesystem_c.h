@@ -18,37 +18,12 @@
      misrepresented as being the original software.
   3. This notice may not be removed or altered from any source distribution.
 */
-#include "SDL_internal.h"
 
-#ifdef SDL_TIMER_PSP
+#ifndef SDL_filesystem_c_h_
+#define SDL_filesystem_c_h_
 
-#include "../SDL_timer_c.h"
-#include <stdlib.h>
-#include <time.h>
-#include <sys/time.h>
-#include <pspthreadman.h>
-#include <psprtc.h>
+extern void SDL_InitFilesystem(void);
+extern void SDL_QuitFilesystem(void);
 
+#endif
 
-Uint64 SDL_GetPerformanceCounter(void)
-{
-    Uint64 ticks;
-    sceRtcGetCurrentTick(&ticks);
-    return ticks;
-}
-
-Uint64 SDL_GetPerformanceFrequency(void)
-{
-    return sceRtcGetTickResolution();
-}
-
-void SDL_SYS_DelayNS(Uint64 ns)
-{
-    const Uint64 max_delay = 0xffffffffLL * SDL_NS_PER_US;
-    if (ns > max_delay) {
-        ns = max_delay;
-    }
-    sceKernelDelayThreadCB((SceUInt)SDL_NS_TO_US(ns));
-}
-
-#endif /* SDL_TIMER_PSP */

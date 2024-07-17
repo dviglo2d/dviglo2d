@@ -53,16 +53,15 @@ extern "C" {
  *
  * \since This datatype is available since SDL 3.0.0.
  *
- * \sa SDL_GetCameraDevices
+ * \sa SDL_GetCameras
  */
-typedef Uint32 SDL_CameraDeviceID;
+typedef Uint32 SDL_CameraID;
 
 /**
  * The opaque structure used to identify an opened SDL camera.
  *
  * \since This struct is available since SDL 3.0.0.
  */
-struct SDL_Camera;
 typedef struct SDL_Camera SDL_Camera;
 
 /**
@@ -73,7 +72,7 @@ typedef struct SDL_Camera SDL_Camera;
  *
  * \since This struct is available since SDL 3.0.0.
  *
- * \sa SDL_GetCameraDeviceSupportedFormats
+ * \sa SDL_GetCameraSupportedFormats
  * \sa SDL_GetCameraFormat
  */
 typedef struct SDL_CameraSpec
@@ -91,7 +90,7 @@ typedef struct SDL_CameraSpec
  *
  * \since This enum is available since SDL 3.0.0.
  *
- * \sa SDL_GetCameraDevicePosition
+ * \sa SDL_GetCameraPosition
  */
 typedef enum SDL_CameraPosition
 {
@@ -183,7 +182,7 @@ extern SDL_DECLSPEC const char *SDLCALL SDL_GetCurrentCameraDriver(void);
  *
  * \sa SDL_OpenCamera
  */
-extern SDL_DECLSPEC SDL_CameraDeviceID *SDLCALL SDL_GetCameraDevices(int *count);
+extern SDL_DECLSPEC SDL_CameraID *SDLCALL SDL_GetCameras(int *count);
 
 /**
  * Get the list of native formats/sizes a camera supports.
@@ -193,10 +192,10 @@ extern SDL_DECLSPEC SDL_CameraDeviceID *SDLCALL SDL_GetCameraDevices(int *count)
  * and sizes and so want to find the optimal spec that doesn't require
  * conversion.
  *
- * This function isn't strictly required; if you call SDL_OpenCameraDevice
- * with a NULL spec, SDL will choose a native format for you, and if you
- * instead specify a desired format, it will transparently convert to the
- * requested format on your behalf.
+ * This function isn't strictly required; if you call SDL_OpenCamera with a
+ * NULL spec, SDL will choose a native format for you, and if you instead
+ * specify a desired format, it will transparently convert to the requested
+ * format on your behalf.
  *
  * If `count` is not NULL, it will be filled with the number of elements in
  * the returned array. Additionally, the last element of the array has all
@@ -223,10 +222,10 @@ extern SDL_DECLSPEC SDL_CameraDeviceID *SDLCALL SDL_GetCameraDevices(int *count)
  *
  * \since This function is available since SDL 3.0.0.
  *
- * \sa SDL_GetCameraDevices
- * \sa SDL_OpenCameraDevice
+ * \sa SDL_GetCameras
+ * \sa SDL_OpenCamera
  */
-extern SDL_DECLSPEC SDL_CameraSpec *SDLCALL SDL_GetCameraDeviceSupportedFormats(SDL_CameraDeviceID devid, int *count);
+extern SDL_DECLSPEC SDL_CameraSpec *SDLCALL SDL_GetCameraSupportedFormats(SDL_CameraID devid, int *count);
 
 /**
  * Get the human-readable device name for a camera.
@@ -241,9 +240,9 @@ extern SDL_DECLSPEC SDL_CameraSpec *SDLCALL SDL_GetCameraDeviceSupportedFormats(
  *
  * \since This function is available since SDL 3.0.0.
  *
- * \sa SDL_GetCameraDevices
+ * \sa SDL_GetCameras
  */
-extern SDL_DECLSPEC const char * SDLCALL SDL_GetCameraDeviceName(SDL_CameraDeviceID instance_id);
+extern SDL_DECLSPEC const char * SDLCALL SDL_GetCameraName(SDL_CameraID instance_id);
 
 /**
  * Get the position of the camera in relation to the system.
@@ -260,9 +259,9 @@ extern SDL_DECLSPEC const char * SDLCALL SDL_GetCameraDeviceName(SDL_CameraDevic
  *
  * \since This function is available since SDL 3.0.0.
  *
- * \sa SDL_GetCameraDevices
+ * \sa SDL_GetCameras
  */
-extern SDL_DECLSPEC SDL_CameraPosition SDLCALL SDL_GetCameraDevicePosition(SDL_CameraDeviceID instance_id);
+extern SDL_DECLSPEC SDL_CameraPosition SDLCALL SDL_GetCameraPosition(SDL_CameraID instance_id);
 
 /**
  * Open a video recording device (a "camera").
@@ -305,10 +304,10 @@ extern SDL_DECLSPEC SDL_CameraPosition SDLCALL SDL_GetCameraDevicePosition(SDL_C
  *
  * \since This function is available since SDL 3.0.0.
  *
- * \sa SDL_GetCameraDevices
+ * \sa SDL_GetCameras
  * \sa SDL_GetCameraFormat
  */
-extern SDL_DECLSPEC SDL_Camera *SDLCALL SDL_OpenCameraDevice(SDL_CameraDeviceID instance_id, const SDL_CameraSpec *spec);
+extern SDL_DECLSPEC SDL_Camera *SDLCALL SDL_OpenCamera(SDL_CameraID instance_id, const SDL_CameraSpec *spec);
 
 /**
  * Query if camera access has been approved by the user.
@@ -338,7 +337,7 @@ extern SDL_DECLSPEC SDL_Camera *SDLCALL SDL_OpenCameraDevice(SDL_CameraDeviceID 
  *
  * \since This function is available since SDL 3.0.0.
  *
- * \sa SDL_OpenCameraDevice
+ * \sa SDL_OpenCamera
  * \sa SDL_CloseCamera
  */
 extern SDL_DECLSPEC int SDLCALL SDL_GetCameraPermissionState(SDL_Camera *camera);
@@ -354,23 +353,20 @@ extern SDL_DECLSPEC int SDLCALL SDL_GetCameraPermissionState(SDL_Camera *camera)
  *
  * \since This function is available since SDL 3.0.0.
  *
- * \sa SDL_OpenCameraDevice
+ * \sa SDL_OpenCamera
  */
-extern SDL_DECLSPEC SDL_CameraDeviceID SDLCALL SDL_GetCameraInstanceID(SDL_Camera *camera);
+extern SDL_DECLSPEC SDL_CameraID SDLCALL SDL_GetCameraID(SDL_Camera *camera);
 
 /**
  * Get the properties associated with an opened camera.
  *
- * \param camera the SDL_Camera obtained from SDL_OpenCameraDevice().
+ * \param camera the SDL_Camera obtained from SDL_OpenCamera().
  * \returns a valid property ID on success or 0 on failure; call
  *          SDL_GetError() for more information.
  *
  * \threadsafety It is safe to call this function from any thread.
  *
  * \since This function is available since SDL 3.0.0.
- *
- * \sa SDL_GetProperty
- * \sa SDL_SetProperty
  */
 extern SDL_DECLSPEC SDL_PropertiesID SDLCALL SDL_GetCameraProperties(SDL_Camera *camera);
 
@@ -395,7 +391,7 @@ extern SDL_DECLSPEC SDL_PropertiesID SDLCALL SDL_GetCameraProperties(SDL_Camera 
  *
  * \since This function is available since SDL 3.0.0.
  *
- * \sa SDL_OpenCameraDevice
+ * \sa SDL_OpenCamera
  */
 extern SDL_DECLSPEC int SDLCALL SDL_GetCameraFormat(SDL_Camera *camera, SDL_CameraSpec *spec);
 

@@ -286,7 +286,7 @@ static int SDLCALL GlobDirectoryCallback(void *userdata, const char *dirname, co
     return retval;
 }
 
-char **SDL_InternalGlobDirectory(const char *path, const char *pattern, SDL_GlobFlags flags, int *count, SDL_GlobEnumeratorFunc enumerator, SDL_GlobGetPathInfoFunc getpathinfo, void *userdata)
+const char * const *SDL_InternalGlobDirectory(const char *path, const char *pattern, SDL_GlobFlags flags, int *count, SDL_GlobEnumeratorFunc enumerator, SDL_GlobGetPathInfoFunc getpathinfo, void *userdata)
 {
     int dummycount;
     if (!count) {
@@ -381,7 +381,8 @@ char **SDL_InternalGlobDirectory(const char *path, const char *pattern, SDL_Glob
     SDL_free(folded);
     SDL_free(pathcpy);
 
-    return retval;
+    SDL_FreeLater(retval);
+    return (const char * const *) retval;
 }
 
 static int GlobDirectoryGetPathInfo(const char *path, SDL_PathInfo *info, void *userdata)
@@ -394,9 +395,64 @@ static int GlobDirectoryEnumerator(const char *path, SDL_EnumerateDirectoryCallb
     return SDL_EnumerateDirectory(path, cb, cbuserdata);
 }
 
-char **SDL_GlobDirectory(const char *path, const char *pattern, SDL_GlobFlags flags, int *count)
+const char * const *SDL_GlobDirectory(const char *path, const char *pattern, SDL_GlobFlags flags, int *count)
 {
     //SDL_Log("SDL_GlobDirectory('%s', '%s') ...", path, pattern);
     return SDL_InternalGlobDirectory(path, pattern, flags, count, GlobDirectoryEnumerator, GlobDirectoryGetPathInfo, NULL);
+}
+
+
+static char *CachedBasePath = NULL;
+
+const char *SDL_GetBasePath(void)
+{
+    if (!CachedBasePath) {
+        CachedBasePath = SDL_SYS_GetBasePath();
+    }
+    return CachedBasePath;
+}
+
+
+static char *CachedUserFolders[SDL_FOLDER_TOTAL];
+
+const char *SDL_GetUserFolder(SDL_Folder folder)
+{
+    const int idx = (int) folder;
+    if ((idx < 0) || (idx >= SDL_arraysize(CachedUserFolders))) {
+        SDL_InvalidParamError("folder");
+        return NULL;
+    }
+
+    if (!CachedUserFolders[idx]) {
+        CachedUserFolders[idx] = SDL_SYS_GetUserFolder(folder);
+    }
+    return CachedUserFolders[idx];
+}
+
+
+const char *SDL_GetPrefPath(const char *org, const char *app)
+{
+    char *path = SDL_SYS_GetPrefPath(org, app);
+    if (path) {
+        SDL_FreeLater(path);
+    }
+    return path;
+}
+
+
+void SDL_InitFilesystem(void)
+{
+    CachedBasePath = NULL;  // just in case.
+    SDL_zeroa(CachedUserFolders);
+}
+
+void SDL_QuitFilesystem(void)
+{
+    SDL_free(CachedBasePath);
+    CachedBasePath = NULL;
+    for (int i = 0; i < SDL_arraysize(CachedUserFolders); i++) {
+        SDL_free(CachedUserFolders[i]);
+        CachedUserFolders[i] = NULL;
+    }
 }
 

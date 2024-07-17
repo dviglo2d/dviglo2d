@@ -138,7 +138,7 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTimeSt
 - (void)setWindow:(SDL_Window *)newWindow
 {
     if (self->window) {
-        SDL_CocoaWindowData *oldwindowdata = (__bridge SDL_CocoaWindowData *)self->window->driverdata;
+        SDL_CocoaWindowData *oldwindowdata = (__bridge SDL_CocoaWindowData *)self->window->internal;
 
         /* Make sure to remove us from the old window's context list, or we'll get scheduled updates from it too. */
         NSMutableArray *contexts = oldwindowdata.nscontexts;
@@ -150,7 +150,7 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTimeSt
     self->window = newWindow;
 
     if (newWindow) {
-        SDL_CocoaWindowData *windowdata = (__bridge SDL_CocoaWindowData *)newWindow->driverdata;
+        SDL_CocoaWindowData *windowdata = (__bridge SDL_CocoaWindowData *)newWindow->internal;
         NSView *contentview = windowdata.sdlContentView;
 
         /* Now sign up for scheduled updates for the new window. */
@@ -258,7 +258,7 @@ SDL_GLContext Cocoa_GL_CreateContext(SDL_VideoDevice *_this, SDL_Window *window)
 {
     @autoreleasepool {
         SDL_VideoDisplay *display = SDL_GetVideoDisplayForWindow(window);
-        SDL_DisplayData *displaydata = (SDL_DisplayData *)display->driverdata;
+        SDL_DisplayData *displaydata = (SDL_DisplayData *)display->internal;
         NSOpenGLPixelFormatAttribute attr[32];
         NSOpenGLPixelFormat *fmt;
         SDLOpenGLContext *context;
@@ -386,7 +386,7 @@ SDL_GLContext Cocoa_GL_CreateContext(SDL_VideoDevice *_this, SDL_Window *window)
         [context setValues:&opaque forParameter:NSOpenGLCPSurfaceOpacity];
 
         if (Cocoa_GL_MakeCurrent(_this, window, sdlcontext) < 0) {
-            SDL_GL_DeleteContext(sdlcontext);
+            SDL_GL_DestroyContext(sdlcontext);
             SDL_SetError("Failed making OpenGL context current");
             return NULL;
         }
@@ -400,27 +400,27 @@ SDL_GLContext Cocoa_GL_CreateContext(SDL_VideoDevice *_this, SDL_Window *window)
 
             glGetStringFunc = (const GLubyte *(APIENTRY *)(GLenum))SDL_GL_GetProcAddress("glGetString");
             if (!glGetStringFunc) {
-                SDL_GL_DeleteContext(sdlcontext);
+                SDL_GL_DestroyContext(sdlcontext);
                 SDL_SetError("Failed getting OpenGL glGetString entry point");
                 return NULL;
             }
 
             glversion = (const char *)glGetStringFunc(GL_VERSION);
             if (glversion == NULL) {
-                SDL_GL_DeleteContext(sdlcontext);
+                SDL_GL_DestroyContext(sdlcontext);
                 SDL_SetError("Failed getting OpenGL context version");
                 return NULL;
             }
 
             if (SDL_sscanf(glversion, "%d.%d", &glversion_major, &glversion_minor) != 2) {
-                SDL_GL_DeleteContext(sdlcontext);
+                SDL_GL_DestroyContext(sdlcontext);
                 SDL_SetError("Failed parsing OpenGL context version");
                 return NULL;
             }
 
             if ((glversion_major < _this->gl_config.major_version) ||
                 ((glversion_major == _this->gl_config.major_version) && (glversion_minor < _this->gl_config.minor_version))) {
-                SDL_GL_DeleteContext(sdlcontext);
+                SDL_GL_DestroyContext(sdlcontext);
                 SDL_SetError("Failed creating OpenGL context at version requested");
                 return NULL;
             }
@@ -490,7 +490,7 @@ int Cocoa_GL_SwapWindow(SDL_VideoDevice *_this, SDL_Window *window)
 {
     @autoreleasepool {
         SDLOpenGLContext *nscontext = (__bridge SDLOpenGLContext *)SDL_GL_GetCurrentContext();
-        SDL_CocoaVideoData *videodata = (__bridge SDL_CocoaVideoData *)_this->driverdata;
+        SDL_CocoaVideoData *videodata = (__bridge SDL_CocoaVideoData *)_this->internal;
         const int setting = SDL_AtomicGet(&nscontext->swapIntervalSetting);
 
         if (setting == 0) {

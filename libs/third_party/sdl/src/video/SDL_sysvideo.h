@@ -31,7 +31,6 @@ typedef struct SDL_VideoDisplay SDL_VideoDisplay;
 typedef struct SDL_VideoDevice SDL_VideoDevice;
 typedef struct SDL_VideoData SDL_VideoData;
 typedef struct SDL_DisplayData SDL_DisplayData;
-typedef struct SDL_DisplayModeData SDL_DisplayModeData;
 typedef struct SDL_WindowData SDL_WindowData;
 
 typedef struct
@@ -112,7 +111,7 @@ struct SDL_Window
 
     SDL_PropertiesID props;
 
-    SDL_WindowData *driverdata;
+    SDL_WindowData *internal;
 
     SDL_Window *prev;
     SDL_Window *next;
@@ -154,7 +153,7 @@ struct SDL_VideoDisplay
 
     SDL_PropertiesID props;
 
-    SDL_DisplayData *driverdata;
+    SDL_DisplayData *internal;
 };
 
 /* Video device flags */
@@ -304,6 +303,7 @@ struct SDL_VideoDevice
     char const* const* (*Vulkan_GetInstanceExtensions)(SDL_VideoDevice *_this, Uint32 *count);
     int (*Vulkan_CreateSurface)(SDL_VideoDevice *_this, SDL_Window *window, VkInstance instance, const struct VkAllocationCallbacks *allocator, VkSurfaceKHR *surface);
     void (*Vulkan_DestroySurface)(SDL_VideoDevice *_this, VkInstance instance, VkSurfaceKHR surface, const struct VkAllocationCallbacks *allocator);
+    SDL_bool (*Vulkan_GetPresentationSupport)(SDL_VideoDevice *_this, VkInstance instance, VkPhysicalDevice physicalDevice, Uint32 queueFamilyIndex);
 
     /* * * */
     /*
@@ -455,7 +455,7 @@ struct SDL_VideoDevice
 
     /* * * */
     /* Data private to this driver */
-    SDL_VideoData *driverdata;
+    SDL_VideoData *internal;
     struct SDL_GLDriverData *gl_data;
 
 #ifdef SDL_VIDEO_OPENGL_EGL

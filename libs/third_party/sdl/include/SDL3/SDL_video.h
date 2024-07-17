@@ -74,6 +74,9 @@ typedef enum SDL_SystemTheme
     SDL_SYSTEM_THEME_DARK       /**< Dark colored system theme */
 } SDL_SystemTheme;
 
+/* Internal display mode data */
+typedef struct SDL_DisplayModeData SDL_DisplayModeData;
+
 /**
  * The structure that defines a display mode.
  *
@@ -87,13 +90,17 @@ typedef enum SDL_SystemTheme
  */
 typedef struct SDL_DisplayMode
 {
-    SDL_DisplayID displayID;    /**< the display this mode is associated with */
-    SDL_PixelFormat format;     /**< pixel format */
-    int w;                      /**< width */
-    int h;                      /**< height */
-    float pixel_density;        /**< scale converting size to pixels (e.g. a 1920x1080 mode with 2.0 scale would have 3840x2160 pixels) */
-    float refresh_rate;         /**< refresh rate (or zero for unspecified) */
-    void *driverdata;           /**< driver-specific data, initialize to 0 */
+    SDL_DisplayID displayID;        /**< the display this mode is associated with */
+    SDL_PixelFormat format;         /**< pixel format */
+    int w;                          /**< width */
+    int h;                          /**< height */
+    float pixel_density;            /**< scale converting size to pixels (e.g. a 1920x1080 mode with 2.0 scale would have 3840x2160 pixels) */
+    float refresh_rate;             /**< refresh rate (or 0.0f for unspecified) */
+    int refresh_rate_numerator;     /**< precise refresh rate numerator (or 0 for unspecified) */
+    int refresh_rate_denominator;   /**< precise refresh rate denominator */
+
+    SDL_DisplayModeData *internal;  /**< Private */
+
 } SDL_DisplayMode;
 
 /**
@@ -429,9 +436,6 @@ extern SDL_DECLSPEC SDL_DisplayID SDLCALL SDL_GetPrimaryDisplay(void);
  *          SDL_GetError() for more information.
  *
  * \since This function is available since SDL 3.0.0.
- *
- * \sa SDL_GetProperty
- * \sa SDL_SetProperty
  */
 extern SDL_DECLSPEC SDL_PropertiesID SDLCALL SDL_GetDisplayProperties(SDL_DisplayID displayID);
 
@@ -782,7 +786,7 @@ extern SDL_DECLSPEC void *SDLCALL SDL_GetWindowICCProfile(SDL_Window *window, si
  *
  * \since This function is available since SDL 3.0.0.
  */
-extern SDL_DECLSPEC Uint32 SDLCALL SDL_GetWindowPixelFormat(SDL_Window *window);
+extern SDL_DECLSPEC SDL_PixelFormat SDLCALL SDL_GetWindowPixelFormat(SDL_Window *window);
 
 /**
  * Get a list of valid windows.
@@ -1225,9 +1229,6 @@ extern SDL_DECLSPEC SDL_Window *SDLCALL SDL_GetWindowParent(SDL_Window *window);
  *          SDL_GetError() for more information.
  *
  * \since This function is available since SDL 3.0.0.
- *
- * \sa SDL_GetProperty
- * \sa SDL_GetNumberProperty
  */
 extern SDL_DECLSPEC SDL_PropertiesID SDLCALL SDL_GetWindowProperties(SDL_Window *window);
 
@@ -2147,23 +2148,18 @@ extern SDL_DECLSPEC int SDLCALL SDL_SetWindowOpacity(SDL_Window *window, float o
 /**
  * Get the opacity of a window.
  *
- * If transparency isn't supported on this platform, opacity will be reported
+ * If transparency isn't supported on this platform, opacity will be returned
  * as 1.0f without error.
  *
- * The parameter `opacity` is ignored if it is NULL.
- *
- * This function also returns -1 if an invalid window was provided.
- *
  * \param window the window to get the current opacity value from.
- * \param out_opacity the float filled in (0.0f - transparent, 1.0f - opaque).
- * \returns 0 on success or a negative error code on failure; call
- *          SDL_GetError() for more information.
+ * \returns the opacity, (0.0f - transparent, 1.0f - opaque), or a negative
+ *          error code on failure; call SDL_GetError() for more information.
  *
  * \since This function is available since SDL 3.0.0.
  *
  * \sa SDL_SetWindowOpacity
  */
-extern SDL_DECLSPEC int SDLCALL SDL_GetWindowOpacity(SDL_Window *window, float *out_opacity);
+extern SDL_DECLSPEC float SDLCALL SDL_GetWindowOpacity(SDL_Window *window);
 
 /**
  * Set the window as a modal to a parent window.
@@ -2592,7 +2588,7 @@ extern SDL_DECLSPEC int SDLCALL SDL_GL_GetAttribute(SDL_GLattr attr, int *value)
  *
  * \since This function is available since SDL 3.0.0.
  *
- * \sa SDL_GL_DeleteContext
+ * \sa SDL_GL_DestroyContext
  * \sa SDL_GL_MakeCurrent
  */
 extern SDL_DECLSPEC SDL_GLContext SDLCALL SDL_GL_CreateContext(SDL_Window *window);
@@ -2769,7 +2765,7 @@ extern SDL_DECLSPEC int SDLCALL SDL_GL_SwapWindow(SDL_Window *window);
  *
  * \sa SDL_GL_CreateContext
  */
-extern SDL_DECLSPEC int SDLCALL SDL_GL_DeleteContext(SDL_GLContext context);
+extern SDL_DECLSPEC int SDLCALL SDL_GL_DestroyContext(SDL_GLContext context);
 
 /* @} *//* OpenGL support functions */
 

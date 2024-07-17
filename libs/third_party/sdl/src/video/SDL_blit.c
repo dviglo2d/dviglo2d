@@ -125,7 +125,7 @@ static SDL_bool SDL_UseAltivecPrefetch(void)
 static SDL_BlitFunc SDL_ChooseBlitFunc(SDL_PixelFormat src_format, SDL_PixelFormat dst_format, int flags,
                                        SDL_BlitFuncEntry *entries)
 {
-    int i, flagcheck = (flags & (SDL_COPY_MODULATE_COLOR | SDL_COPY_MODULATE_ALPHA | SDL_COPY_BLEND | SDL_COPY_ADD | SDL_COPY_MOD | SDL_COPY_MUL | SDL_COPY_COLORKEY | SDL_COPY_NEAREST));
+    int i, flagcheck = (flags & (SDL_COPY_MODULATE_COLOR | SDL_COPY_MODULATE_ALPHA | SDL_COPY_BLEND | SDL_COPY_BLEND_PREMULTIPLIED | SDL_COPY_ADD | SDL_COPY_ADD_PREMULTIPLIED | SDL_COPY_MOD | SDL_COPY_MUL | SDL_COPY_COLORKEY | SDL_COPY_NEAREST));
     static unsigned int features = 0x7fffffff;
 
     /* Get the available CPU features */
@@ -279,9 +279,11 @@ int SDL_CalculateBlit(SDL_Surface *surface)
         SDL_PixelFormat src_format = surface->format;
         SDL_PixelFormat dst_format = dst->format;
 
-        if (!SDL_ISPIXELFORMAT_INDEXED(src_format) &&
+        if ((!SDL_ISPIXELFORMAT_INDEXED(src_format) ||
+             (src_format == SDL_PIXELFORMAT_INDEX8 && surface->internal->palette)) &&
             !SDL_ISPIXELFORMAT_FOURCC(src_format) &&
-            !SDL_ISPIXELFORMAT_INDEXED(dst_format) &&
+            (!SDL_ISPIXELFORMAT_INDEXED(dst_format) ||
+             (dst_format == SDL_PIXELFORMAT_INDEX8 && dst->internal->palette)) &&
             !SDL_ISPIXELFORMAT_FOURCC(dst_format)) {
             blit = SDL_Blit_Slow;
         }

@@ -413,9 +413,6 @@ extern SDL_DECLSPEC const char *SDLCALL SDL_GetRendererName(SDL_Renderer *render
  *          SDL_GetError() for more information.
  *
  * \since This function is available since SDL 3.0.0.
- *
- * \sa SDL_GetProperty
- * \sa SDL_SetProperty
  */
 extern SDL_DECLSPEC SDL_PropertiesID SDLCALL SDL_GetRendererProperties(SDL_Renderer *renderer);
 
@@ -758,9 +755,6 @@ extern SDL_DECLSPEC SDL_Texture *SDLCALL SDL_CreateTextureWithProperties(SDL_Ren
  *          SDL_GetError() for more information.
  *
  * \since This function is available since SDL 3.0.0.
- *
- * \sa SDL_GetProperty
- * \sa SDL_SetProperty
  */
 extern SDL_DECLSPEC SDL_PropertiesID SDLCALL SDL_GetTextureProperties(SDL_Texture *texture);
 
@@ -1012,15 +1006,13 @@ extern SDL_DECLSPEC int SDLCALL SDL_SetTextureBlendMode(SDL_Texture *texture, SD
  * Get the blend mode used for texture copy operations.
  *
  * \param texture the texture to query.
- * \param blendMode a pointer filled in with the current SDL_BlendMode.
- * \returns 0 on success or a negative error code on failure; call
- *          SDL_GetError() for more information.
+ * \returns the current SDL_BlendMode.
  *
  * \since This function is available since SDL 3.0.0.
  *
  * \sa SDL_SetTextureBlendMode
  */
-extern SDL_DECLSPEC int SDLCALL SDL_GetTextureBlendMode(SDL_Texture *texture, SDL_BlendMode *blendMode);
+extern SDL_DECLSPEC SDL_BlendMode SDLCALL SDL_GetTextureBlendMode(SDL_Texture *texture);
 
 /**
  * Set the scale mode used for texture scale operations.
@@ -1044,15 +1036,13 @@ extern SDL_DECLSPEC int SDLCALL SDL_SetTextureScaleMode(SDL_Texture *texture, SD
  * Get the scale mode used for texture scale operations.
  *
  * \param texture the texture to query.
- * \param scaleMode a pointer filled in with the current scale mode.
- * \returns 0 on success or a negative error code on failure; call
- *          SDL_GetError() for more information.
+ * \returns the current scale mode.
  *
  * \since This function is available since SDL 3.0.0.
  *
  * \sa SDL_SetTextureScaleMode
  */
-extern SDL_DECLSPEC int SDLCALL SDL_GetTextureScaleMode(SDL_Texture *texture, SDL_ScaleMode *scaleMode);
+extern SDL_DECLSPEC SDL_ScaleMode SDLCALL SDL_GetTextureScaleMode(SDL_Texture *texture);
 
 /**
  * Update the given texture rectangle with new pixel data.
@@ -1647,15 +1637,13 @@ extern SDL_DECLSPEC int SDLCALL SDL_SetRenderColorScale(SDL_Renderer *renderer, 
  * Get the color scale used for render operations.
  *
  * \param renderer the rendering context.
- * \param scale a pointer filled in with the current color scale value.
- * \returns 0 on success or a negative error code on failure; call
- *          SDL_GetError() for more information.
+ * \returns the current color scale value.
  *
  * \since This function is available since SDL 3.0.0.
  *
  * \sa SDL_SetRenderColorScale
  */
-extern SDL_DECLSPEC int SDLCALL SDL_GetRenderColorScale(SDL_Renderer *renderer, float *scale);
+extern SDL_DECLSPEC float SDLCALL SDL_GetRenderColorScale(SDL_Renderer *renderer);
 
 /**
  * Set the blend mode used for drawing operations (Fill and Line).
@@ -1677,15 +1665,13 @@ extern SDL_DECLSPEC int SDLCALL SDL_SetRenderDrawBlendMode(SDL_Renderer *rendere
  * Get the blend mode used for drawing operations.
  *
  * \param renderer the rendering context.
- * \param blendMode a pointer filled in with the current SDL_BlendMode.
- * \returns 0 on success or a negative error code on failure; call
- *          SDL_GetError() for more information.
+ * \returns the current SDL_BlendMode.
  *
  * \since This function is available since SDL 3.0.0.
  *
  * \sa SDL_SetRenderDrawBlendMode
  */
-extern SDL_DECLSPEC int SDLCALL SDL_GetRenderDrawBlendMode(SDL_Renderer *renderer, SDL_BlendMode *blendMode);
+extern SDL_DECLSPEC SDL_BlendMode SDLCALL SDL_GetRenderDrawBlendMode(SDL_Renderer *renderer);
 
 /**
  * Clear the current rendering target with the drawing color.
@@ -1968,6 +1954,12 @@ extern SDL_DECLSPEC SDL_Surface * SDLCALL SDL_RenderReadPixels(SDL_Renderer *ren
  * encouraged to call SDL_RenderClear() to initialize the backbuffer before
  * starting each new frame's drawing, even if you plan to overwrite every
  * pixel.
+ *
+ * Please note, that in case of rendering to a texture - there is **no need**
+ * to call `SDL_RenderPresent` after drawing needed objects to a texture, you
+ * are only required to change back the rendering target to default via
+ * `SDL_SetRenderTarget(renderer, NULL)` afterwards, as textures by themselves
+ * do not have a concept of backbuffers.
  *
  * \param renderer the rendering context.
  * \returns 0 on success or a negative error code on failure; call

@@ -991,7 +991,7 @@ JNIEXPORT void JNICALL SDL_JAVA_INTERFACE(onNativeRotationChanged)(
 
     if (Android_Window) {
         SDL_VideoDisplay *display = SDL_GetVideoDisplay(SDL_GetPrimaryDisplay());
-        SDL_SendDisplayEvent(display, SDL_EVENT_DISPLAY_ORIENTATION, displayCurrentOrientation);
+        SDL_SendDisplayEvent(display, SDL_EVENT_DISPLAY_ORIENTATION, displayCurrentOrientation, 0);
     }
 
     SDL_UnlockMutex(Android_ActivityMutex);
@@ -1144,7 +1144,7 @@ JNIEXPORT void JNICALL SDL_JAVA_INTERFACE(onNativeSurfaceCreated)(JNIEnv *env, j
     SDL_LockMutex(Android_ActivityMutex);
 
     if (Android_Window) {
-        SDL_WindowData *data = Android_Window->driverdata;
+        SDL_WindowData *data = Android_Window->internal;
 
         data->native_window = Android_JNI_GetNativeWindow();
         if (data->native_window == NULL) {
@@ -1163,7 +1163,7 @@ JNIEXPORT void JNICALL SDL_JAVA_INTERFACE(onNativeSurfaceChanged)(JNIEnv *env, j
 #ifdef SDL_VIDEO_OPENGL_EGL
     if (Android_Window) {
         SDL_VideoDevice *_this = SDL_GetVideoDevice();
-        SDL_WindowData *data = Android_Window->driverdata;
+        SDL_WindowData *data = Android_Window->internal;
 
         /* If the surface has been previously destroyed by onNativeSurfaceDestroyed, recreate it here */
         if (data->egl_surface == EGL_NO_SURFACE) {
@@ -1187,7 +1187,7 @@ retry:
     SDL_LockMutex(Android_ActivityMutex);
 
     if (Android_Window) {
-        SDL_WindowData *data = Android_Window->driverdata;
+        SDL_WindowData *data = Android_Window->internal;
 
         /* Wait for Main thread being paused and context un-activated to release 'egl_surface' */
         if (!data->backup_done) {
@@ -2245,7 +2245,7 @@ void Android_JNI_HapticStop(int device_id)
 /* See SDLActivity.java for constants. */
 #define COMMAND_SET_KEEP_SCREEN_ON 5
 
-int SDL_AndroidSendMessage(Uint32 command, int param)
+int SDL_SendAndroidMessage(Uint32 command, int param)
 {
     if (command >= 0x8000) {
         return Android_JNI_SendMessage(command, param);
@@ -2392,12 +2392,12 @@ int Android_JNI_ShowMessageBox(const SDL_MessageBoxData *messageboxdata, int *bu
 //////////////////////////////////////////////////////////////////////////////
 */
 
-void *SDL_AndroidGetJNIEnv(void)
+void *SDL_GetAndroidJNIEnv(void)
 {
     return Android_JNI_GetEnv();
 }
 
-void *SDL_AndroidGetActivity(void)
+void *SDL_GetAndroidActivity(void)
 {
     /* See SDL_system.h for caveats on using this function. */
 
@@ -2446,14 +2446,14 @@ SDL_bool SDL_IsDeXMode(void)
     return (*env)->CallStaticBooleanMethod(env, mActivityClass, midIsDeXMode);
 }
 
-void SDL_AndroidBackButton(void)
+void SDL_SendAndroidBackButton(void)
 {
     JNIEnv *env = Android_JNI_GetEnv();
     (*env)->CallStaticVoidMethod(env, mActivityClass, midManualBackButton);
 }
 
 // this caches a string until the process ends, so there's no need to use SDL_FreeLater.
-const char *SDL_AndroidGetInternalStoragePath(void)
+const char *SDL_GetAndroidInternalStoragePath(void)
 {
     static char *s_AndroidInternalFilesPath = NULL;
 
@@ -2507,22 +2507,19 @@ const char *SDL_AndroidGetInternalStoragePath(void)
     return s_AndroidInternalFilesPath;
 }
 
-int SDL_AndroidGetExternalStorageState(Uint32 *state)
+Uint32 SDL_GetAndroidExternalStorageState(void)
 {
     struct LocalReferenceHolder refs = LocalReferenceHolder_Setup(__FUNCTION__);
     jmethodID mid;
     jclass cls;
     jstring stateString;
     const char *state_string;
-    int stateFlags;
+    Uint32 stateFlags;
 
     JNIEnv *env = Android_JNI_GetEnv();
     if (!LocalReferenceHolder_Init(&refs, env)) {
         LocalReferenceHolder_Cleanup(&refs);
-        if (state) {
-            *state = 0;
-        }
-        return -1;
+        return 0;
     }
 
     cls = (*env)->FindClass(env, "android/os/Environment");
@@ -2546,14 +2543,12 @@ int SDL_AndroidGetExternalStorageState(Uint32 *state)
     (*env)->ReleaseStringUTFChars(env, stateString, state_string);
 
     LocalReferenceHolder_Cleanup(&refs);
-    if (state) {
-        *state = stateFlags;
-    }
-    return 0;
+
+    return stateFlags;
 }
 
 // this caches a string until the process ends, so there's no need to use SDL_FreeLater.
-const char *SDL_AndroidGetExternalStoragePath(void)
+const char *SDL_GetAndroidExternalStoragePath(void)
 {
     static char *s_AndroidExternalFilesPath = NULL;
 
@@ -2598,7 +2593,54 @@ const char *SDL_AndroidGetExternalStoragePath(void)
     return s_AndroidExternalFilesPath;
 }
 
-int SDL_AndroidShowToast(const char *message, int duration, int gravity, int xOffset, int yOffset)
+// this caches a string until the process ends, so there's no need to use SDL_FreeLater.
+const char *SDL_GetAndroidCachePath(void)
+{
+    // !!! FIXME: lots of duplication with SDL_GetAndroidExternalStoragePath and SDL_GetAndroidInternalStoragePath; consolidate these functions!
+    static char *s_AndroidCachePath = NULL;
+
+    if (!s_AndroidCachePath) {
+        struct LocalReferenceHolder refs = LocalReferenceHolder_Setup(__FUNCTION__);
+        jmethodID mid;
+        jobject context;
+        jobject fileObject;
+        jstring pathString;
+        const char *path;
+
+        JNIEnv *env = Android_JNI_GetEnv();
+        if (!LocalReferenceHolder_Init(&refs, env)) {
+            LocalReferenceHolder_Cleanup(&refs);
+            return NULL;
+        }
+
+        /* context = SDLActivity.getContext(); */
+        context = (*env)->CallStaticObjectMethod(env, mActivityClass, midGetContext);
+
+        /* fileObj = context.getExternalFilesDir(); */
+        mid = (*env)->GetMethodID(env, (*env)->GetObjectClass(env, context),
+                                  "getCacheDir", "(Ljava/lang/String;)Ljava/io/File;");
+        fileObject = (*env)->CallObjectMethod(env, context, mid, NULL);
+        if (!fileObject) {
+            SDL_SetError("Couldn't get cache directory");
+            LocalReferenceHolder_Cleanup(&refs);
+            return NULL;
+        }
+
+        /* path = fileObject.getAbsolutePath(); */
+        mid = (*env)->GetMethodID(env, (*env)->GetObjectClass(env, fileObject),
+                                  "getAbsolutePath", "()Ljava/lang/String;");
+        pathString = (jstring)(*env)->CallObjectMethod(env, fileObject, mid);
+
+        path = (*env)->GetStringUTFChars(env, pathString, NULL);
+        s_AndroidCachePath = SDL_strdup(path);
+        (*env)->ReleaseStringUTFChars(env, pathString, path);
+
+        LocalReferenceHolder_Cleanup(&refs);
+    }
+    return s_AndroidCachePath;
+}
+
+int SDL_ShowAndroidToast(const char *message, int duration, int gravity, int xOffset, int yOffset)
 {
     return Android_JNI_ShowToast(message, duration, gravity, xOffset, yOffset);
 }
@@ -2669,7 +2711,7 @@ typedef struct NativePermissionRequestInfo
 {
     int request_code;
     char *permission;
-    SDL_AndroidRequestPermissionCallback callback;
+    SDL_RequestAndroidPermissionCallback callback;
     void *userdata;
     struct NativePermissionRequestInfo *next;
 } NativePermissionRequestInfo;
@@ -2697,7 +2739,7 @@ JNIEXPORT void JNICALL SDL_JAVA_INTERFACE(nativePermissionResult)(
     SDL_UnlockMutex(Android_ActivityMutex);
 }
 
-int SDL_AndroidRequestPermission(const char *permission, SDL_AndroidRequestPermissionCallback cb, void *userdata)
+int SDL_RequestAndroidPermission(const char *permission, SDL_RequestAndroidPermissionCallback cb, void *userdata)
 {
     if (!permission) {
         return SDL_InvalidParamError("permission");

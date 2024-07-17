@@ -10,7 +10,7 @@ set "PATH=c:\program files\git\bin"
 git clone https://github.com/libsdl-org/SDL_mixer repo
 
 :: Возвращаем состояние репозитория к определённой версии
-git -C repo reset --hard a866fc7dcf4fe4f6bfcaf80afa9c00e2bbc17fb8
+git -C repo reset --hard 96ea69fce472dcef7c638199aef8e3c81200573a
 
 :: Ждём нажатие Enter перед закрытием консоли
 pause

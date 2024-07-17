@@ -312,7 +312,7 @@ void SDL_RemoveMouse(SDL_MouseID mouseID, SDL_bool send_event)
         return;
     }
 
-    SDL_FreeLater(SDL_mice[mouse_index].name);  // SDL_GetMouseInstanceName returns this pointer.
+    SDL_FreeLater(SDL_mice[mouse_index].name);  // SDL_GetMouseNameForID returns this pointer.
 
     if (mouse_index != SDL_mouse_count - 1) {
         SDL_memcpy(&SDL_mice[mouse_index], &SDL_mice[mouse_index + 1], (SDL_mouse_count - mouse_index - 1) * sizeof(SDL_mice[mouse_index]));
@@ -370,7 +370,7 @@ SDL_MouseID *SDL_GetMice(int *count)
     return mice;
 }
 
-const char *SDL_GetMouseInstanceName(SDL_MouseID instance_id)
+const char *SDL_GetMouseNameForID(SDL_MouseID instance_id)
 {
     int mouse_index = SDL_GetMouseIndex(instance_id);
     if (mouse_index < 0) {
@@ -409,7 +409,7 @@ void SDL_SetDefaultCursor(SDL_Cursor *cursor)
             }
         }
 
-        if (mouse->FreeCursor && default_cursor->driverdata) {
+        if (mouse->FreeCursor && default_cursor->internal) {
             mouse->FreeCursor(default_cursor);
         } else {
             SDL_free(default_cursor);
@@ -1628,7 +1628,7 @@ void SDL_DestroyCursor(SDL_Cursor *cursor)
                 mouse->cursors = curr->next;
             }
 
-            if (mouse->FreeCursor && curr->driverdata) {
+            if (mouse->FreeCursor && curr->internal) {
                 mouse->FreeCursor(curr);
             } else {
                 SDL_free(curr);

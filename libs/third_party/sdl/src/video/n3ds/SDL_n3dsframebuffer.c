@@ -67,13 +67,13 @@ int SDL_N3DS_CreateWindowFramebuffer(SDL_VideoDevice *_this, SDL_Window *window,
 
 int SDL_N3DS_UpdateWindowFramebuffer(SDL_VideoDevice *_this, SDL_Window *window, const SDL_Rect *rects, int numrects)
 {
-    SDL_WindowData *drv_data = window->driverdata;
+    SDL_WindowData *drv_data = window->internal;
     SDL_Surface *surface;
     u16 width, height;
     void *framebuffer;
     u32 bufsize;
 
-    surface = (SDL_Surface *)SDL_GetProperty(SDL_GetWindowProperties(window), N3DS_SURFACE, NULL);
+    surface = (SDL_Surface *)SDL_GetPointerProperty(SDL_GetWindowProperties(window), N3DS_SURFACE, NULL);
     if (!surface) {
         return SDL_SetError("%s: Unable to get the window surface.", __func__);
     }
