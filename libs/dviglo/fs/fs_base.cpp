@@ -81,6 +81,7 @@ StrUtf8 get_pref_path(StrViewUtf8 org, StrViewUtf8 app)
     CoTaskMemFree(wpath);
     ret = to_internal(ret) + "/";
 #else
+    // https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
     char* home = getenv("XDG_DATA_HOME");
 
     if (!home)
