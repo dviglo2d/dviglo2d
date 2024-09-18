@@ -11,6 +11,15 @@
 namespace dviglo
 {
 
+enum class WindowMode : u32
+{
+    windowed = 0,
+    resizable,
+    fullscreen_window,
+    exclusive_fullscreen
+};
+
+
 /// Эти параметры используются при инициализации движка
 namespace engine_params
 {
@@ -18,7 +27,7 @@ namespace engine_params
 
     inline StrUtf8 window_title{"Игра"};
     inline glm::ivec2 window_size{800, 600};
-    inline bool window_resizable = false;
+    inline WindowMode window_mode = WindowMode::windowed;
 
     /// 0 - выключено, 1 - включено,
     /// -1 - адаптивная вертикальная синхронизация (если не поддерживается, то включается обычная).
