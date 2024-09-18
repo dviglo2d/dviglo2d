@@ -13,7 +13,7 @@
 namespace dviglo
 {
 
-enum class VertexAttributes
+enum class VertexAttributes : u32
 {
     none     = 0,
     position = 1 << 0,
