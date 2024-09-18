@@ -18,6 +18,7 @@ enum class LogLevel : u32
     none       // 4
 };
 
+
 class Log
 {
 private:
