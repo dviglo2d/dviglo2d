@@ -17,5 +17,5 @@
 [submodule "libs/third_party/sdl_mixer/repo"]
 	path = libs/third_party/sdl_mixer/repo
 	url = https://github.com/dviglo2d/sdl_mixer
-	branch = dv_2024_09_16
+	branch = dv_2024_09_19
 	shallow = true
