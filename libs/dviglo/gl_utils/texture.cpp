@@ -3,37 +3,104 @@
 
 #include "texture.hpp"
 
+#include "../fs/log.hpp"
 #include "../res/image.hpp"
 
+#include <pugixml.hpp>
+
+#include <format>
 #include <memory>
 
+using namespace pugi;
 using namespace std;
 
 
 namespace dviglo
 {
 
+/// Пытается загрузить xml-файл с настройками текстуры. Перед вызовом функции текстура должна быть забинжена
+static void load_xml(const StrUtf8& xml_file_path)
+{
+    xml_document doc;
+    xml_parse_result result = doc.load_file(xml_file_path.c_str());
+
+    if (result.status == xml_parse_status::status_file_not_found)
+        return;
+
+    if (!result)
+    {
+        DV_LOG->write_error(format(R"(load_xml("{}") | !result)", xml_file_path));
+        return;
+    }
+
+    xml_node root_node = doc.first_child();
+
+    if (root_node.name() != string("texture"))
+    {
+        DV_LOG->write_error(format(R"(load_xml("{}") | root_node.name() != string("texture"))", xml_file_path));
+        return;
+    }
+
+    for (xml_node child : root_node)
+    {
+        StrUtf8 key(child.name());
+
+        if (key == "GL_TEXTURE_MIN_FILTER")
+        {
+            StrUtf8 value(child.child_value());
+
+            if (value == "GL_NEAREST")
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+            else if (value == "GL_LINEAR")
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            else if (value == "GL_NEAREST_MIPMAP_NEAREST")
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
+            else if (value == "GL_LINEAR_MIPMAP_NEAREST")
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
+            else if (value == "GL_NEAREST_MIPMAP_LINEAR")
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_LINEAR);
+            else if (value == "GL_LINEAR_MIPMAP_LINEAR")
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+            else
+                DV_LOG->write_error(format(R"(load_xml("{}") | GL_TEXTURE_MIN_FILTER | incorrect value "{}")", xml_file_path, value));
+        }
+        else if (key == "GL_TEXTURE_MAG_FILTER")
+        {
+            StrUtf8 value(child.child_value());
+
+            if (value == "GL_NEAREST")
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            else if (value == "GL_LINEAR")
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            else
+                DV_LOG->write_error(format(R"(load_xml("{}") | GL_TEXTURE_MAG_FILTER | incorrect value "{}")", xml_file_path, value));
+        }
+        else
+        {
+            DV_LOG->write_error(format(R"(load_xml("{}") | incorrect key "{}")", xml_file_path, key));
+        }
+    }
+}
+
 Texture::Texture(const StrUtf8& file_path)
 {
     unique_ptr<Image> image = make_unique<Image>(file_path);
 
-    GLenum format;
+    GLenum img_format;
 
     if (image->num_components() == 3)
-        format = GL_RGB;
+        img_format = GL_RGB;
     else
-        format = GL_RGBA;
+        img_format = GL_RGBA;
 
     size_ = image->size();
 
     glGenTextures(1, &gpu_object_name_);
     glBindTexture(GL_TEXTURE_2D, gpu_object_name_);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size_.x, size_.y, 0, format, GL_UNSIGNED_BYTE, image->data());
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size_.x, size_.y, 0, img_format, GL_UNSIGNED_BYTE, image->data());
     glGenerateMipmap(GL_TEXTURE_2D);
-
-    // Включаем трилинейную фильтрацию
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    load_xml(file_path + ".xml");
+    glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 } // namespace dviglo
