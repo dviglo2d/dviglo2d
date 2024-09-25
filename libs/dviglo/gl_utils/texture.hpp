@@ -14,6 +14,12 @@
 namespace dviglo
 {
 
+struct TextureParams
+{
+    GLint min_filter = GL_NEAREST_MIPMAP_LINEAR;
+    GLint mag_filter = GL_LINEAR;
+};
+
 class Texture
 {
 private:
@@ -21,6 +27,9 @@ private:
     glm::ivec2 size_;
 
 public:
+    /// Эти параметры используются по умолчанию при создании новой текстуры
+    inline static TextureParams default_params;
+
     Texture()
         : gpu_object_name_(0)
         , size_({})
@@ -65,6 +74,13 @@ public:
     void bind()
     {
         glBindTexture(GL_TEXTURE_2D, gpu_object_name_);
+    }
+
+    void set_params(const TextureParams& params)
+    {
+        glBindTexture(GL_TEXTURE_2D, gpu_object_name_);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, params.min_filter);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, params.mag_filter);
     }
 };
 

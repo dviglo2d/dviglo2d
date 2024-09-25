@@ -18,19 +18,22 @@ using namespace std;
 namespace dviglo
 {
 
-/// Пытается загрузить xml-файл с настройками текстуры. Перед вызовом функции текстура должна быть забинжена
-static void load_xml(const StrUtf8& xml_file_path)
+/// Пытается загрузить xml-файл с настройками текстуры.
+/// В случае неудачи возвращает дефолтные параметры
+static TextureParams try_load_xml(const StrUtf8& xml_file_path)
 {
+    TextureParams ret = Texture::default_params;
+
     xml_document doc;
     xml_parse_result result = doc.load_file(xml_file_path.c_str());
 
     if (result.status == xml_parse_status::status_file_not_found)
-        return;
+        return ret;
 
     if (!result)
     {
         DV_LOG->write_error(format(R"(load_xml("{}") | !result)", xml_file_path));
-        return;
+        return ret;
     }
 
     xml_node root_node = doc.first_child();
@@ -38,7 +41,7 @@ static void load_xml(const StrUtf8& xml_file_path)
     if (root_node.name() != string("texture"))
     {
         DV_LOG->write_error(format(R"(load_xml("{}") | root_node.name() != string("texture"))", xml_file_path));
-        return;
+        return ret;
     }
 
     for (xml_node child : root_node)
@@ -50,17 +53,17 @@ static void load_xml(const StrUtf8& xml_file_path)
             StrUtf8 value(child.child_value());
 
             if (value == "GL_NEAREST")
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+                ret.min_filter = GL_NEAREST;
             else if (value == "GL_LINEAR")
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+                ret.min_filter = GL_LINEAR;
             else if (value == "GL_NEAREST_MIPMAP_NEAREST")
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
+                ret.min_filter = GL_NEAREST_MIPMAP_NEAREST;
             else if (value == "GL_LINEAR_MIPMAP_NEAREST")
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
+                ret.min_filter = GL_LINEAR_MIPMAP_NEAREST;
             else if (value == "GL_NEAREST_MIPMAP_LINEAR")
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_LINEAR);
+                ret.min_filter = GL_NEAREST_MIPMAP_LINEAR;
             else if (value == "GL_LINEAR_MIPMAP_LINEAR")
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+                ret.min_filter = GL_LINEAR_MIPMAP_LINEAR;
             else
                 DV_LOG->write_error(format(R"(load_xml("{}") | GL_TEXTURE_MIN_FILTER | incorrect value "{}")", xml_file_path, value));
         }
@@ -69,9 +72,9 @@ static void load_xml(const StrUtf8& xml_file_path)
             StrUtf8 value(child.child_value());
 
             if (value == "GL_NEAREST")
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+                ret.mag_filter = GL_NEAREST;
             else if (value == "GL_LINEAR")
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+                ret.mag_filter = GL_LINEAR;
             else
                 DV_LOG->write_error(format(R"(load_xml("{}") | GL_TEXTURE_MAG_FILTER | incorrect value "{}")", xml_file_path, value));
         }
@@ -80,6 +83,8 @@ static void load_xml(const StrUtf8& xml_file_path)
             DV_LOG->write_error(format(R"(load_xml("{}") | incorrect key "{}")", xml_file_path, key));
         }
     }
+
+    return ret;
 }
 
 Texture::Texture(const StrUtf8& file_path)
@@ -99,8 +104,7 @@ Texture::Texture(const StrUtf8& file_path)
     glBindTexture(GL_TEXTURE_2D, gpu_object_name_);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size_.x, size_.y, 0, img_format, GL_UNSIGNED_BYTE, image->data());
     glGenerateMipmap(GL_TEXTURE_2D);
-    load_xml(file_path + ".xml");
-    glBindTexture(GL_TEXTURE_2D, 0);
+    set_params(try_load_xml(file_path + ".xml"));
 }
 
 } // namespace dviglo
