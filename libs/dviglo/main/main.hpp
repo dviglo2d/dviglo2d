@@ -33,9 +33,9 @@ std::vector<StrUtf8> main_args_to_vector(i32 argc, char* argv[]);
         return app->main_event(event);                                      \
     }                                                                       \
                                                                             \
-    void SDL_AppQuit(void* appstate)                                        \
+    void SDL_AppQuit(void* appstate, SDL_AppResult result)                  \
     {                                                                       \
-        app->main_quit();                                                   \
+        app->main_quit(result);                                             \
         delete app;                                                         \
         app = nullptr;                                                      \
     }

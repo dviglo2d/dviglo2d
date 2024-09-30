@@ -50,7 +50,7 @@ public:
     SDL_AppResult main_init();
     SDL_AppResult main_iterate();
     SDL_AppResult main_event(SDL_Event* event);
-    void main_quit();
+    void main_quit(SDL_AppResult result);
 };
 
 } // namespace dviglo
