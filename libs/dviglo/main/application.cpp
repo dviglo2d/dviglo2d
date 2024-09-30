@@ -49,24 +49,21 @@ Application::Application(const vector<StrUtf8>& args)
     }
 }
 
-bool Application::handle_sdl_event(const SDL_Event& event)
+void Application::handle_sdl_event(const SDL_Event& event)
 {
     switch (event.type)
     {
     case SDL_EVENT_QUIT:
         should_exit_ = true;
-        return true;
+        return;
 
     case SDL_EVENT_WINDOW_RESIZED:
         {
             i32 width = event.window.data1;
             i32 height = event.window.data2;
             glViewport(0, 0, width, height);
-            return true;
+            return;
         }
-
-    default:
-        return false;
     }
 }
 
