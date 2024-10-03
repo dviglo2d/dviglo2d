@@ -61,14 +61,21 @@ void SpriteBatch::add_quad()
         flush();
 }
 
-void SpriteBatch::prepare_ogl(bool alpha_blending)
+void SpriteBatch::prepare_ogl(bool alpha_blending, bool flip_vertically)
 {
     flush(); // На случай, если параметры меняются посередине рендеринга
 
-    // Задаём треугольники по часовой стрелке
+    flip_vertically_ = flip_vertically;
+
+#if false // Для тестов
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
-    glFrontFace(GL_CW);
+
+    if (flip_vertically)
+        glFrontFace(GL_CCW); 
+    else
+        glFrontFace(GL_CW); // Задаём треугольники по часовой стрелке
+#endif
 
     // Включаем альфа-смешение, если нужно
     if (alpha_blending)
@@ -123,10 +130,10 @@ void SpriteBatch::flush()
 {
     if (t_num_vertices_ > 0)
     {
-        ivec2 viewport_size = get_viewport().size;
-
         t_shader_program_->use();
-        t_shader_program_->set("u_scale", vec2(2.f / viewport_size.x, -2.f / viewport_size.y));
+        ivec2 viewport_size = get_viewport().size;
+        t_shader_program_->set("u_pixel_size", vec2(2.f / viewport_size.x, 2.f / viewport_size.y));
+        t_shader_program_->set("u_flip_vertically", flip_vertically_);
 
         t_vertex_buffer_->set_data(t_num_vertices_, t_vertices_);
 
@@ -138,10 +145,10 @@ void SpriteBatch::flush()
     }
     else if (q_num_vertices_ > 0)
     {
-        ivec2 viewport_size = get_viewport().size;
-
         q_current_shader_program_->use();
-        q_current_shader_program_->set("u_scale", vec2(2.f / viewport_size.x, -2.f / viewport_size.y));
+        ivec2 viewport_size = get_viewport().size;
+        t_shader_program_->set("u_pixel_size", vec2(2.f / viewport_size.x, 2.f / viewport_size.y));
+        t_shader_program_->set("u_flip_vertically", flip_vertically_);
 
         glActiveTexture(GL_TEXTURE0);
         q_current_texture_->bind();
