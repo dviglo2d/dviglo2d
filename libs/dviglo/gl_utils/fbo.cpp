@@ -19,7 +19,7 @@ Fbo::Fbo(ivec2 size)
     glGenFramebuffers(1, &gpu_object_name_);
     glBindFramebuffer(GL_FRAMEBUFFER, gpu_object_name_);
 
-    texture_ = make_shared<Texture>(size);
+    texture_ = make_unique<Texture>(size);
     glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, texture_->gpu_object_name(), 0);
 
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)

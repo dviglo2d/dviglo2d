@@ -58,7 +58,7 @@ void App::start()
     sprite_batch_->prepare_ogl(true);
     sprite_batch_->draw_string("Отрендеренная сцена", font_.get(), vec2{4.f, 1.f}, 0xFF000000);
     sprite_batch_->flush();
-    rendered_scene_ = fbo.texture();
+    rendered_scene_ = fbo.move_texture();
     rendered_scene_->bind();
     glGenerateMipmap(GL_TEXTURE_2D);
 

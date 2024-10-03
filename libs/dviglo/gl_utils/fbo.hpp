@@ -18,7 +18,7 @@ private:
     /// Идентификатор объекта OpenGL
     GLuint gpu_object_name_ = 0;
 
-    std::shared_ptr<Texture> texture_;
+    std::unique_ptr<Texture> texture_;
 
 public:
     Fbo(glm::ivec2 size);
@@ -34,7 +34,8 @@ public:
         gpu_object_name_ = 0;
     }
 
-    std::shared_ptr<Texture> texture() const { return texture_; }
+    Texture* texture() const { return texture_.get(); }
+    std::unique_ptr<Texture> move_texture() { return std::move(texture_); }
 
     void bind()
     {

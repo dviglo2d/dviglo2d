@@ -21,7 +21,7 @@ private:
     Mix_Music* music_ = nullptr;
 
     /// Отрендеренная в текстуру сцена
-    shared_ptr<Texture> rendered_scene_;
+    unique_ptr<Texture> rendered_scene_;
 
 public:
     App(const vector<StrUtf8>& args);
