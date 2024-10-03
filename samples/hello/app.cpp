@@ -55,7 +55,7 @@ void App::start()
     glViewport(0, 0, fbo.texture()->size().x, fbo.texture()->size().y);
     glClearColor(1.f, 1.f, 0.f, 1.f); // Жёлтый фон
     glClear(GL_COLOR_BUFFER_BIT);
-    sprite_batch_->prepare_ogl(true, true);
+    sprite_batch_->prepare_ogl(true, true); // Отражаем вертикально
     sprite_batch_->draw_string("Отрендеренная сцена", font_.get(), vec2{4.f, 1.f}, 0xFF000000);
     sprite_batch_->flush();
     rendered_scene_ = fbo.move_texture();
