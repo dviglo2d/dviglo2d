@@ -36,7 +36,11 @@ public:
     {
     }
 
+    /// Загружает тестуру из файла
     Texture(const StrUtf8& file_path);
+
+    /// Создаёт пустую RGBA текстуру нужного размера
+    Texture(glm::ivec2 size);
 
     ~Texture()
     {
@@ -70,6 +74,7 @@ public:
     glm::ivec2 size() const { return size_; }
     i32 width() const { return size_.x; }
     i32 height() const { return size_.y; }
+    GLuint gpu_object_name() const { return gpu_object_name_; }
 
     void bind()
     {

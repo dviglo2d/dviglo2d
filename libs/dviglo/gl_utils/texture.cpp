@@ -11,6 +11,7 @@
 #include <format>
 #include <memory>
 
+using namespace glm;
 using namespace pugi;
 using namespace std;
 
@@ -105,6 +106,15 @@ Texture::Texture(const StrUtf8& file_path)
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size_.x, size_.y, 0, img_format, GL_UNSIGNED_BYTE, image->data());
     glGenerateMipmap(GL_TEXTURE_2D);
     set_params(try_load_xml(file_path + ".xml"));
+}
+
+Texture::Texture(ivec2 size)
+    : size_(size)
+{
+    glGenTextures(1, &gpu_object_name_);
+    glBindTexture(GL_TEXTURE_2D, gpu_object_name_);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size.x, size.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+    glGenerateMipmap(GL_TEXTURE_2D);
 }
 
 } // namespace dviglo

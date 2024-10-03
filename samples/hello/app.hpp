@@ -14,11 +14,14 @@ using namespace std;
 
 class App : public Application
 {
+private:
     Texture* texture_ = nullptr;
     unique_ptr<SpriteBatch> sprite_batch_;
     unique_ptr<SpriteFont> font_;
-
     Mix_Music* music_ = nullptr;
+
+    /// Отрендеренная в текстуру сцена
+    shared_ptr<Texture> rendered_scene_;
 
 public:
     App(const vector<StrUtf8>& args);

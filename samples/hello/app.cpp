@@ -4,6 +4,7 @@
 #include "app.hpp"
 
 #include <dviglo/fs/fs_base.hpp>
+#include <dviglo/gl_utils/fbo.hpp>
 #include <dviglo/gl_utils/texture_cache.hpp>
 #include <dviglo/main/engine_params.hpp>
 #include <dviglo/main/os_window.hpp>
@@ -47,6 +48,25 @@ void App::start()
 
     if (!Mix_PlayMusic(music_, -1))
         DV_LOG->write_error(format("App::start(): !Mix_PlayMusic(...) | {}", SDL_GetError()));
+
+    // Рендерим в текстуру
+    Fbo fbo(ivec2(256, 256));
+    fbo.bind();
+    glViewport(0, 0, fbo.texture()->size().x, fbo.texture()->size().y);
+    glClearColor(1.f, 1.f, 0.f, 1.f); // Жёлтый фон
+    glClear(GL_COLOR_BUFFER_BIT);
+    sprite_batch_->prepare_ogl(true);
+    sprite_batch_->draw_string("Отрендеренная сцена", font_.get(), vec2{4.f, 1.f}, 0xFF000000);
+    sprite_batch_->flush();
+    rendered_scene_ = fbo.texture();
+    rendered_scene_->bind();
+    glGenerateMipmap(GL_TEXTURE_2D);
+
+    // Возвращаемся к рендерингу в default framebuffer
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    ivec2 screen_size;
+    SDL_GetWindowSizeInPixels(DV_OS_WINDOW->window(), &screen_size.x, &screen_size.y);
+    glViewport(0, 0, screen_size.x, screen_size.y);
 }
 
 void App::handle_sdl_event(const SDL_Event& event)
@@ -129,7 +149,7 @@ void App::draw()
     sprite_batch_->set_shape_color(0x90FFFF00);
     sprite_batch_->draw_rect({{screen_size.x - 400.f, screen_size.y - 200.f}, {300.f, 100.f}});
 
-    sprite_batch_->draw_sprite(texture_, {100.f, 100.f});
+    sprite_batch_->draw_sprite(rendered_scene_.get(), {100.f, 100.f, 128.f, 128.f});
     sprite_batch_->draw_sprite(texture_, {500.f, 100.f}, nullptr, 0x90FFFFFF, rotation);
 
     sprite_batch_->draw_string(fps_text, font_.get(), vec2{4.f, 1.f}, 0xFF000000);
