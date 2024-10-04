@@ -36,6 +36,7 @@ public:
 
     Texture* texture() const { return texture_.get(); }
     std::unique_ptr<Texture> move_texture() { return std::move(texture_); }
+    GLuint gpu_object_name() const { return gpu_object_name_; }
 
     void bind()
     {
