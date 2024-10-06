@@ -1,6 +1,8 @@
 // Copyright (c) the Dviglo project
 // License: MIT
 
+#pragma once
+
 #include "../std_utils/string.hpp"
 
 #include <glm/glm.hpp>
