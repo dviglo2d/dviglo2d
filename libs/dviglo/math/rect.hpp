@@ -29,7 +29,11 @@ struct Rect
         , size(width, height)
     {
     }
+
+    static const Rect zero;
 };
+
+inline const Rect Rect::zero(0.f, 0.f, 0.f, 0.f);
 
 struct IntRect
 {
@@ -49,6 +53,10 @@ struct IntRect
         , size(width, height)
     {
     }
+
+    static const IntRect zero;
 };
+
+inline const IntRect IntRect::zero(0, 0, 0, 0);
 
 } // namespace dviglo
