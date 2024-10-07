@@ -104,7 +104,7 @@ constexpr StrAscii replace_all(StrViewAscii str,
     return ret;
 }
 
-/// Укорачивает сроку, если в конце неё находятся любые символы из набора
+/// Укорачивает строку, если в конце неё находятся любые символы из набора
 constexpr void trim_end_chars(StrAscii& str, StrViewAscii chars = " ")
 {
     size_t new_length = str.length();
