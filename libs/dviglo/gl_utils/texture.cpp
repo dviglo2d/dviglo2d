@@ -90,20 +90,20 @@ static TextureParams try_load_xml(const StrUtf8& xml_file_path)
 
 Texture::Texture(const StrUtf8& file_path)
 {
-    unique_ptr<Image> image = make_unique<Image>(file_path);
+    Image image = Image::from_file(file_path);
 
     GLenum img_format;
 
-    if (image->num_components() == 3)
+    if (image.num_components() == 3)
         img_format = GL_RGB;
     else
         img_format = GL_RGBA;
 
-    size_ = image->size();
+    size_ = image.size();
 
     glGenTextures(1, &gpu_object_name_);
     glBindTexture(GL_TEXTURE_2D, gpu_object_name_);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size_.x, size_.y, 0, img_format, GL_UNSIGNED_BYTE, image->data());
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size_.x, size_.y, 0, img_format, GL_UNSIGNED_BYTE, image.data());
     glGenerateMipmap(GL_TEXTURE_2D);
     set_params(try_load_xml(file_path + ".xml"));
 }

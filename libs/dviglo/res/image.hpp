@@ -21,8 +21,11 @@ private:
     byte* data_;
 
 public:
-    Image(const StrUtf8& path);
+    Image();
     ~Image();
+
+    /// Выделяет память
+    Image(glm::ivec2 size, i32 num_components);
 
     // Запрещаем копировать объект, так как если в одной из копий будет вызван деструктор,
     // все другие объекты будут иметь ссылку на уничтоженный data_
@@ -55,6 +58,9 @@ public:
     i32 height() const { return size_.y; }
     i32 num_components() const { return num_components_; }
     const byte* data() const { return data_; }
+    bool empty() const { return data_ == nullptr; }
+
+    static Image from_file(const StrUtf8& path);
 };
 
 } // namespace dviglo
