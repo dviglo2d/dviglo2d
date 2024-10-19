@@ -7,6 +7,10 @@
 #define STBI_WINDOWS_UTF8
 #include <stb_image.h>
 
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#define STBIW_WINDOWS_UTF8
+#include <stb_image_write.h>
+
 using namespace glm;
 
 
@@ -30,6 +34,11 @@ Image::Image(ivec2 size, i32 num_components)
 Image::~Image()
 {
     stbi_image_free(data_);
+}
+
+void Image::save_png(const StrUtf8& path)
+{
+    stbi_write_png(path.c_str(), size_.x, size_.y, num_components_, data_, 0);
 }
 
 Image Image::from_file(const StrUtf8& path)

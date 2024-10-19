@@ -60,6 +60,8 @@ public:
     const byte* data() const { return data_; }
     bool empty() const { return data_ == nullptr; }
 
+    void save_png(const StrUtf8& path);
+
     static Image from_file(const StrUtf8& path);
 };
 
