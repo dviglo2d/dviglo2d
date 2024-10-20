@@ -31,6 +31,48 @@ Image::Image(ivec2 size, i32 num_components)
     data_ = reinterpret_cast<byte*>(STBI_MALLOC(size_.x * size_.y * num_components_));
 }
 
+Image::Image(const Image& other)
+{
+    size_ = other.size_;
+    num_components_ = other.num_components_;
+    data_ = reinterpret_cast<byte*>(STBI_MALLOC(size_.x * size_.y * num_components_));
+    memcpy(data_, other.data_, size_.x * size_.y * num_components_);
+}
+
+Image& Image::operator=(const Image& other)
+{
+    if (this != &other)
+    {
+        stbi_image_free(data_);
+
+        size_ = other.size_;
+        num_components_ = other.num_components_;
+        data_ = reinterpret_cast<byte*>(STBI_MALLOC(size_.x * size_.y * num_components_));
+        memcpy(data_, other.data_, size_.x * size_.y * num_components_);
+    }
+
+    return *this;
+}
+
+Image::Image(Image&& other) noexcept
+    : size_(std::exchange(other.size_, {}))
+    , num_components_(std::exchange(other.num_components_, 0))
+    , data_(std::exchange(other.data_, nullptr))
+{
+}
+
+Image& Image::operator=(Image&& other) noexcept
+{
+    if (this != &other)
+    {
+        size_ = std::exchange(other.size_, {});
+        num_components_ = std::exchange(other.num_components_, 0);
+        data_ = std::exchange(other.data_, nullptr);
+    }
+
+    return *this;
+}
+
 Image::~Image()
 {
     stbi_image_free(data_);
