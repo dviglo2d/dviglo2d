@@ -20,4 +20,6 @@ public:
     void draw() override;
 
     void on_key(const SDL_KeyboardEvent& event_data);
+
+    void show_ui();
 };
