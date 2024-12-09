@@ -270,6 +270,8 @@ void App::show_ui()
             Button(generate_button_label.c_str());
         }
 
+        NewLine();
+
         ImGui::End();
     }
 }
