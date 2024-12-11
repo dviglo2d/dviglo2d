@@ -2,6 +2,8 @@
 
 #include <utility>
 
+using namespace glm;
+
 
 GrayscaleImage::GrayscaleImage(const FT_BitmapGlyph bitmap_glyph)
 {
@@ -206,4 +208,21 @@ void GrayscaleImage::blur(i32 radius)
     }
 
     delete[] tmp_buffer;
+}
+
+Image GrayscaleImage::to_image() const
+{
+    Image ret(ivec2(width_, height_), 4);
+
+    for (i32 y = 0; y < height_; ++y)
+    {
+        for (i32 x = 0; x < width_; ++x)
+        {
+            f32 c = get_pixel(x, y);
+            ret.SetPixel(x, y, Color(color.r_, color.g_, color.b_, mask * color.a_));
+        }
+    }
+
+    return result;
+
 }

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "freetype_face.hpp"
+#include "glyph_renderer.hpp"
 
 #include <dviglo/graphics/sprite_batch.hpp>
 #include <dviglo/main/application.hpp>

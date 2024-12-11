@@ -9,6 +9,7 @@
 #include FT_GLYPH_H
 
 #include <dviglo/common/primitive_types.hpp>
+#include <dviglo/res/image.hpp>
 
 using namespace dviglo;
 
@@ -50,4 +51,6 @@ public:
 
     // Проверяет, что координаты не выходят за границы изображения
     bool is_inside(i32 x, i32 y) { return x >= 0 && x < width_ && y >= 0 && y < height_; }
+
+    Image to_image() const;
 };

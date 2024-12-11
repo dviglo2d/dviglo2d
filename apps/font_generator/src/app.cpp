@@ -137,6 +137,8 @@ void App::show_ui()
 
     ShowDemoWindow(&show_demo_window);
 
+
+    // Окно настройки шрифта
     {
         SetNextWindowPos(ImVec2(20.f, 20.f), ImGuiCond_FirstUseEver);
         const f32 window_width = 500.f;
@@ -204,20 +206,20 @@ void App::show_ui()
             Bullet();
             Text("Обводка");
             Indent(GetFontSize());
-                Bullet();
-                Text("Цвет");
-                SameLine();
-                ColorEdit4("##second_color", (f32*)&second_color, ImGuiColorEditFlags_AlphaPreview);
+            Bullet();
+            Text("Цвет");
+            SameLine();
+            ColorEdit4("##second_color", (f32*)&second_color, ImGuiColorEditFlags_AlphaPreview);
 
-                Bullet();
-                Text("Толщина");
-                SameLine();
-                SliderInt("##thickness", &thickness, 0, 20);
+            Bullet();
+            Text("Толщина");
+            SameLine();
+            SliderInt("##thickness", &thickness, 0, 20);
 
-                Bullet();
-                Text("Радиус размытия");
-                SameLine();
-                SliderInt("##blur_radius", &blur_radius, 0, 20);
+            Bullet();
+            Text("Радиус размытия");
+            SameLine();
+            SliderInt("##blur_radius", &blur_radius, 0, 20);
             Unindent(GetFontSize());
         }
         // Только контур
@@ -275,12 +277,33 @@ void App::show_ui()
             if (Button(generate_button_label.c_str()))
             {
                 unique_ptr<FreeTypeFace> face = make_unique<FreeTypeFace>(*freetype_library_, src_font_path, font_height);
+
             }
         }
 
         NewLine();
 
         ImGui::End();
+    }
+
+    // Окно вывода текстур
+    {
+        ImGui::Begin("Сгенерированный шрифт");
+
+        // Установка размеров окна
+        ImVec2 windowSize(800, 600); // Размеры окна
+        ImGui::SetWindowSize(windowSize);
+
+        // Создание области для прокрутки
+        ImGui::BeginChild("ScrollableRegion", ImVec2(0, 0), true);
+
+        // Отображение изображения
+        //ImGui::Image((void*)(intptr_t)texture, ImVec2(800, 600)); // Укажите размеры изображения
+
+        ImGui::EndChild();
+        ImGui::End();
+
+        ImGui::Render();
     }
 }
 

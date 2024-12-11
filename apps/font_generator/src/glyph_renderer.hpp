@@ -1,8 +1,7 @@
 #pragma once
 
+#include "freetype_face.hpp"
 #include "grayscale_image.hpp"
-
-#include <dviglo/std_utils/string.hpp>
 
 #include <ft2build.h>
 #include FT_FREETYPE_H
@@ -17,6 +16,8 @@ struct RenderedGlyph
 {
     unique_ptr<GrayscaleImage> grayscale_image;
 
+    RenderedGlyph() = default;
+
     // Запрещаем копирование
     RenderedGlyph(const RenderedGlyph&) = delete;
     RenderedGlyph& operator=(const RenderedGlyph&) = delete;
@@ -26,30 +27,14 @@ struct RenderedGlyph
     RenderedGlyph& operator=(RenderedGlyph&& other) noexcept = default;
 
     // Символ в кодировке UTF-32
-    u32 code_point;
+    u32 code_point = 0;
 
     // Смещение при выводе на экран
-    i32 x_offset;
-    i32 y_offset;
+    i32 x_offset = 0;
+    i32 y_offset = 0;
 
     // Расстояние между origin текущего глифа и origin следующего глифа
-    i32 x_advance;
-
-    // Высота строки (одинакова для всех глифов)
-    i32 line_height;
+    i32 x_advance = 0;
 };
 
-
-
-
-class GlyphRenderer
-{
-private:
-
-
-    // Текущий шрифт
-    FT_Face face_;
-
-public:
-    GlyphRenderer(const StrUtf8& font_path, i32 font_height);
-};
+RenderedGlyph render_glyph_simpe(const FreeTypeFace& face, i32 blur_radius);
