@@ -132,6 +132,9 @@ void App::show_ui()
     static i32 blur_radius = 8;
     static i32 texture_width_idx = 2;
     static i32 texture_height_idx = 2;
+    static dviglo::Image glyph_image;
+    static Texture glyph_texture;
+
 
     ImGuiStyle& style = GetStyle();
 
@@ -277,7 +280,8 @@ void App::show_ui()
             if (Button(generate_button_label.c_str()))
             {
                 unique_ptr<FreeTypeFace> face = make_unique<FreeTypeFace>(*freetype_library_, src_font_path, font_height);
-
+                glyph_image = render_glyph_simpe(*face, blur_radius).grayscale_image->to_image();
+                glyph_texture = Texture(glyph_image);
             }
         }
 
@@ -298,7 +302,7 @@ void App::show_ui()
         ImGui::BeginChild("ScrollableRegion", ImVec2(0, 0), true);
 
         // Отображение изображения
-        //ImGui::Image((void*)(intptr_t)texture, ImVec2(800, 600)); // Укажите размеры изображения
+        ImGui::Image(glyph_texture.gpu_object_name(), ImVec2(800, 600)); // Укажите размеры изображения
 
         ImGui::EndChild();
         ImGui::End();

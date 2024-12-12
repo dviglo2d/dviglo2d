@@ -3,16 +3,52 @@
 #include <cassert>
 
 
-RenderedGlyph render_glyph_simpe(const FreeTypeFace& face, i32 blur_radius)
+RenderedGlyph render_glyph_simpe(FreeTypeFace& face, i32 blur_radius)
 {
     RenderedGlyph ret;
 
     assert(blur_radius >= 0);
 
+    FT_UInt glyphIndex_ = FT_Get_Char_Index(face.get(), 41);
+
+    glyphIndex_ = 0;
+
+    FT_ULong charCode = FT_Get_First_Char(face.get(), &glyphIndex_);
+
+    //for (i32 j = 0; j < 127; ++j)
+    //    charCode = FT_Get_Next_Char(face.get(), charCode, &glyphIndex_);
+
+    FT_Error error1 = FT_Load_Glyph(face.get(), glyphIndex_, FT_LOAD_DEFAULT);
+
+    //FT_Error error1 = FT_Load_Char(face.get(), 'A', FT_LOAD_DEFAULT);
+
+    if (error1)
+    {
+        DV_LOG->write_error(format("render_glyph_simpe(): FT_Load_Glyph() error | {}", error1));
+        return ret;
+    }
+
     // Реднерим глиф
     FT_Glyph glyph;
-    FT_Get_Glyph(face.get()->glyph, &glyph);
-    FT_Glyph_To_Bitmap(&glyph, FT_RENDER_MODE_NORMAL, nullptr, true);
+
+    FT_Error error = FT_Get_Glyph(face.get()->glyph, &glyph);
+
+    if (error)
+    {
+        DV_LOG->write_error(format("render_glyph_simpe(): FT_Get_Glyph() error | {}", error));
+        return ret;
+    }
+
+    error = FT_Glyph_To_Bitmap(&glyph, FT_RENDER_MODE_NORMAL, nullptr, true);
+
+    if (error)
+    {
+        DV_LOG->write_error(format("render_glyph_simpe(): FT_Glyph_To_Bitmap() error | {}", error));
+        FT_Done_Glyph(glyph);
+        return ret;
+    }
+
+
     FT_BitmapGlyph bitmap_glyph = reinterpret_cast<FT_BitmapGlyph>(glyph);
     ret.grayscale_image = make_unique<GrayscaleImage>(bitmap_glyph);
     FT_Done_Glyph(glyph);

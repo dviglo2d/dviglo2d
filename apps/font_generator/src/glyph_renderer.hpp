@@ -37,4 +37,4 @@ struct RenderedGlyph
     i32 x_advance = 0;
 };
 
-RenderedGlyph render_glyph_simpe(const FreeTypeFace& face, i32 blur_radius);
+RenderedGlyph render_glyph_simpe(FreeTypeFace& face, i32 blur_radius);

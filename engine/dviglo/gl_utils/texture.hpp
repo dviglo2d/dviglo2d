@@ -3,12 +3,9 @@
 
 #pragma once
 
-#include "../std_utils/string.hpp"
+#include "../res/image.hpp"
 
 #include <glad/gl.h>
-#include <glm/glm.hpp>
-
-#include <utility> // std::exchange()
 
 
 namespace dviglo
@@ -41,6 +38,9 @@ public:
 
     /// Создаёт пустую RGBA текстуру нужного размера
     Texture(glm::ivec2 size);
+
+    /// Создаёт текстуру из изображения
+    Texture(const Image& image);
 
     ~Texture()
     {

@@ -47,5 +47,5 @@ public:
     FreeTypeLibrary(const FreeTypeLibrary&) = delete;
     FreeTypeLibrary& operator=(const FreeTypeLibrary&) = delete;
 
-    FT_Library get() const { return library_; }
+    FT_Library get() { return library_; }
 };

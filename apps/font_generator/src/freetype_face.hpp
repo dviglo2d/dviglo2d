@@ -12,7 +12,7 @@ private:
     FT_Face face_ = nullptr; // Это указатель
 
 public:
-    FreeTypeFace(const FreeTypeLibrary& lib, const StrUtf8& font_path, u32 font_height)
+    FreeTypeFace(FreeTypeLibrary& lib, const StrUtf8& font_path, u32 font_height)
     {
         // Не используем FT_New_Face(), так как она ожидает путь в кодировке ANSI
         vector<byte> data = read_all_data(font_path);
@@ -63,5 +63,5 @@ public:
     FreeTypeFace(const FreeTypeFace&) = delete;
     FreeTypeFace& operator=(const FreeTypeFace&) = delete;
 
-    FT_Face get() const { return face_; }
+    FT_Face get() { return face_; }
 };
