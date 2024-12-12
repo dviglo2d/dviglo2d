@@ -214,13 +214,13 @@ Image GrayscaleImage::to_image() const
 {
     Image ret(ivec2(width_, height_), 4);
 
-    for (i32 i = 0; i < width_ * height_; i += 4)
+    for (i32 i = 0; i < width_ * height_; ++i)
     {
         byte c = byte(pixels_[i] * 255.f);
-        ret.data()[i] = c;
-        ret.data()[i + 1] = c;
-        ret.data()[i + 2] = c;
-        ret.data()[i + 4] = c;
+        ret.data()[i*4] = c;
+        ret.data()[i*4 + 1] = c;
+        ret.data()[i*4 + 2] = c;
+        ret.data()[i*4 + 3] = c;
     }
 
     return ret;

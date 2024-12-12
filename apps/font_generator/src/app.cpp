@@ -302,7 +302,7 @@ void App::show_ui()
         ImGui::BeginChild("ScrollableRegion", ImVec2(0, 0), true);
 
         // Отображение изображения
-        ImGui::Image(glyph_texture.gpu_object_name(), ImVec2(800, 600)); // Укажите размеры изображения
+        ImGui::Image(glyph_texture.gpu_object_name(), ImVec2(glyph_image.size().x, glyph_image.size().y)); // Укажите размеры изображения
 
         ImGui::EndChild();
         ImGui::End();
