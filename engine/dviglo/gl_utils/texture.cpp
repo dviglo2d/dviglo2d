@@ -4,7 +4,6 @@
 #include "texture.hpp"
 
 #include "../fs/log.hpp"
-#include "../res/image.hpp"
 
 #include <pugixml.hpp>
 
@@ -103,7 +102,7 @@ Texture::Texture(const StrUtf8& file_path)
 
     glGenTextures(1, &gpu_object_name_);
     glBindTexture(GL_TEXTURE_2D, gpu_object_name_);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size_.x, size_.y, 0, img_format, GL_UNSIGNED_BYTE, image.data());
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, size_.x, size_.y, 0, img_format, GL_UNSIGNED_BYTE, image.data());
     glGenerateMipmap(GL_TEXTURE_2D);
     set_params(try_load_xml(file_path + ".xml"));
 }
@@ -113,7 +112,24 @@ Texture::Texture(ivec2 size)
 {
     glGenTextures(1, &gpu_object_name_);
     glBindTexture(GL_TEXTURE_2D, gpu_object_name_);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size.x, size.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, size.x, size.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+    glGenerateMipmap(GL_TEXTURE_2D);
+}
+
+Texture::Texture(const Image& image)
+{
+    GLenum img_format;
+
+    if (image.num_components() == 3)
+        img_format = GL_RGB;
+    else
+        img_format = GL_RGBA;
+
+    size_ = image.size();
+
+    glGenTextures(1, &gpu_object_name_);
+    glBindTexture(GL_TEXTURE_2D, gpu_object_name_);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, size_.x, size_.y, 0, img_format, GL_UNSIGNED_BYTE, image.data());
     glGenerateMipmap(GL_TEXTURE_2D);
 }
 

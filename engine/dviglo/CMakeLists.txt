@@ -21,7 +21,7 @@ endif()
 # Подключаем библиотеки из папки third_party.
 # Так как движок компилируется только в виде статической библиотеки,
 # то приложения тоже могут использовать сторонние библиотеки без проблем
-target_link_libraries(${target_name} PUBLIC SDL3-static SDL3_mixer-static glad stb glm pugixml)
+target_link_libraries(${target_name} PUBLIC SDL3-static SDL3_mixer-static glad stb glm pugixml freetype)
 
 # Опции, которые не требуют ничего, кроме создания дефайнов
 foreach(opt

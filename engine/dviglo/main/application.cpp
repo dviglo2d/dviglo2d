@@ -71,6 +71,7 @@ SDL_AppResult Application::main_init()
 
     os_window_ = make_unique<OsWindow>();
     audio_ = make_unique<Audio>();
+    freetype_ = make_unique<FreeType>();
 
     start();
     new_frame();
