@@ -11,6 +11,8 @@
 #define STBI_WINDOWS_UTF8
 #include <stb_image.h>
 
+#include "../math/rect.hpp"
+
 using namespace glm;
 
 
@@ -76,6 +78,65 @@ Image& Image::operator=(Image&& other) noexcept
 Image::~Image()
 {
     stbi_image_free(data_);
+}
+
+void Image::paste(const Image& img, ivec2 pos)
+{
+    if (img.num_components() != num_components())
+    {
+        // TODO: Конвертировать вставляемое изображение
+        //asIScriptContext* ctx = asGetActiveContext();
+        //if (ctx)
+        //    ctx->SetException("ASImage::paste(): img.num_components() != num_components()");
+        return;
+    }
+
+    // Границы вставляемого изображения
+    IntRect img_rect({0, 0}, img.size());
+
+    if (pos.x < 0)
+    {
+        img_rect.pos.x -= pos.x;  // Смещаем вправо
+        img_rect.size.x += pos.x; // Уменьшаем ширину
+        pos.x = 0;
+
+        if (img_rect.size.x <= 0) // Вставляемое изображение целиком за левой границей
+            return;
+    }
+    else if (pos.x >= size().x) // Вставляемое изображение целиком за правой границей
+    {
+        return;
+    }
+
+    if (pos.x + img_rect.size.x > size().x) // Вставляемое изображение не умещается
+        img_rect.size.x = size().x - pos.x;
+
+    if (pos.y < 0)
+    {
+        img_rect.pos.y -= pos.y;  // Смещаем вниз
+        img_rect.size.y += pos.y; // Уменьшаем высоту
+        pos.y = 0;
+
+        if (img_rect.size.y <= 0) // Вставляемое изображение целиком за верхней границей
+            return;
+    }
+    else if (pos.y >= size().y) // Вставляемое изображение целиком за нижней границей
+    {
+        return;
+    }
+
+    if (pos.y + img_rect.size.y > size().y) // Вставляемое изображение не умещается
+        img_rect.size.y = size().y - pos.y;
+
+    // Копируем линии вставляемого изображения
+    for (i32 img_y = img_rect.pos.y, this_y = pos.y;
+        img_y < img_rect.pos.y + img_rect.size.y;
+        ++img_y, ++this_y)
+    {
+        i32 img_data_offset = (img_y * img.size().x + img_rect.pos.x) * img.num_components();
+        i32 this_data_offset = (this_y * size().x + pos.x) * num_components();
+        memcpy(data() + this_data_offset, img.data() + img_data_offset, img_rect.size.x * num_components());
+    }
 }
 
 void Image::save_png(const StrUtf8& path)

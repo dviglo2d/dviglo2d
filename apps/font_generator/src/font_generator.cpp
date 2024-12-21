@@ -1,41 +1,58 @@
 #include "font_generator.hpp"
 
+#define STB_RECT_PACK_IMPLEMENTATION
 #include <stb_rect_pack.h>
 
 
-GeneratedFont generate_font_simple(const FreeTypeFace& face, const FontSettings& font_settings)
+GeneratedFont generate_font_simple(const FontSettings& font_settings)
 {
     GeneratedFont ret;
 
-    //FT_UInt glyphIndex_ = FT_Get_Char_Index(face.get(), 0x2DE0);
+    FreeTypeFace face(font_settings);
 
-    uint32_t glyph_index = FT_Get_Char_Index(face.get(), 'A');
+    FT_UInt glyph_index;
+    FT_ULong char_code = FT_Get_First_Char(face.get(), &glyph_index);
+    vector<unique_ptr<RenderedGlyph>> rendered_glyphs;
+    rendered_glyphs.reserve(face.get()->num_glyphs);
+    vector<stbrp_rect> rects;
+    rects.reserve(face.get()->num_glyphs);
 
-    //FT_Set_Pixel_Sizes(face, 0, 48);
-
-    
-    /*FT_Load_Char(face.get(), 'A', FT_LOAD_DEFAULT);
-
-    FT_UInt glyphIndex_ = 0;
-
-    FT_ULong charCode = FT_Get_First_Char(face.get(), &glyphIndex_);
-
-    for (i32 j = 0; j < 127; ++j)
-        charCode = FT_Get_Next_Char(face.get(), charCode, &glyphIndex_);*/
-
-    FT_Error error1 = FT_Load_Glyph(face.get(), glyph_index, FT_LOAD_TARGET_MONO);
-
-    //FT_Error error1 = FT_Load_Char(face.get(), 'A', FT_LOAD_DEFAULT);
-
-    if (error1)
+    while (glyph_index != 0)
     {
-        DV_LOG->write_error(format("render_glyph_simpe(): FT_Load_Glyph() error | {}", error1));
-        return ret;
+        FT_Load_Glyph(face.get(), glyph_index, FT_LOAD_TARGET_MONO);
+        unique_ptr<RenderedGlyph> rendered_glyph = render_glyph_simpe(face.get(), font_settings);
+
+        stbrp_rect r;
+        r.w = rendered_glyph->grayscale_image->width();
+        r.h = rendered_glyph->grayscale_image->height();
+        rects.push_back(r);
+
+        rendered_glyphs.push_back(std::move(rendered_glyph));
+
+        char_code = FT_Get_Next_Char(face.get(), char_code, &glyph_index);
     }
 
-    RenderedGlyph rendered_glyph = render_glyph_simpe(face.get(), font_settings);
+    stbrp_context pack_context;
+    i32 num_nodes = font_settings.texture_size.x;
+    vector<stbrp_node> nodes(num_nodes);
 
-    ret.pages.push_back(rendered_glyph.grayscale_image->to_image());
+    Image current_page(font_settings.texture_size, 4);
+    stbrp_init_target(&pack_context, font_settings.texture_size.x, font_settings.texture_size.y, nodes.data(), num_nodes);
+
+    stbrp_pack_rects(&pack_context, rects.data(), 40);
+
+    for (i32 i = 0; i < 40; ++i)
+    {
+        current_page.paste(rendered_glyphs[i]->grayscale_image.get()->to_image(),
+            {rects[i].x, rects[i].y});
+    }
+
+/*    while (stbrp_pack_rects(&pack_context, rects.data(), 40) == 0)
+    {
+
+    }*/
+
+    ret.pages.push_back(current_page);
 
     return ret;
 }

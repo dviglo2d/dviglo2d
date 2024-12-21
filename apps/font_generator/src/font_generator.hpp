@@ -18,4 +18,4 @@ struct GeneratedFont
     GeneratedFont& operator=(GeneratedFont&&) = default;
 };
 
-GeneratedFont generate_font_simple(const FreeTypeFace& face, const FontSettings& font_settings);
+GeneratedFont generate_font_simple(const FontSettings& font_settings);

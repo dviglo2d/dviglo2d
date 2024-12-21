@@ -37,4 +37,4 @@ struct RenderedGlyph
     i32 x_advance = 0;
 };
 
-RenderedGlyph render_glyph_simpe(FT_Face face, const FontSettings& font_settings);
+unique_ptr<RenderedGlyph> render_glyph_simpe(FT_Face face, const FontSettings& font_settings);

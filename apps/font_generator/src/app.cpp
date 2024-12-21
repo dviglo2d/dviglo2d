@@ -321,8 +321,7 @@ void App::show_ui()
 
             if (Button(generate_button_label.c_str()))
             {
-                unique_ptr<FreeTypeFace> face = make_unique<FreeTypeFace>(font_settings);
-                GeneratedFont generated_font = generate_font_simple(*face, font_settings);
+                GeneratedFont generated_font = generate_font_simple(font_settings);
                 glyph_texture = Texture(generated_font.pages[0]);
             }
         }

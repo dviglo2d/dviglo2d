@@ -37,6 +37,9 @@ public:
 
     ~GrayscaleImage();
 
+    i32 width() const { return width_; }
+    i32 height() const { return height_; }
+
     f32 get_pixel(i32 x, i32 y) const;
     void set_pixel(i32 x, i32 y, f32 gray);
 
