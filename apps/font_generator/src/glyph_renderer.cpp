@@ -3,9 +3,9 @@
 #include <cassert>
 
 
-unique_ptr<RenderedGlyph> render_glyph_simpe(FT_Face face, const FontSettings& font_settings)
+RenderedGlyph render_glyph_simpe(FT_Face face, const FontSettings& font_settings)
 {
-    unique_ptr<RenderedGlyph> ret = make_unique<RenderedGlyph>();
+    RenderedGlyph ret;
 
     assert(font_settings.blur_radius >= 0);
 #if 0
@@ -62,7 +62,7 @@ unique_ptr<RenderedGlyph> render_glyph_simpe(FT_Face face, const FontSettings& f
 
 
     FT_BitmapGlyph bitmap_glyph = reinterpret_cast<FT_BitmapGlyph>(glyph);
-    ret->grayscale_image = make_unique<GrayscaleImage>(bitmap_glyph);
+    ret.grayscale_image = make_unique<GrayscaleImage>(bitmap_glyph);
     FT_Done_Glyph(glyph);
 
     return ret;
