@@ -153,7 +153,7 @@ void show_settings_window(unique_ptr<SpriteFont>& font,
                 constexpr f32 max_val = 20.f;
                 // Переменная используется в других стилях, ограничиваем
                 ref_clamp(font_settings.thickness, min_val, max_val);
-                if (ig::InputFloat("##thickness", &font_settings.thickness, 0.1f, 1.f))
+                if (ig::InputFloat("##thickness", &font_settings.thickness, 1.f / 64.f, 1.f))
                     idle_time_ns = 0;
                 // И снова ограничиваем
                 ref_clamp(font_settings.thickness, min_val, max_val);
@@ -186,11 +186,11 @@ void show_settings_window(unique_ptr<SpriteFont>& font,
             ig::TextUnformatted("Толщина");
             ig::SameLine();
             {
-                constexpr f32 min_val = 1.f;
+                constexpr f32 min_val = 1.f / 64.f;
                 constexpr f32 max_val = 20.f;
                 // Переменная используется в других стилях, ограничиваем
                 ref_clamp(font_settings.thickness, min_val, max_val);
-                if (ig::InputFloat("##thickness", &font_settings.thickness, 0.1f, 1.f))
+                if (ig::InputFloat("##thickness", &font_settings.thickness, 1.f / 64.f, 1.f))
                     idle_time_ns = 0;
                 // И снова ограничиваем
                 ref_clamp(font_settings.thickness, min_val, max_val);
