@@ -476,7 +476,12 @@ void SpriteBatch::draw_string(const StrUtf8& text, SpriteFont* font, vec2 positi
 
     for (; i >= 0 && i < (i32)unicode_text.size(); i += step)
     {
-        const Glyph& glyph = font->glyphs().at(unicode_text[i]);
+        auto it = font->glyphs().find(unicode_text[i]);
+
+        if (it == font->glyphs().end())
+            it = font->glyphs().find('?'); // Вопрос всегда должен быть в шрифте
+
+        const Glyph& glyph = it->second;
 
         Rect rect(glyph.rect);
         vec2 offset(glyph.offset);
@@ -531,7 +536,12 @@ Rect SpriteBatch::measure_string(const StrUtf8& text, SpriteFont* font, vec2 pos
 
     for (; i >= 0 && i < (i32)unicode_text.size(); i += step)
     {
-        const Glyph& glyph = font->glyphs().at(unicode_text[i]);
+        auto it = font->glyphs().find(unicode_text[i]);
+
+        if (it == font->glyphs().end())
+            it = font->glyphs().find('?'); // Вопрос всегда должен быть в шрифте
+
+        const Glyph& glyph = it->second;
 
         Rect rect(glyph.rect);
         vec2 offset(glyph.offset);

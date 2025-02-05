@@ -310,6 +310,25 @@ static Image to_image(const FT_Bitmap& bitmap)
     return ret;
 }
 
+// Расширяет и размывает изображение, если нужно
+static void apply_blur(RenderedGlyph& rendered_glyph, const i32 blur_radius)
+{
+    assert(blur_radius >= 0);
+
+    if (!blur_radius)
+        return;
+
+    // Расширенное изображение
+    Image new_image(rendered_glyph.image->size() + blur_radius * 2, rendered_glyph.image->num_components());
+    // Вставляем исходное изображение в центр расширенного
+    new_image.paste(*rendered_glyph.image, ivec2(blur_radius));
+    new_image.blur_triangle(blur_radius);
+    *rendered_glyph.image = std::move(new_image);
+
+    // Размытый текст предназначен для создания тени от неразмытого текста
+    rendered_glyph.offset -= blur_radius;
+}
+
 SpriteFont::SpriteFont(const SFSettingsSimple& settings, i64* generation_time_ms)
 {
     i64 begin_time_ms = get_ticks_ms();
@@ -360,24 +379,7 @@ SpriteFont::SpriteFont(const SFSettingsSimple& settings, i64* generation_time_ms
             rendered_glyph.offset.y = round_to_pixels(face.get()->size->metrics.ascender - face.get()->glyph->metrics.horiBearingY);
             rendered_glyph.x_advance = round_to_pixels(face.get()->glyph->metrics.horiAdvance);
 
-            if (settings.blur_radius > 0)
-            {
-
-                unique_ptr<Image> new_image = make_unique<Image>(rendered_glyph.image->size() + settings.blur_radius * 2,
-                    rendered_glyph.image->num_components());
-
-                // Вставляем в центр расширенного изображения
-                new_image->paste(*rendered_glyph.image, ivec2(settings.blur_radius, settings.blur_radius));
-
-                // TODO: Изображение может быть нулевого размера
-                new_image->blur_triangle(settings.blur_radius);
-
-                rendered_glyph.image = std::move(new_image);
-
-                // Так как размытые глифы предназначены для создания теней, то их центры должны
-                // совпадать с центрами неразмытых глифов.
-                rendered_glyph.offset -= settings.blur_radius;
-            }
+            apply_blur(rendered_glyph, settings.blur_radius);
 
             stbrp_rect r{};
             r.id = vec_ind;
@@ -708,11 +710,15 @@ RenderedGlyph render_glyph_outlined(FT_Face face, const SFSettingsOutlined& sett
 
         inflatedGlyph = std::move(new_image);
 
+        ret.offset.x -= settings.outline_blur_radius;
+        ret.offset.y -= settings.outline_blur_radius;
+    }
+
+    if (settings.outline_blur_radius > 0)
+    {
         // Переделать
         deltaX += settings.outline_blur_radius;
         deltaY += settings.outline_blur_radius;
-        ret.offset.x -= settings.outline_blur_radius;
-        ret.offset.y -= settings.outline_blur_radius;
     }
 
     // Специальный случай - цвета внутри и снаружи совпадают. При этом не выводим внутренний глиф.
