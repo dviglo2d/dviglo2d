@@ -310,63 +310,6 @@ static Image to_image(const FT_Bitmap& bitmap)
     return ret;
 }
 
-RenderedGlyph render_glyph_simpe(FT_Face face, const SFSettingsSimple& font_settings)
-{
-    RenderedGlyph ret;
-
-    assert(font_settings.blur_radius >= 0);
-
-    // Реднерим глиф
-    FT_Glyph glyph;
-
-    FT_Error error = FT_Get_Glyph(face->glyph, &glyph);
-
-    if (error)
-    {
-        DV_LOG->writef_error("render_glyph_simpe(): FT_Get_Glyph() error | {}", error);
-        return ret;
-    }
-
-    FT_Render_Mode render_mode = font_settings.anti_aliasing ? FT_RENDER_MODE_NORMAL : FT_RENDER_MODE_MONO;
-    error = FT_Glyph_To_Bitmap(&glyph, render_mode, nullptr, 1);
-
-    if (error)
-    {
-        DV_LOG->writef_error("render_glyph_simpe(): FT_Glyph_To_Bitmap() error | {}", error);
-        FT_Done_Glyph(glyph);
-        return ret;
-    }
-
-    FT_BitmapGlyph bitmap_glyph = reinterpret_cast<FT_BitmapGlyph>(glyph);
-    ret.image = make_unique<Image>(to_image(bitmap_glyph->bitmap));
-    FT_Done_Glyph(glyph);
-
-    ret.offset.x = round_to_pixels(face->glyph->metrics.horiBearingX);
-    ret.offset.y = round_to_pixels(face->size->metrics.ascender - face->glyph->metrics.horiBearingY);
-    ret.x_advance = face->glyph->metrics.horiAdvance >> 6;
-
-    if (font_settings.blur_radius > 0)
-    {
-
-        unique_ptr<Image> new_image = make_unique<Image>(ret.image->size() + font_settings.blur_radius * 2,
-                                                         ret.image->num_components());
-
-        // Вставляем в центр расширенного изображения
-        new_image->paste(*ret.image, ivec2(font_settings.blur_radius, font_settings.blur_radius));
-
-        // TODO: Изображение может быть нулевого размера
-        new_image->blur_triangle(font_settings.blur_radius);
-
-        ret.image = std::move(new_image);
-
-        // Так как размытые глифы предназначены для создания теней, то их центры должны
-        // совпадать с центрами неразмытых глифов.
-        ret.offset -= font_settings.blur_radius;
-    }
-
-    return ret;
-}
-
 SpriteFont::SpriteFont(const SFSettingsSimple& settings, i64* generation_time_ms)
 {
     i64 begin_time_ms = get_ticks_ms();
@@ -387,24 +330,66 @@ SpriteFont::SpriteFont(const SFSettingsSimple& settings, i64* generation_time_ms
 
     while (glyph_index != 0)
     {
-        // Алгоритм хинтига
-        FT_Int32 load_flags = settings.anti_aliasing ? FT_LOAD_TARGET_NORMAL : FT_LOAD_TARGET_MONO;
+        // При загрузке глифа сразу же его рендерим
+        FT_Int32 load_flags = FT_LOAD_RENDER;
 
-        FT_Load_Glyph(face.get(), glyph_index, load_flags);
-        RenderedGlyph rendered_glyph = render_glyph_simpe(face.get(), settings);
-        rendered_glyph.code_point = char_code;
+        // По умолчанию рендерится в режиме FT_RENDER_MODE_NORMAL.
+        // Перезаписываем, если сглаживание отключено
+        if (!settings.anti_aliasing)
+        {
+            load_flags |= FT_LOAD_MONOCHROME;  // 1 бит на пиксель
+            load_flags |= FT_LOAD_TARGET_MONO; // Алгоритм хинтига
+        }
 
-        stbrp_rect r{};
-        r.id = vec_ind;
-        r.w = rendered_glyph.image->width() + padding * 2;
-        r.h = rendered_glyph.image->height() + padding * 2;
-        rects.push_back(r);
+        RenderedGlyph rendered_glyph;
 
-        rendered_glyphs.push_back(std::move(rendered_glyph));
+        // Результат будет помещён в слот
+        FT_Error error = FT_Load_Glyph(face.get(), glyph_index, load_flags);
 
-        char_code = FT_Get_Next_Char(face.get(), char_code, &glyph_index);
+        if (error)
+        {
+            DV_LOG->writef_error("SpriteFont::SpriteFont(SFSettingsSimple ...) | FT_Load_Glyph(...) | {}", error);
+        }
+        else
+        {
+            rendered_glyph.code_point = char_code;
 
-        ++vec_ind;
+            // Забираем данные из слота (FT_Face->glyph)
+            rendered_glyph.image = make_unique<Image>(to_image(face.get()->glyph->bitmap));
+            rendered_glyph.offset.x = round_to_pixels(face.get()->glyph->metrics.horiBearingX);
+            rendered_glyph.offset.y = round_to_pixels(face.get()->size->metrics.ascender - face.get()->glyph->metrics.horiBearingY);
+            rendered_glyph.x_advance = round_to_pixels(face.get()->glyph->metrics.horiAdvance);
+
+            if (settings.blur_radius > 0)
+            {
+
+                unique_ptr<Image> new_image = make_unique<Image>(rendered_glyph.image->size() + settings.blur_radius * 2,
+                    rendered_glyph.image->num_components());
+
+                // Вставляем в центр расширенного изображения
+                new_image->paste(*rendered_glyph.image, ivec2(settings.blur_radius, settings.blur_radius));
+
+                // TODO: Изображение может быть нулевого размера
+                new_image->blur_triangle(settings.blur_radius);
+
+                rendered_glyph.image = std::move(new_image);
+
+                // Так как размытые глифы предназначены для создания теней, то их центры должны
+                // совпадать с центрами неразмытых глифов.
+                rendered_glyph.offset -= settings.blur_radius;
+            }
+
+            stbrp_rect r{};
+            r.id = vec_ind;
+            r.w = rendered_glyph.image->width() + padding * 2;
+            r.h = rendered_glyph.image->height() + padding * 2;
+            rects.push_back(r);
+
+            rendered_glyphs.push_back(std::move(rendered_glyph));
+
+            char_code = FT_Get_Next_Char(face.get(), char_code, &glyph_index);
+            ++vec_ind;
+        }
     }
 
     stbrp_context pack_context;
