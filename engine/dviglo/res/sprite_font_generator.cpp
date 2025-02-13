@@ -9,17 +9,10 @@
 #include "freetype_utils.hpp"
 
 #include "../fs/file.hpp"
-
-#include "../fs/file.hpp"
 #include "../fs/log.hpp"
-#include "../fs/path.hpp"
 #include "../gl_utils/gl_utils.hpp"
 #include "../gl_utils/texture_cache.hpp"
 #include "../main/timer.hpp"
-
-#include <pugixml.hpp>
-
-#include <memory>
 
 #include <ft2build.h>
 #include FT_FREETYPE_H
