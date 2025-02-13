@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include "cast.hpp"
+
 #include "../common/primitive_types.hpp"
 
 #include <algorithm>
@@ -249,28 +251,28 @@ constexpr StrUtf8 to_utf8(c32 utf32_c)
 
     if (utf32_c <= 0b01111111u) // 7-битный ASCII просто возвращаем
     {
-        ret += (char)utf32_c;
+        ret += s_cast<char>(utf32_c);
     }
     else if (utf32_c <= 0x7ffu)
     {
         ret.reserve(2);
-        ret += (char)(0b110'00000u | ((utf32_c >> 6u) & 0b000'11111u));
-        ret += (char)(0b10'000000u | (utf32_c         & 0b00'111111u));
+        ret += s_cast<char>(0b110'00000u | ((utf32_c >> 6u) & 0b000'11111u));
+        ret += s_cast<char>(0b10'000000u | (utf32_c         & 0b00'111111u));
     }
     else if (utf32_c <= 0xffffu)
     {
         ret.reserve(3);
-        ret += (char)(0b1110'0000u | ((utf32_c >> 12u) & 0b0000'1111u));
-        ret += (char)(0b10'000000u | ((utf32_c >> 6u)  & 0b00'111111u));
-        ret += (char)(0b10'000000u | (utf32_c          & 0b00'111111u));
+        ret += s_cast<char>(0b1110'0000u | ((utf32_c >> 12u) & 0b0000'1111u));
+        ret += s_cast<char>(0b10'000000u | ((utf32_c >> 6u)  & 0b00'111111u));
+        ret += s_cast<char>(0b10'000000u | (utf32_c          & 0b00'111111u));
     }
     else if (utf32_c <= 0x10ffffu)
     {
         ret.reserve(4);
-        ret += (char)(0b11110'000u | ((utf32_c >> 18u) & 0b00000'111u));
-        ret += (char)(0b10'000000u | ((utf32_c >> 12u) & 0b00'111111u));
-        ret += (char)(0b10'000000u | ((utf32_c >> 6u)  & 0b00'111111u));
-        ret += (char)(0b10'000000u | (utf32_c          & 0b00'111111u));
+        ret += s_cast<char>(0b11110'000u | ((utf32_c >> 18u) & 0b00000'111u));
+        ret += s_cast<char>(0b10'000000u | ((utf32_c >> 12u) & 0b00'111111u));
+        ret += s_cast<char>(0b10'000000u | ((utf32_c >> 6u)  & 0b00'111111u));
+        ret += s_cast<char>(0b10'000000u | (utf32_c          & 0b00'111111u));
     }
     else // Ошибка
     {

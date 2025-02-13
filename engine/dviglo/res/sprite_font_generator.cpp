@@ -28,7 +28,7 @@ using namespace std;
 namespace dviglo
 {
 
-// Шрифт
+// Обёртка над FT_Face
 class FreeTypeFace
 {
 private:
@@ -48,29 +48,31 @@ public:
             return;
         }
 
-        FT_Error error = FT_New_Memory_Face(DV_FREETYPE->library(), (const FT_Byte*)data.data(), (FT_Long)data.size(), 0, &face_);
+        FT_Error error = FT_New_Memory_Face(DV_FREETYPE->library(),
+                                            r_cast<const FT_Byte*>(data.data()),
+                                            s_cast<FT_Long>(data.size()), 0, &face_);
         if (error)
         {
-            DV_LOG->writef_error("FreeTypeFace::FreeTypeFace(): FT_New_Memory_Face() error {}", error);
+            DV_LOG->writef_error("{} | FT_New_Memory_Face(...) error {}", DV_FUNCSIG, error);
             return;
         }
 
         error = FT_Select_Charmap(face_, FT_ENCODING_UNICODE);
         if (error)
         {
-            DV_LOG->writef_error("FreeTypeFace::FreeTypeFace(): FT_Select_Charmap() error {}", error);
+            DV_LOG->writef_error("{} | FT_Select_Charmap(...) error {}", DV_FUNCSIG, error);
             return;
         }
 
         // Шрифт может содержать несколько начертаний, но используется только первое
         if (face_->num_faces != 1)
-            DV_LOG->writef_warning("FreeTypeFace::FreeTypeFace(): face_->num_faces != 1 | {}", face_->num_faces);
+            DV_LOG->writef_warning("{} | face_->num_faces != 1 | {}", DV_FUNCSIG, face_->num_faces);
 
         // Реальная высота текста отличается от запрошенной
         error = FT_Set_Pixel_Sizes(face_, 0, font_settings.height);
         if (error)
         {
-            DV_LOG->writef_error("FreeTypeFace::FreeTypeFace(): FT_Set_Pixel_Sizes() error {}", error);
+            DV_LOG->writef_error("{} | FT_Set_Pixel_Sizes(...) error {}", DV_FUNCSIG, error);
             return;
         }
     }
@@ -81,13 +83,17 @@ public:
         {
             FT_Error error = FT_Done_Face(face_);
             if (error)
-                DV_LOG->writef_error("FreeTypeFace::~FreeTypeFace(): error {}", error);
+                DV_LOG->writef_error("{} | FT_Done_Face(...) error {}", DV_FUNCSIG, error);
         }
     }
 
     // Запрещаем копирование
     FreeTypeFace(const FreeTypeFace&) = delete;
-    FreeTypeFace& operator=(const FreeTypeFace&) = delete;
+    FreeTypeFace& operator =(const FreeTypeFace&) = delete;
+
+    // Запрещаем перемещение
+    FreeTypeFace(FreeTypeFace&&) = delete;
+    FreeTypeFace& operator =(FreeTypeFace&&) = delete;
 
     FT_Face get() const { return face_; }
 };
