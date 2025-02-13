@@ -34,13 +34,13 @@ class FreeTypeFace
 private:
     FT_Face face_ = nullptr; // Это указатель
 
-    // Данные нужно держать в памяти до вызова FT_Done_Face()
+    // Данные нужно держать в памяти до вызова FT_Done_Face(...)
     vector<byte> data;
 
 public:
     FreeTypeFace(const SFSettings& font_settings)
     {
-        // FT_New_Face() ожидает путь в кодировке ANSI, поэтому испольузем FT_New_Memory_Face()
+        // FT_New_Face() ожидает путь в кодировке ANSI, поэтому испольузем FT_New_Memory_Face(...)
         data = read_all_data(font_settings.src_path);
         if (data.empty())
         {
@@ -68,7 +68,7 @@ public:
         if (face_->num_faces != 1)
             DV_LOG->writef_warning("{} | face_->num_faces != 1 | {}", DV_FUNCSIG, face_->num_faces);
 
-        // Реальная высота текста отличается от запрошенной
+        // Реальная высота текста чаще всего отличается от запрошенной
         error = FT_Set_Pixel_Sizes(face_, 0, font_settings.height);
         if (error)
         {
@@ -97,45 +97,6 @@ public:
 
     FT_Face get() const { return face_; }
 };
-
-
-// Копирует FT_Bitmap в grayscale Image
-static Image to_image(const FT_Bitmap& bitmap)
-{
-    Image ret(bitmap.width, bitmap.rows, 1);
-
-    // Если изображение монохромное
-    if (bitmap.pixel_mode == FT_PIXEL_MODE_MONO)
-    {
-        // В монохромном изображении один пиксель занимает 1 бит (не байт).
-        // pitch - это число байт, занимаемых одной линией изображения
-        for (i32 y = 0; y < ret.size().y; ++y)
-        {
-            u8* src = bitmap.buffer + bitmap.pitch * y;
-            u8* dest = ret.data() + y * ret.size().x;
-
-            for (i32 x = 0; x < ret.size().x; ++x)
-            {
-                // 1) В одном байте умещается 8 пикселей. x >> 3 эквивалентно делению
-                //    на 8 (0b1000 превращается в 0b1). Так мы получаем байт, в котором находится пиксель
-                // 2) x & 7 - это остаток от деления на 8. Допустим x = 12 = 0b1100
-                //    0b1100 & 0b0111 = 0b100 = 4. Так мы получаем номер бита внутри байта.
-                // 3) 0x80 == 0b10000000. Единица внутри этого числа сдвигается на номер бита
-                //    и побитовой операцией определяется значение бита
-                dest[x] = (src[x >> 3] & (0x80 >> (x & 7))) ? 255 : 0;
-            }
-        }
-    }
-    else // Grayscale
-    {
-        // В grayscale изображении каждый пиксель занимает один байт,
-        // а значит pitch эквивалентен width
-        for (i32 i = 0; i < ret.size().x * ret.size().y; ++i)
-            ret.data()[i] = bitmap.buffer[i];
-    }
-
-    return ret;
-}
 
 
 struct RenderedGlyph
@@ -168,6 +129,56 @@ struct RenderedGlyph
     // Область в текстуре
     IntRect rect = IntRect::zero;
 };
+
+
+// Копирует FT_Bitmap в grayscale Image
+static Image to_image(const FT_Bitmap& bitmap)
+{
+    Image ret(bitmap.width, bitmap.rows, 1);
+
+    // Если изображение монохромное
+    if (bitmap.pixel_mode == FT_PIXEL_MODE_MONO)
+    {
+        // В монохромном изображении один пиксель занимает 1 бит (не байт).
+        // pitch - это число байт, занимаемых одной линией изображения
+        for (i32 y = 0; y < ret.size().y; ++y)
+        {
+            u8* src = bitmap.buffer + bitmap.pitch * y;
+            u8* dest = ret.data() + ret.size().x * y;
+
+            for (i32 x = 0; x < ret.size().x; ++x)
+            {
+                // Индекс байта, в котором находится пиксель.
+                // В одном байте хранится 8 пикселей, поэтому делим x на 8
+                i32 byte_index = x / 8;
+
+                // Индекс бита внутри байта
+                i32 bit_index = x % 8;
+
+                u8 pixel_mask = 0b1000'0000 >> bit_index;
+                dest[x] = (src[byte_index] & pixel_mask) ? 255 : 0;
+            }
+        }
+    }
+    else // Grayscale
+    {
+        // В grayscale изображении каждый пиксель занимает один байт,
+        // но pitch может отличаться от width
+        for (i32 y = 0; y < ret.size().y; ++y)
+        {
+            u8* src = bitmap.buffer + bitmap.pitch * y;
+            u8* dest = ret.data() + ret.size().x * y;
+
+            for (i32 x = 0; x < ret.size().x; ++x)
+                dest[x] = src[x];
+        }
+    }
+
+    return ret;
+}
+
+
+
 
 // Расширяет и размывает grayscale Image, если нужно
 static void apply_blur(RenderedGlyph& rendered_glyph, const i32 blur_radius)
