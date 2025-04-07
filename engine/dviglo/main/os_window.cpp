@@ -98,8 +98,7 @@ OsWindow::OsWindow()
 
     // Версия может отличаться от 30003 (например имеет значение 40002 при запуске
     // через Mesa на сервере ГитХаба)
-    i32 gl_version = gladLoadGL((GLADloadfunc)SDL_GL_GetProcAddress);
-
+    i32 gl_version = gladLoadGL(static_cast<GLADloadfunc>(SDL_GL_GetProcAddress));
     if (!gl_version)
     {
         DV_LOG->write_error("Application::run(): !gl_version");
