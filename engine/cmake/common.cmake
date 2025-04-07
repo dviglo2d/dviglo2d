@@ -160,6 +160,7 @@ function(dv_copy_shared_libs_to_bin_dir exe_target_name)
 
         set(dlls ${mingw_dir}/libgcc_s_seh-1.dll
                  ${mingw_dir}/libstdc++-6.dll
+                 ${mingw_dir}/libgomp-1.dll
                  ${mingw_dir}/libwinpthread-1.dll)
 
         add_custom_command(TARGET ${exe_target_name} POST_BUILD

@@ -45,6 +45,13 @@ sudo apt update
 sudo apt install libgl1-mesa-dev libxrandr-dev libasound2-dev
 ```
 
+Для Clang дополнительно нужно установить OpenMP:
+
+```
+# Установка OpenMP для Clang 15
+sudo apt install libomp-15-dev
+```
+
 ## Сборка
 
 Запустите скрипт `build_linux.sh`.

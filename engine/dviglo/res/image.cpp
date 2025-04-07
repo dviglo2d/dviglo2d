@@ -28,6 +28,11 @@ using namespace glm;
 using namespace std;
 
 
+#ifndef _OPENMP
+    #error "OpenMP is required"
+#endif
+
+
 namespace dviglo
 {
 
@@ -275,6 +280,7 @@ void Image::blur_triangle(i32 radius)
     Image tmp(size_, num_components_);
 
     // Размываем по вертикали и сохраняем результат в tmp
+    #pragma omp parallel for // Распараллеливание внешнего цикла с помощью OpenMP
     for (i32 x = 0; x < size_.x; ++x)
     {
         for (i32 y = 0; y < size_.y; ++y)
@@ -282,9 +288,8 @@ void Image::blur_triangle(i32 radius)
             // Сразу записываем вклад центрального пикселя.
             // Его вес равен radius + 1
             u32 sum = (u32)pixel_ptr(x, y)[0] * (radius + 1);
-            i32 dist = 1;
 
-            while (dist <= radius)
+            for (i32 dist = 1; dist <= radius; ++dist)
             {
                 i32 weight = 1 + radius - dist;
 
@@ -295,8 +300,6 @@ void Image::blur_triangle(i32 radius)
 
                 if (is_inside(x, y - dist))
                     sum += (u32)pixel_ptr(x, y - dist)[0] * weight;
-
-                ++dist;
             }
 
             // Сумму нужно поделить на общий вес, иначе изменится яркость изображения
@@ -304,15 +307,15 @@ void Image::blur_triangle(i32 radius)
         }
     }
 
-    // Размываем по горизонтали и сохраняем результат назад в структуру.
+    // Размываем по горизонтали и сохраняем результат назад в структуру
+    #pragma omp parallel for // Распараллеливание внешнего цикла с помощью OpenMP
     for (i32 x = 0; x < size_.x; ++x)
     {
         for (i32 y = 0; y < size_.y; ++y)
         {
             u32 sum = (u32)tmp.pixel_ptr(x, y)[0] * (radius + 1);
-            i32 dist = 1;
 
-            while (dist <= radius)
+            for (i32 dist = 1; dist <= radius; ++dist)
             {
                 i32 weight = 1 + radius - dist;
 
@@ -321,8 +324,6 @@ void Image::blur_triangle(i32 radius)
 
                 if (tmp.is_inside(x - dist, y))
                     sum += (u32)tmp.pixel_ptr(x - dist, y)[0] * weight;
-
-                ++dist;
             }
 
             pixel_ptr(x, y)[0] = u8(sum / total_weight);

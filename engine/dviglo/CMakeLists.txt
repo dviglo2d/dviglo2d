@@ -23,6 +23,10 @@ endif()
 # то приложения тоже могут использовать сторонние библиотеки без проблем
 target_link_libraries(${target_name} PUBLIC SDL3-static SDL3_mixer-static glad stb glm pugixml freetype miniz)
 
+# Подключаем OpenMP для параллельных вычислений
+find_package(OpenMP)
+target_link_libraries(${target_name} PUBLIC OpenMP::OpenMP_CXX)
+
 # Опции, которые не требуют ничего, кроме создания дефайнов
 foreach(opt
             DV_CTEST # enable_testing() вызывается в common.cmake
