@@ -60,6 +60,7 @@ Image::Image(ivec2 size, i32 num_components, u32 color)
     }
     else
     {
+        #pragma omp parallel for // Распараллеливание цикла с помощью OpenMP
         for (i32 i = 0; i < size_.x * size_.y; ++i)
             memcpy(data_ + i * num_components_, &color, num_components_);
     }
@@ -218,13 +219,14 @@ void Image::paste(const Image& img, ivec2 pos)
         img_rect.size.y = size().y - pos.y;
 
     // Копируем линии вставляемого изображения
-    for (i32 img_y = img_rect.pos.y, this_y = pos.y;
-         img_y < img_rect.pos.y + img_rect.size.y;
-         ++img_y, ++this_y)
+    #pragma omp parallel for // Распараллеливание цикла с помощью OpenMP
+    for (i32 img_y = img_rect.pos.y; img_y < img_rect.pos.y + img_rect.size.y; ++img_y)
     {
+        i32 this_y = pos.y + (img_y - img_rect.pos.y);
         i32 img_data_offset = (img_y * img.size().x + img_rect.pos.x) * img.num_components();
         i32 this_data_offset = (this_y * size().x + pos.x) * num_components();
         memcpy(data() + this_data_offset, img.data() + img_data_offset, img_rect.size.x * num_components());
+        ++this_y;
     }
 }
 
@@ -239,6 +241,7 @@ Image Image::to_rgba(u32 color)
 
     Image ret(size_, 4);
 
+    #pragma omp parallel for // Распараллеливание цикла с помощью OpenMP
     for (i32 i = 0; i < size_.x * size_.y; ++i)
     {
         u32 color_a = (color & 0xFF000000) >> 24;
@@ -279,6 +282,7 @@ void Image::blur_triangle(i32 radius)
 
     Image tmp(size_, num_components_);
 
+#if 1
     // Размываем по вертикали и сохраняем результат в tmp
     #pragma omp parallel for // Распараллеливание внешнего цикла с помощью OpenMP
     for (i32 x = 0; x < size_.x; ++x)
@@ -329,6 +333,105 @@ void Image::blur_triangle(i32 radius)
             pixel_ptr(x, y)[0] = u8(sum / total_weight);
         }
     }
+
+#else
+    // Размываем по вертикали и сохраняем результат в tmp
+//#pragma omp parallel for // Распараллеливание внешнего цикла с помощью OpenMP
+    for (i32 x = 0; x < size_.x; ++x)
+    {
+        for (i32 y = 0; y < size_.y && y < radius; ++y)
+        {
+            // Сразу записываем вклад центрального пикселя.
+            // Его вес равен radius + 1
+            u32 sum = (u32)pixel_ptr(x, y)[0] * (radius + 1);
+
+            for (i32 dist = 1; dist <= radius; ++dist)
+            {
+                i32 weight = 1 + radius - dist;
+
+                // Пиксель вне изображения черный, ноль можно не плюсовать.
+                // Так что тут все корректно
+                if (is_inside(x, y + dist))
+                    sum += (u32)pixel_ptr(x, y + dist)[0] * weight;
+
+                if (is_inside(x, y - dist))
+                    sum += (u32)pixel_ptr(x, y - dist)[0] * weight;
+            }
+
+            // Сумму нужно поделить на общий вес, иначе изменится яркость изображения
+            tmp.pixel_ptr(x, y)[0] = u8(sum / total_weight);
+        }
+
+        for (i32 y = radius; y <= size_.y - radius; ++y)
+        {
+            // Сразу записываем вклад центрального пикселя.
+            // Его вес равен radius + 1
+            u32 sum = (u32)pixel_ptr(x, y)[0] * (radius + 1);
+
+            for (i32 dist = 1; dist <= radius; ++dist)
+            {
+                i32 weight = 1 + radius - dist;
+
+                // Пиксель вне изображения черный, ноль можно не плюсовать.
+                // Так что тут все корректно
+                //if (is_inside(x, y + dist))
+                    sum += (u32)pixel_ptr(x, y + dist)[0] * weight;
+
+                //if (is_inside(x, y - dist))
+                    sum += (u32)pixel_ptr(x, y - dist)[0] * weight;
+            }
+
+            // Сумму нужно поделить на общий вес, иначе изменится яркость изображения
+            tmp.pixel_ptr(x, y)[0] = u8(sum / total_weight);
+        }
+
+        for (i32 y = size_.y - radius - 1; y < size_.y; ++y)
+        {
+            // Сразу записываем вклад центрального пикселя.
+            // Его вес равен radius + 1
+            u32 sum = (u32)pixel_ptr(x, y)[0] * (radius + 1);
+
+            for (i32 dist = 1; dist <= radius; ++dist)
+            {
+                i32 weight = 1 + radius - dist;
+
+                // Пиксель вне изображения черный, ноль можно не плюсовать.
+                // Так что тут все корректно
+                if (is_inside(x, y + dist))
+                    sum += (u32)pixel_ptr(x, y + dist)[0] * weight;
+
+                if (is_inside(x, y - dist))
+                    sum += (u32)pixel_ptr(x, y - dist)[0] * weight;
+            }
+
+            // Сумму нужно поделить на общий вес, иначе изменится яркость изображения
+            tmp.pixel_ptr(x, y)[0] = u8(sum / total_weight);
+        }
+    }
+
+    // Размываем по горизонтали и сохраняем результат назад в структуру
+    //#pragma omp parallel for // Распараллеливание внешнего цикла с помощью OpenMP
+    for (i32 x = 0; x < size_.x; ++x)
+    {
+        for (i32 y = 0; y < size_.y; ++y)
+        {
+            u32 sum = (u32)tmp.pixel_ptr(x, y)[0] * (radius + 1);
+
+            for (i32 dist = 1; dist <= radius; ++dist)
+            {
+                i32 weight = 1 + radius - dist;
+
+                if (tmp.is_inside(x + dist, y))
+                    sum += (u32)tmp.pixel_ptr(x + dist, y)[0] * weight;
+
+                if (tmp.is_inside(x - dist, y))
+                    sum += (u32)tmp.pixel_ptr(x - dist, y)[0] * weight;
+            }
+
+            pixel_ptr(x, y)[0] = u8(sum / total_weight);
+        }
+    }
+#endif
 }
 
 const Image error_image = []
