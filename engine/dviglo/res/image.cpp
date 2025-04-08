@@ -60,7 +60,7 @@ Image::Image(ivec2 size, i32 num_components, u32 color)
     }
     else
     {
-        #pragma omp parallel for // Распараллеливание цикла с помощью OpenMP
+        //#pragma omp parallel for // Распараллеливание цикла с помощью OpenMP
         for (i32 i = 0; i < size_.x * size_.y; ++i)
             memcpy(data_ + i * num_components_, &color, num_components_);
     }
@@ -219,7 +219,7 @@ void Image::paste(const Image& img, ivec2 pos)
         img_rect.size.y = size().y - pos.y;
 
     // Копируем линии вставляемого изображения
-    #pragma omp parallel for // Распараллеливание цикла с помощью OpenMP
+    //#pragma omp parallel for // Распараллеливание цикла с помощью OpenMP
     for (i32 img_y = img_rect.pos.y; img_y < img_rect.pos.y + img_rect.size.y; ++img_y)
     {
         i32 this_y = pos.y + (img_y - img_rect.pos.y);
@@ -241,7 +241,7 @@ Image Image::to_rgba(u32 color)
 
     Image ret(size_, 4);
 
-    #pragma omp parallel for // Распараллеливание цикла с помощью OpenMP
+    //#pragma omp parallel for // Распараллеливание цикла с помощью OpenMP
     for (i32 i = 0; i < size_.x * size_.y; ++i)
     {
         u32 color_a = (color & 0xFF000000) >> 24;
@@ -334,7 +334,11 @@ void Image::blur_triangle(i32 radius)
         }
     }
 
-#else
+#elif 1
+#else 
+
+
+
     // Размываем по вертикали и сохраняем результат в tmp
 //#pragma omp parallel for // Распараллеливание внешнего цикла с помощью OpenMP
     for (i32 x = 0; x < size_.x; ++x)
