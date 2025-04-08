@@ -176,6 +176,29 @@ private:
         sf_glyph.offset -= blur_radius;
     }
 
+    // Расширяет и размывает grayscale Image, если нужно.
+// Функция модифицирует sf_glyph.offset
+    void no_blur(const i32 blur_radius)
+    {
+        assert(blur_radius >= 0);
+        assert(image.num_components() == 1);
+
+        if (!blur_radius)
+            return;
+
+        // Расширенное изображение
+        Image new_image(image.size() + blur_radius * 2, image.num_components());
+
+        // Вставляем исходное изображение в центр расширенного
+        new_image.paste(image, ivec2(blur_radius));
+
+        //new_image.blur_triangle(blur_radius);
+        image = std::move(new_image);
+
+        // Размытый текст предназначен для создания тени от неразмытого текста
+        sf_glyph.offset -= blur_radius;
+    }
+
     void error_image()
     {
         assert(code_point);
@@ -230,10 +253,10 @@ public:
         sf_glyph.advance_x = round_to_pixels(slot->metrics.horiAdvance);
 
         // Размываем grayscale глиф (модифицирует sf_glyph.offset)
-        blur(settings.blur_radius);
+        no_blur(settings.blur_radius);
 
         // Окрашиваем
-        image = image.to_rgba(settings.color);
+        //image = image.to_rgba(settings.color);
     }
 
     // Рендерит контур глифа
@@ -619,6 +642,12 @@ void render_glyphs(const FreeTypeFace& face,
 
     for (shared_ptr<Image> atlas : atlases)
     {
+        if constexpr (std::is_same_v<T, SFSettingsSimple>)
+        {
+            atlas->blur_triangle(settings.blur_radius);
+            atlas = make_shared<Image>(atlas->to_rgba(settings.color));
+        }
+
         // Отправляем атлас в память GPU
         shared_ptr<Texture> texture = make_shared<Texture>(atlas, true);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);

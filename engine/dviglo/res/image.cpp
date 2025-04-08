@@ -24,6 +24,10 @@
 #define STBI_WINDOWS_UTF8
 #include <stb_image.h>
 
+#include "../gl_utils/fbo.hpp"
+#include "../gl_utils/shader_cache.hpp"
+#include "../fs/fs_base.hpp"
+
 using namespace glm;
 using namespace std;
 
@@ -282,7 +286,7 @@ void Image::blur_triangle(i32 radius)
 
     Image tmp(size_, num_components_);
 
-#if 1
+#if 0
     // Размываем по вертикали и сохраняем результат в tmp
     #pragma omp parallel for // Распараллеливание внешнего цикла с помощью OpenMP
     for (i32 x = 0; x < size_.x; ++x)
@@ -335,6 +339,50 @@ void Image::blur_triangle(i32 radius)
     }
 
 #elif 1
+    //static unique_ptr<Fbo> fbo;
+
+    //if (!fbo || fbo->texture()->size() != size_)
+    //    fbo = make_unique<Fbo>(size_);
+
+    StrUtf8 base_path = get_base_path();
+    ShaderProgram* shader_program = DV_SHADER_CACHE->get(base_path + "engine_data/shaders/blur.vert", base_path + "engine_data/shaders/blur.frag");
+
+    Fbo fbo(size_);
+    fbo.bind();
+    Texture tex(*this);
+    tex.bind();
+    glViewport(0, 0, fbo.texture()->size().x, fbo.texture()->size().y);
+    glClearColor(0.5f, 0.5f, 0.f, 1.f); // Жёлтый фон
+    glClear(GL_COLOR_BUFFER_BIT);
+
+
+    GLfloat vertices[] = { -1, -1, 1, -1, -1, 1, 1, 1 };
+    GLuint vao, vbo;
+    glGenVertexArrays(1, &vao);
+    glGenBuffers(1, &vbo);
+
+    glBindVertexArray(vao);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, 0);
+
+    shader_program->use();
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+#if 1
+    glPixelStorei(GL_PACK_ALIGNMENT, 1); // Важно для градаций серого
+    glReadPixels(0, 0, size_.x, size_.y, GL_RED, GL_UNSIGNED_BYTE, data_);
+#else
+    glGetTexImage(
+        GL_TEXTURE_2D,    // Тип текстуры (2D, кубемап и т.д.)
+        0,                // Уровень мипмапа
+        GL_RGBA,          // Формат данных (должен соответствовать формату текстуры)
+        GL_UNSIGNED_BYTE, // Тип данных
+        pixels.data()     // Указатель на буфер
+    );
+#endif
+
 #else 
 
 
