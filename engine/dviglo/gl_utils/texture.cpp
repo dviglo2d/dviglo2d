@@ -171,7 +171,7 @@ Texture::Texture(const Image& image)
     glGenTextures(1, &gpu_object_name_);
     glBindTexture(GL_TEXTURE_2D, gpu_object_name_);
     glTexImage2D(GL_TEXTURE_2D, 0, internal_format, size_.x, size_.y, 0, image_format, GL_UNSIGNED_BYTE, image.data());
-    glGenerateMipmap(GL_TEXTURE_2D);
+    //glGenerateMipmap(GL_TEXTURE_2D);
 }
 
 Texture::Texture(shared_ptr<Image> image, bool keep_ptr)
@@ -215,16 +215,39 @@ void Texture::from_error_image()
 
 void Texture::copy_to_cpu()
 {
-    if (!image_)
-        image_ = make_unique<Image>(size_, num_components_);
+    //if (!image_)
+        image_ = make_unique<Image>(size_, num_components_, 0xFFFFFFFF);
 
     assert(size_ == image_->size());
     assert(num_components_ == image_->num_components());
     assert(num_components_ == 1);
 
     bind();
+
+
+    int w,h,d;
+    glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &w);
+    glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &h);
+    glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_DEPTH, &d);
+    int internal_format;
+    glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_INTERNAL_FORMAT, &internal_format);
+    int data_type_r, data_type_g;
+    glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_RED_TYPE, &data_type_r);
+    //glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_GREEN_TYPE, &data_type_g);
+    int size_r, size_g;
+    glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_RED_SIZE, &size_r);
+    //glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_GREEN_SIZE, &size_g);
+
+
+
+
+
     GLenum image_format = to_image_format(num_components_);
-    glGetTexImage(GL_TEXTURE_2D, 0, image_format, GL_UNSIGNED_BYTE, image_->data());
+    glPixelStorei(GL_PACK_ALIGNMENT, 1);
+    //glGetTexImage(GL_TEXTURE_2D, 0, image_format, GL_UNSIGNED_BYTE, image_->data());
+    //glGetTexImage(GL_TEXTURE_2D, 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, image_->data());
+    //DV_LOG->writef_debug("{}", glGetError());
+    glGetTexImage(GL_TEXTURE_2D, 0, GL_RED, GL_UNSIGNED_BYTE, image_->data());
 }
 
 void Texture::apply_shader(ShaderProgram* shader_program)

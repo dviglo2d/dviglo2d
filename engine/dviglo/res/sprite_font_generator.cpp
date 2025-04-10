@@ -167,7 +167,7 @@ private:
             return;
 
         // Расширенное изображение
-        Image new_image(image.size() + blur_radius * 2, image.num_components());
+        Image new_image(image.size() + blur_radius * 2, image.num_components(), 0xFFFFFFFF);
 
         // Вставляем исходное изображение в центр расширенного
         new_image.paste(image, ivec2(blur_radius));
@@ -182,17 +182,20 @@ private:
         DV_LOG->writef_info("Counter: {}", counter);
         ++counter;
 
+        if (counter < 100000000) {
         Texture tex(new_image);
         StrUtf8 base_path = get_base_path();
 
 
-        ShaderProgram* inverse_filter = DV_SHADER_CACHE->get(base_path + "engine_test_data/shaders/inverse.vert", base_path + "engine_test_data/shaders/inverse.frag");
-        tex.apply_shader(inverse_filter);
+        //ShaderProgram* inverse_filter = DV_SHADER_CACHE->get(base_path + "engine_test_data/shaders/inverse.vert", base_path + "engine_test_data/shaders/inverse.frag");
+        //tex.apply_shader(inverse_filter);
         tex.bind();
-        glGenerateMipmap(GL_TEXTURE_2D);
+        //glGenerateMipmap(GL_TEXTURE_2D);
         tex.copy_to_cpu();
         assert(num_com == tex.image()->num_components());
+        assert(tex.image()->size() == new_image.size());
         new_image = std::move(*tex.image());
+        }
 #endif
 
         image = std::move(new_image);

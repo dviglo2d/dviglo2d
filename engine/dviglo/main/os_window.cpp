@@ -110,6 +110,8 @@ OsWindow::OsWindow()
     DV_LOG->writef_info("GL_RENDERER: {}", reinterpret_cast<const char*>(glGetString(GL_RENDERER)));
     DV_LOG->writef_info("GL_VERSION: {}", reinterpret_cast<const char*>(glGetString(GL_VERSION)));
 
+    glPixelStorei(GL_PACK_ALIGNMENT, 1);
+
     instance_ = this;
     DV_LOG->write_debug("OsWindow constructed");
 }
