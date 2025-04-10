@@ -153,6 +153,15 @@ Texture::Texture(const Image& image)
         return;
     }
 
+    if (image.size().x == 0 || image.size().y == 0)
+    {
+        DV_LOG->writef_error("{} | image->size() == {}, {}", DV_FUNCSIG, image.size().x, image.size().y);
+        from_error_image();
+        return;
+    }
+
+    assert(image.num_components() == 1);
+
     size_ = image.size();
     num_components_ = image.num_components();
 

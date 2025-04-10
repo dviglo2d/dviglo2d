@@ -24,6 +24,9 @@
 #define STB_RECT_PACK_IMPLEMENTATION
 #include <stb_rect_pack.h>
 
+#include "../gl_utils/shader_cache.hpp"
+#include "../fs/fs_base.hpp"
+
 using namespace glm;
 using namespace std;
 
@@ -169,7 +172,26 @@ private:
         // Вставляем исходное изображение в центр расширенного
         new_image.paste(image, ivec2(blur_radius));
 
+#if 0
         new_image.blur_triangle(blur_radius);
+#else
+        static i32 counter = 0;
+
+        DV_LOG->writef_info("Counter: {}", counter);
+        ++counter;
+
+        Texture tex(new_image);
+        StrUtf8 base_path = get_base_path();
+
+
+        //ShaderProgram* inverse_filter = DV_SHADER_CACHE->get(base_path + "engine_test_data/shaders/inverse.vert", base_path + "engine_test_data/shaders/inverse.frag");
+        //tex.apply_shader(inverse_filter);
+        //tex.bind();
+        //glGenerateMipmap(GL_TEXTURE_2D);
+        //tex.copy_to_cpu();
+        //new_image = std::move(*tex.image());
+#endif
+
         image = std::move(new_image);
 
         // Размытый текст предназначен для создания тени от неразмытого текста
