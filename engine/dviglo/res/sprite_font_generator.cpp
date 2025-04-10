@@ -177,6 +177,8 @@ private:
 #else
         static i32 counter = 0;
 
+        i32 num_com = new_image.num_components();
+
         DV_LOG->writef_info("Counter: {}", counter);
         ++counter;
 
@@ -184,12 +186,13 @@ private:
         StrUtf8 base_path = get_base_path();
 
 
-        //ShaderProgram* inverse_filter = DV_SHADER_CACHE->get(base_path + "engine_test_data/shaders/inverse.vert", base_path + "engine_test_data/shaders/inverse.frag");
-        //tex.apply_shader(inverse_filter);
-        //tex.bind();
-        //glGenerateMipmap(GL_TEXTURE_2D);
-        //tex.copy_to_cpu();
-        //new_image = std::move(*tex.image());
+        ShaderProgram* inverse_filter = DV_SHADER_CACHE->get(base_path + "engine_test_data/shaders/inverse.vert", base_path + "engine_test_data/shaders/inverse.frag");
+        tex.apply_shader(inverse_filter);
+        tex.bind();
+        glGenerateMipmap(GL_TEXTURE_2D);
+        tex.copy_to_cpu();
+        assert(num_com == tex.image()->num_components());
+        new_image = std::move(*tex.image());
 #endif
 
         image = std::move(new_image);

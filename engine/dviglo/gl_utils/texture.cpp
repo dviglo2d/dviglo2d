@@ -220,6 +220,7 @@ void Texture::copy_to_cpu()
 
     assert(size_ == image_->size());
     assert(num_components_ == image_->num_components());
+    assert(num_components_ == 1);
 
     bind();
     GLenum image_format = to_image_format(num_components_);
