@@ -229,7 +229,7 @@ void Texture::copy_to_cpu()
 
 void Texture::apply_shader(ShaderProgram* shader_program)
 {
-    Fbo fbo(size_);
+    Fbo fbo(size_, num_components_);
     fbo.bind();
 
     vec2 vertices[] = { {-1, -1}, {1, -1}, {-1, 1}, {1, 1} };
@@ -251,12 +251,12 @@ void Texture::apply_shader(ShaderProgram* shader_program)
 
     // Обновляем изображение в ОЗУ.
     // Можно вызвать copy_to_cpu(), но у меня glReadPixels(...) работает немного быстрее glGetTexImage(...)
-    if (image_)
+    /*if (image_)
     {
         glPixelStorei(GL_PACK_ALIGNMENT, 1); // TODO: нужно или нет?
         GLenum image_format = to_image_format(num_components_);
         glReadPixels(0, 0, size_.x, size_.y, image_format, GL_UNSIGNED_BYTE, image_->data());
-    }
+    }*/
 }
 
 } // namespace dviglo
