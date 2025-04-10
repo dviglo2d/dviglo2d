@@ -66,8 +66,11 @@ public:
 
     ~Texture()
     {
-        glDeleteTextures(1, &gpu_object_name_); // Проверка на 0 не нужна
-        gpu_object_name_ = 0;
+        if (gpu_object_name_)
+        {
+            glDeleteTextures(1, &gpu_object_name_); // Проверка на 0 не нужна
+            gpu_object_name_ = 0;
+        }
     }
 
     // Запрещаем копировать объект, так как если в одной из копий будет вызван деструктор,

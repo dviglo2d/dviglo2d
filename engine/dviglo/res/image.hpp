@@ -57,4 +57,7 @@ public:
 // Чёрно-пурпурное шахматное изображение
 extern const Image error_image;
 
+// Одноканальное шахматное изображение
+extern const Image error_image_r;
+
 } // namespace dviglo

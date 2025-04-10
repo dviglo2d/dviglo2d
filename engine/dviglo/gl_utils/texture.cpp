@@ -124,6 +124,8 @@ Texture::Texture(const StrUtf8& file_path)
 
     glGenTextures(1, &gpu_object_name_);
     glBindTexture(GL_TEXTURE_2D, gpu_object_name_);
+    glPixelStorei(GL_PACK_ALIGNMENT, 1);
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     glTexImage2D(GL_TEXTURE_2D, 0, internal_format, size_.x, size_.y, 0, image_format, GL_UNSIGNED_BYTE, image->data());
     glGenerateMipmap(GL_TEXTURE_2D);
     set_params(try_load_xml(file_path + ".xml"));
@@ -140,6 +142,8 @@ Texture::Texture(const ivec2 size, const i32 num_components)
 
     glGenTextures(1, &gpu_object_name_);
     glBindTexture(GL_TEXTURE_2D, gpu_object_name_);
+    glPixelStorei(GL_PACK_ALIGNMENT, 1);
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     glTexImage2D(GL_TEXTURE_2D, 0, internal_format, size.x, size.y, 0, image_format, GL_UNSIGNED_BYTE, nullptr);
     glGenerateMipmap(GL_TEXTURE_2D);
 }
@@ -168,10 +172,15 @@ Texture::Texture(const Image& image)
     GLint internal_format = to_interal_format(image.num_components());
     GLenum image_format = to_image_format(image.num_components());
 
+    assert(internal_format == GL_R8);
+    assert(image_format == GL_RED);
+
     glGenTextures(1, &gpu_object_name_);
     glBindTexture(GL_TEXTURE_2D, gpu_object_name_);
+    glPixelStorei(GL_PACK_ALIGNMENT, 1);
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     glTexImage2D(GL_TEXTURE_2D, 0, internal_format, size_.x, size_.y, 0, image_format, GL_UNSIGNED_BYTE, image.data());
-    //glGenerateMipmap(GL_TEXTURE_2D);
+    glGenerateMipmap(GL_TEXTURE_2D);
 }
 
 Texture::Texture(shared_ptr<Image> image, bool keep_ptr)
@@ -193,6 +202,8 @@ Texture::Texture(shared_ptr<Image> image, bool keep_ptr)
 
     glGenTextures(1, &gpu_object_name_);
     glBindTexture(GL_TEXTURE_2D, gpu_object_name_);
+    glPixelStorei(GL_PACK_ALIGNMENT, 1);
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     glTexImage2D(GL_TEXTURE_2D, 0, internal_format, size_.x, size_.y, 0, image_format, GL_UNSIGNED_BYTE, image->data());
     glGenerateMipmap(GL_TEXTURE_2D);
 
@@ -209,6 +220,8 @@ void Texture::from_error_image()
 
     glGenTextures(1, &gpu_object_name_);
     glBindTexture(GL_TEXTURE_2D, gpu_object_name_);
+    glPixelStorei(GL_PACK_ALIGNMENT, 1);
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, size_.x, size_.y, 0, img_format, GL_UNSIGNED_BYTE, error_image.data());
     glGenerateMipmap(GL_TEXTURE_2D);
 }
@@ -244,10 +257,13 @@ void Texture::copy_to_cpu()
 
     GLenum image_format = to_image_format(num_components_);
     glPixelStorei(GL_PACK_ALIGNMENT, 1);
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
     //glGetTexImage(GL_TEXTURE_2D, 0, image_format, GL_UNSIGNED_BYTE, image_->data());
     //glGetTexImage(GL_TEXTURE_2D, 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, image_->data());
     //DV_LOG->writef_debug("{}", glGetError());
     glGetTexImage(GL_TEXTURE_2D, 0, GL_RED, GL_UNSIGNED_BYTE, image_->data());
+    //glPixelStorei(GL_PACK_ALIGNMENT, 4);
 }
 
 void Texture::apply_shader(ShaderProgram* shader_program)

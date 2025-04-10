@@ -42,6 +42,8 @@ Image::Image(ivec2 size, i32 num_components, u32 color)
     : size_(size)
     , num_components_(num_components)
 {
+    assert(size.x != 0 && size.y != 0 && num_components != 0);
+
     data_ = (u8*)STBI_MALLOC(size_.x * size_.y * num_components_);
 
 #ifdef DV_WINDOWS_MSVC
@@ -334,6 +336,37 @@ const Image error_image = []
 {
     const i32 image_size = 64;
     const i32 num_components = 3; // Можно и 4
+    const i32 square_size = 8;
+
+    // Цвета
+    const u32 magenta = 0xFFFF00FF;
+    const u32 black = 0xFF000000;
+
+    Image ret(image_size, image_size, num_components);
+
+    for (i32 y = 0; y < image_size; ++y)
+    {
+        for (i32 x = 0; x < image_size; ++x)
+        {
+            // Номер квадратика по x и y
+            i32 square_index_x = x / square_size;
+            i32 square_index_y = y / square_size;
+
+            // Оба номера чётные или оба номера нечётные
+            u32 color = (square_index_x % 2 == square_index_y % 2) ? black : magenta;
+
+            // Устанавливаем цвет пикселя
+            memcpy(ret.data() + y * image_size * num_components + x * num_components, &color, num_components);
+        }
+    }
+
+    return ret;
+}();
+
+const Image error_image_r = []
+{
+    const i32 image_size = 64;
+    const i32 num_components = 1; // Можно и 4
     const i32 square_size = 8;
 
     // Цвета
