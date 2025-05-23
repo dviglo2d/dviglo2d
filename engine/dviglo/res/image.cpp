@@ -24,7 +24,9 @@
 #define STBI_WINDOWS_UTF8
 #include <stb_image.h>
 
+#include <fstream>
 #include <utility> // std::exchange()
+#include <filesystem>
 
 using namespace glm;
 using namespace std;
@@ -189,9 +191,13 @@ void Image::save_png(const StrUtf8& path) const
     }
     else
     {
-        FILE* stream = file_open(path.c_str(), "wb");
+        std::ofstream file(std::filesystem::u8path(path), std::ios::binary);
+        file.write(reinterpret_cast<const char*>(png_data), (i32)png_data_size);
+        file.close();
+
+        /*FILE* stream = file_open(path.c_str(), "wb");
         file_write(png_data, (i32)png_data_size, 1, stream);
-        file_close(stream);
+        file_close(stream);*/
         mz_free(png_data);
     }
 #else
