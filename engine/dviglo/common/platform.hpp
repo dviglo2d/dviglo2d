@@ -28,7 +28,7 @@
         static_assert(__clang_major__ >= 18);
     #elif defined(__GNUC__)
         #define DV_LINUX_GCC 1
-        static_assert(__clang_major__ >= 13);
+        static_assert(__GNUC__ >= 13);
     #else
         #error
     #endif
