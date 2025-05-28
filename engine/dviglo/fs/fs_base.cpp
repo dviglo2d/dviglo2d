@@ -24,7 +24,7 @@ bool create_dir_silent(const StrUtf8& path)
 {
     // Рекурсивно создаём родительские папки
     StrUtf8 parent_path = get_parent(path);
-    if (parent_path.length() > 1 && !dir_exists(to_path(parent_path)))
+    if (parent_path.length() > 1 && !dir_exists(parent_path))
     {
         if (!create_dir_silent(parent_path))
             return false;

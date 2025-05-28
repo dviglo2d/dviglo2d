@@ -624,7 +624,7 @@ static void blur(Image& atlas, const i32 blur_radius)
 #endif
 }
 
-template <typename T>
+template<typename T>
 SpriteFont::SpriteFont(const T& settings, i64* generation_time_ms)
 {
     // Засекаем время начала генерации

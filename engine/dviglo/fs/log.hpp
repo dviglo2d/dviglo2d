@@ -58,25 +58,25 @@ public:
         write(LogLevel::error, message);
     }
 
-    template <typename... Types>
+    template<typename... Types>
     void writef_debug(const std::format_string<Types...> fmt, Types&&... args)
     {
         write(LogLevel::debug , std::vformat(fmt.get(), std::make_format_args(args...)));
     }
 
-    template <typename... Types>
+    template<typename... Types>
     void writef_info(const std::format_string<Types...> fmt, Types&&... args)
     {
         write(LogLevel::info, std::vformat(fmt.get(), std::make_format_args(args...)));
     }
 
-    template <typename... Types>
+    template<typename... Types>
     void writef_warning(const std::format_string<Types...> fmt, Types&&... args)
     {
         write(LogLevel::warning, std::vformat(fmt.get(), std::make_format_args(args...)));
     }
 
-    template <typename... Types>
+    template<typename... Types>
     void writef_error(const std::format_string<Types...> fmt, Types&&... args)
     {
         write(LogLevel::error, std::vformat(fmt.get(), std::make_format_args(args...)));

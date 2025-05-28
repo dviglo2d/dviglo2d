@@ -21,7 +21,7 @@
 namespace dviglo
 {
 
-template <typename F>
+template<typename F>
 class ScopeGuard
 {
 private:

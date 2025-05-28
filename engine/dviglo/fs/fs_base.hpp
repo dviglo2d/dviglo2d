@@ -5,9 +5,7 @@
 
 #pragma once
 
-#include "../std_utils/string.hpp"
-
-#include <filesystem>
+#include "path.hpp"
 
 
 namespace dviglo
@@ -19,6 +17,11 @@ bool dir_exists(const Path& path)
 {
     std::error_code ec;
     return std::filesystem::exists(path, ec) && std::filesystem::is_directory(path, ec);
+}
+
+inline bool dir_exists(StrViewUtf8 path)
+{
+    return dir_exists(to_path(path));
 }
 
 // Версия функции, которая не пишет с лог
