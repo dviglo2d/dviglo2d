@@ -17,38 +17,14 @@
 
 using namespace std;
 
-
 namespace dviglo
 {
-
-bool dir_exists(const StrUtf8& path)
-{
-#if defined(DV_WINDOWS)
-    DWORD attributes = GetFileAttributesW(to_win_native(path).c_str());
-    if (attributes == INVALID_FILE_ATTRIBUTES || !(attributes & FILE_ATTRIBUTE_DIRECTORY))
-        return false;
-
-    return true;
-#elif defined(DV_LINUX)
-    // Возвращаем true для корневой папки
-    if (path == "/")
-        return true;
-
-    struct stat st{};
-    if (stat(path.c_str(), &st) || !(st.st_mode & S_IFDIR))
-        return false;
-
-    return true;
-#else
-    #error
-#endif
-}
 
 bool create_dir_silent(const StrUtf8& path)
 {
     // Рекурсивно создаём родительские папки
     StrUtf8 parent_path = get_parent(path);
-    if (parent_path.length() > 1 && !dir_exists(parent_path))
+    if (parent_path.length() > 1 && !dir_exists(to_path(parent_path)))
     {
         if (!create_dir_silent(parent_path))
             return false;

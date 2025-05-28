@@ -7,11 +7,19 @@
 
 #include "../std_utils/string.hpp"
 
+#include <filesystem>
+
 
 namespace dviglo
 {
 
-bool dir_exists(const StrUtf8& path);
+// Концепт запрещает функции принимать строку
+template<std::same_as<std::filesystem::path> Path>
+bool dir_exists(const Path& path)
+{
+    std::error_code ec;
+    return std::filesystem::exists(path, ec) && std::filesystem::is_directory(path, ec);
+}
 
 // Версия функции, которая не пишет с лог
 bool create_dir_silent(const StrUtf8& path);
