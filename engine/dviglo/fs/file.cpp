@@ -11,17 +11,18 @@
 
 using namespace std;
 
+namespace fs = std::filesystem;
+
 
 namespace dviglo
 {
 
-// Используем самый быстрый способ: https://insanecoding.blogspot.com/2011/11/how-to-read-in-file-in-c.html
 vector<byte> read_all_data(const StrUtf8& path)
 {
     vector<byte> ret;
 
     // Открываем файл сразу в конце, чтобы получить его размер
-    ifstream stream(to_path(path), ios::binary | ios::ate);
+    ifstream stream(path, ios::binary | ios::ate);
     if (!stream)
     {
         DV_LOG->writef_error("{} | !stream | {}", DV_FUNCSIG, path);
@@ -43,7 +44,7 @@ StrUtf8 read_all_text(const StrUtf8& path)
     StrUtf8 ret;
 
     // Открываем файл сразу в конце, чтобы получить его размер
-    ifstream stream(to_path(path), ios::binary | ios::ate);
+    ifstream stream(path, ios::binary | ios::ate);
     if (!stream)
     {
         DV_LOG->writef_error("{} | !stream | {}", DV_FUNCSIG, path);
@@ -65,7 +66,7 @@ vector<StrUtf8> read_all_lines(const StrUtf8& path, bool ignore_empty)
     vector<StrUtf8> ret;
     StrUtf8 line;
 
-    ifstream stream(to_path(path));
+    ifstream stream(path);
     if (!stream)
     {
         DV_LOG->writef_error("{} | !stream | {}", DV_FUNCSIG, path);

@@ -5,16 +5,49 @@
 
 #pragma once
 
-#include "../std_utils/string.hpp"
+#include "path.hpp"
 
 
 namespace dviglo
 {
 
-bool dir_exists(const StrUtf8& path);
+// Концепт запрещает функции принимать строку
+template <std::same_as<std::filesystem::path> Path>
+bool dir_exists(const Path& path) noexcept
+{
+    std::error_code ec;
+    return std::filesystem::is_directory(path, ec);
+}
 
-// Версия функции, которая не пишет с лог
-bool create_dir_silent(const StrUtf8& path);
+inline bool dir_exists(StrViewUtf8 path) noexcept
+{
+    return dir_exists(std::filesystem::path(path));
+}
+
+// Создаёт папку и все родительские папки.
+// Возвращает true, если папка создана или уже существует.
+// Концепт запрещает функции принимать строку
+template <std::same_as<std::filesystem::path> Path>
+bool create_dir_silent(const Path& path) noexcept
+{
+    std::error_code ec;
+
+    // В данном случае это не важно, но в MSVC (в отличие от GCC) функция всегда возвращает
+    // false, если в конце пути стоит /
+    std::filesystem::create_directories(path, ec);
+
+    if (ec)
+        return false;
+
+    return std::filesystem::is_directory(path, ec);
+}
+
+// Создаёт папку и все родительские папки.
+// Возвращает true, если папка создана или уже существует
+inline bool create_dir_silent(const StrUtf8& path) noexcept
+{
+    return create_dir_silent(std::filesystem::path(path));
+}
 
 // Аналог SDL_GetPrefPath(), который не требует инициализации SDL
 // <https://github.com/libsdl-org/SDL/issues/2587>.

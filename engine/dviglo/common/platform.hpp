@@ -25,8 +25,10 @@
 #elif defined(DV_LINUX)
     #if defined(__clang__)
         #define DV_LINUX_CLANG 1
+        static_assert(__clang_major__ >= 18);
     #elif defined(__GNUC__)
         #define DV_LINUX_GCC 1
+        static_assert(__GNUC__ >= 13);
     #else
         #error
     #endif

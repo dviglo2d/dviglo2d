@@ -114,28 +114,4 @@ constexpr StrUtf8 get_file_name(const StrViewUtf8 path)
     return ret;
 }
 
-inline std::filesystem::path to_path(const StrViewUtf8 source)
-{
-#if DV_WINDOWS_MSVC
-    #pragma warning(push)
-    #pragma warning(disable: 4996)
-#elif DV_WINDOWS_MINGW || DV_LINUX_GCC || DV_LINUX_CLANG
-    #pragma GCC diagnostic push
-    #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-#else
-    #error
-#endif
-
-    // Deprecated в C++20
-    return std::filesystem::u8path(source);
-
-#if DV_WINDOWS_MSVC
-    #pragma warning(pop)
-#elif DV_WINDOWS_MINGW || DV_LINUX_GCC || DV_LINUX_CLANG
-    #pragma GCC diagnostic pop
-#else
-    #error
-#endif
-}
-
 } // namespace dviglo

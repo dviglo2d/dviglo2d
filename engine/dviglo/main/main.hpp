@@ -9,6 +9,7 @@
 namespace dviglo
 {
 
+bool set_locale();
 std::vector<StrUtf8> main_args_to_vector(i32 argc, char* argv[]);
 
 } // namespace dviglo
@@ -20,6 +21,8 @@ std::vector<StrUtf8> main_args_to_vector(i32 argc, char* argv[]);
     SDL_AppResult SDL_AppInit(void** appstate, i32 argc, char* argv[])      \
     {                                                                       \
         (void)appstate;                                                     \
+        if (!set_locale())                                                  \
+            return SDL_APP_FAILURE;                                         \
         app = new ClassName(main_args_to_vector(argc, argv));               \
         return app->main_init();                                            \
     }                                                                       \

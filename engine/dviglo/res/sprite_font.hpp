@@ -137,7 +137,7 @@ public:
     SpriteFont(const StrUtf8& file_path);
 
     // Генерирует спрайтовый шрифт из векторного
-    template<typename T>
+    template <typename T>
     SpriteFont(const T& settings, i64* generation_time_ms = nullptr);
 
     const std::vector<std::shared_ptr<Texture>>& textures() const { return textures_; }

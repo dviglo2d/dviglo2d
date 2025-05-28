@@ -1,6 +1,10 @@
 // Copyright (c) the Dviglo project
 // License: MIT
 
+#include "force_assert.hpp"
+
+#include <dviglo/main/main.hpp>
+
 #include <iostream>
 
 using namespace std;
@@ -28,7 +32,8 @@ int main(int argc, char* argv[])
     (void)argc;
     (void)argv;
 
-    setlocale(LC_CTYPE, "en_US.UTF-8");
+    assert(dviglo::set_locale());
+
     run();
     cout << "Все тесты пройдены успешно" << endl;
 

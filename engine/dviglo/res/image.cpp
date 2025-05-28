@@ -30,6 +30,8 @@
 using namespace glm;
 using namespace std;
 
+namespace fs = std::filesystem;
+
 
 #ifdef DV_WINDOWS_MSVC
     // Чтобы не проверять, что malloc(...) возвращает не nullptr
@@ -190,7 +192,7 @@ void Image::save_png(const StrUtf8& path) const
     }
     else
     {
-        ofstream stream(to_path(path), ios::binary);
+        ofstream stream(fs::path(path), ios::binary);
         stream.write(reinterpret_cast<const char*>(png_data), (i32)png_data_size);
         mz_free(png_data);
     }

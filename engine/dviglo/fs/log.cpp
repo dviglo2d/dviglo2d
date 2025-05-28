@@ -33,7 +33,7 @@ Log::Log(const StrUtf8& path)
 
     write_debug("Log constructed");
 
-    stream_.open(to_path(path));
+    stream_.open(std::filesystem::path(path));
 
     if (stream_)
         writef_info("Opened log file {}", path);

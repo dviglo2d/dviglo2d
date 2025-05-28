@@ -7,7 +7,7 @@
 
 Игровой движок на основе SpriteBatch.
 
-Поддерживаемые ОС: Linux и Windows.
+Поддерживаемые ОС: Linux и Windows 10+.
 
 Скачивание репозитория с подмодулями в папку repo: `git clone --recurse-submodules https://github.com/dviglo2d/dviglo2d repo`.
 

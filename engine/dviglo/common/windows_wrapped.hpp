@@ -14,7 +14,9 @@
 // В файле rpcndr.h определён тип byte, который конфликтует с byte движка
 #define byte BYTE
 
+#ifndef NOMINMAX
+    #define NOMINMAX
+#endif
 #include <windows.h>
 
 #undef byte
-#undef max
