@@ -11,42 +11,30 @@
 namespace dviglo
 {
 
-// Концепт запрещает функции принимать строку
-template <std::same_as<std::filesystem::path> Path>
-bool dir_exists(const Path& path) noexcept
+inline bool dir_exists(const std::filesystem::path& path) noexcept
 {
     std::error_code ec;
     return std::filesystem::is_directory(path, ec);
 }
 
-inline bool dir_exists(StrViewUtf8 path) noexcept
-{
-    return dir_exists(std::filesystem::path(path));
-}
-
 // Создаёт папку и все родительские папки.
-// Возвращает true, если папка создана или уже существует.
-// Концепт запрещает функции принимать строку
-template <std::same_as<std::filesystem::path> Path>
-bool create_dir_silent(const Path& path) noexcept
+// В MSVC функция create_directories(...) всегда возвращает
+ // false, если в конце пути стоит /
+inline bool create_dir_silent(const std::filesystem::path& path) noexcept
 {
+    // В отличие от GCC в MSVC () функция create_directories(...) всегда возвращает
+    // false, если в конце пути стоит /
+    std::filesystem::path fixed_path = path;
+
+
     std::error_code ec;
 
-    // В данном случае это не важно, но в MSVC (в отличие от GCC) функция всегда возвращает
-    // false, если в конце пути стоит /
-    std::filesystem::create_directories(path, ec);
+    std::filesystem::create_directories(path.parent_path(), ec);
 
     if (ec)
         return false;
 
     return std::filesystem::is_directory(path, ec);
-}
-
-// Создаёт папку и все родительские папки.
-// Возвращает true, если папка создана или уже существует
-inline bool create_dir_silent(const StrUtf8& path) noexcept
-{
-    return create_dir_silent(std::filesystem::path(path));
 }
 
 // Аналог SDL_GetPrefPath(), который не требует инициализации SDL

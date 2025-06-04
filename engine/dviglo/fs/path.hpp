@@ -50,6 +50,26 @@ constexpr StrUtf8 trim_end_slash(const StrViewUtf8 path)
     return ret;
 }
 
+// Удаляет все / в конце пути (кроме путей / и z:\).
+// Это нужно для функции create_directories(...), которая в MSVC всегда возвращает false,
+// если в конце пути стоит /
+inline std::filesystem::path create_dirs_workaround(const std::filesystem::path& path)
+{
+    std::filesystem::path ret = path.lexically_normal();
+
+    while (true)
+    {
+        if (ret.has_filename())
+            return ret;
+
+        std::filesystem::path parent_path = ret.parent_path();
+        if (parent_path == ret)
+            return ret;
+
+        ret = std::move(parent_path);
+    }
+}
+
 // Возвращает родительский путь (с / в конце) или пустую строку
 constexpr StrUtf8 get_parent(const StrViewUtf8 path)
 {

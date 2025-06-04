@@ -8,6 +8,8 @@
 using namespace dviglo;
 using namespace std;
 
+namespace fs = std::filesystem;
+
 
 void test_fs_path()
 {
@@ -71,5 +73,57 @@ void test_fs_path()
 
         split_path(path, nullptr, nullptr, &ext);
         assert(ext == "");
+    }
+
+    // Проверяем, что стандартная библиотека работает предсказуемым образом
+    {
+        auto aa = fs::path("z:").root_directory();
+
+        assert(fs::path("").root_name() == "");
+        assert(fs::path("").root_directory() == "");
+        assert(fs::path("").root_path() == "");
+
+        assert(fs::path("z:\\").root_name() == "z:");
+        assert(fs::path("z:\\").root_directory() == "\\");
+        assert(fs::path("z:\\").root_path() == "z:\\");
+
+        assert(fs::path("/").root_name() == "");
+        assert(fs::path("/").root_directory() == "/");
+        assert(fs::path("/").root_path() == "/");
+
+        assert(fs::path("z:").root_name() == "z:");
+        assert(fs::path("z:").root_directory() == "");
+        assert(fs::path("z:").root_path() == "z:");
+
+
+        //assert(fs::path("z:").root_name() == "");
+        //assert(fs::path("/").root_directory() == "/");
+
+
+        //assert(fs::path("/привет\\hello/").root_name() == "");
+        assert(fs::path("/привет\\hello/").root_directory() == "/");
+        assert(fs::path("\\привет\\hello/").root_directory() == "\\");
+        assert(fs::path("/привет\\hello/").root_name() == "");
+
+        assert(fs::path("//привет\\hello/").root_directory() == "/");
+       //assert(fs::path("//привет\\hello/").root_name() == "/");
+
+
+
+        assert(fs::path("z:/привет\\hello/").root_name() == "z:");
+        assert(fs::path("z:/привет\\hello/").root_directory() == "/");
+        assert(fs::path("z:\\привет\\hello/").root_directory() == "\\");
+        assert(fs::path("z://привет\\hello/").root_directory() == "/");
+    }
+
+    {
+       /* assert(trim_end_slashes("").string() == "");
+        assert(trim_end_slashes("/").string() == "");
+        assert(trim_end_slashes("\\/").string() == "");
+        assert(trim_end_slashes("z:\\").string() == "z:");
+        assert(trim_end_slashes("z://").string() == "z:");
+        assert(trim_end_slashes("c:\\привет/hello/").string() == "c:\\привет/hello");
+        assert(trim_end_slashes("./привет\\hello/").string() == "./привет\\hello");
+        assert(trim_end_slashes("c:/привет\\hello/\\/").generic_string() == "c:/привет/hello");*/
     }
 }
