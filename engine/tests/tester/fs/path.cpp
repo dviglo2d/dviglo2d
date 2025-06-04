@@ -77,10 +77,11 @@ void test_fs_path()
 
     // Проверяем, что стандартная библиотека работает предсказуемым образом
     {
-        string m = "///привет";
+        string m = "/usr///\\\\////lib";
         auto aa = fs::path(m).root_name();
         auto bb = fs::path(m).root_directory();
         auto cc = fs::path(m).root_path();
+        auto dd = fs::path("/usr\\///\\\\////lib").lexically_normal().string();
 
         assert(fs::path("").root_name() == "");
         assert(fs::path("").root_directory() == "");
@@ -118,13 +119,15 @@ void test_fs_path()
         assert(fs::path("///привет").root_directory() == "///");
         assert(fs::path("///привет").root_path() == "///");
 
-        //assert(fs::path("/usr///\\\\////lib") == "/usr///lib");
-        //assert(fs::path("/usr\\///\\\\////lib").lexically_normal().string() == "/usr\lib");
+        assert(fs::path("/usr///\\\\////lib") == "/usr///lib");
 
-
-        //assert(fs::path("z:").root_name() == "");
-        //assert(fs::path("/").root_directory() == "/");
-
+#if DV_WINDOWS
+        assert(fs::path("//\\usr\\///\\\\////lib").lexically_normal().string() == "\\usr\\lib");
+#elif DV_LINUX
+        assert(fs::path("//\\usr\\///\\\\////lib").lexically_normal().string() == "/usr/lib");
+#else
+    #error
+#endif
 
         //assert(fs::path("/привет\\hello/").root_name() == "");
         assert(fs::path("/привет\\hello/").root_directory() == "/");
