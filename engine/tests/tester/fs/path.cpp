@@ -77,7 +77,10 @@ void test_fs_path()
 
     // Проверяем, что стандартная библиотека работает предсказуемым образом
     {
-        auto aa = fs::path("z:").root_directory();
+        string m = "///привет";
+        auto aa = fs::path(m).root_name();
+        auto bb = fs::path(m).root_directory();
+        auto cc = fs::path(m).root_path();
 
         assert(fs::path("").root_name() == "");
         assert(fs::path("").root_directory() == "");
@@ -87,13 +90,36 @@ void test_fs_path()
         assert(fs::path("z:\\").root_directory() == "\\");
         assert(fs::path("z:\\").root_path() == "z:\\");
 
-        assert(fs::path("/").root_name() == "");
-        assert(fs::path("/").root_directory() == "/");
-        assert(fs::path("/").root_path() == "/");
+        assert(fs::path("z:/").root_name() == "z:");
+        assert(fs::path("z:/").root_directory() == "/");
+        assert(fs::path("z:/").root_path() == "z:/");
 
         assert(fs::path("z:").root_name() == "z:");
         assert(fs::path("z:").root_directory() == "");
         assert(fs::path("z:").root_path() == "z:");
+
+        assert(fs::path("/").root_name() == "");
+        assert(fs::path("/").root_directory() == "/");
+        assert(fs::path("/").root_path() == "/");
+
+        assert(fs::path("\\").root_name() == "");
+        assert(fs::path("\\").root_directory() == "\\");
+        assert(fs::path("\\").root_path() == "\\");
+
+        assert(fs::path("/привет").root_name() == "");
+        assert(fs::path("/привет").root_directory() == "/");
+        assert(fs::path("/привет").root_path() == "/");
+
+        assert(fs::path("//сервер").root_name() == "//сервер");
+        assert(fs::path("//сервер").root_directory() == "");
+        assert(fs::path("//сервер").root_path() == "//сервер");
+
+        assert(fs::path("///привет").root_name() == "");
+        assert(fs::path("///привет").root_directory() == "///");
+        assert(fs::path("///привет").root_path() == "///");
+
+        //assert(fs::path("/usr///\\\\////lib") == "/usr///lib");
+        //assert(fs::path("/usr\\///\\\\////lib").lexically_normal().string() == "/usr\lib");
 
 
         //assert(fs::path("z:").root_name() == "");
