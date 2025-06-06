@@ -98,14 +98,14 @@ void test_fs_path()
         assert(fs::path("").root_directory() == "");
         assert(fs::path("").root_path() == "");
 
-#if DV_WINDOWS_MSVC
-        assert(fs::path("/").root_name() == "");
-        assert(fs::path("/").root_directory().string() == "\\");
-        assert(fs::path("/").root_path().string() == "\\");
-#elif DV_LINUX_GCC || DV_LINUX_CLANG || DV_WINDOWS_MINGW
+#if DV_WINDOWS_MSVC || DV_LINUX_GCC || DV_LINUX_CLANG
         assert(fs::path("/").root_name() == "");
         assert(fs::path("/").root_directory().string() == "/");
         assert(fs::path("/").root_path().string() == "/");
+#elif DV_WINDOWS_MINGW
+        assert(fs::path("/").root_name() == "");
+        assert(fs::path("/").root_directory().string() == "\\");
+        assert(fs::path("/").root_path().string() == "\\");
 #else
         #error
 #endif
