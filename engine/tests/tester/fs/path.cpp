@@ -84,7 +84,7 @@ void test_fs_path()
     //    Windows: \ и / - разделители, некоторые символы запрещены: https://ru.wikipedia.org/wiki/Имя_файла
     // 2) Linux: root_name (имя корня) всегда пустое
     //    Windows: \\server_name или z: - имена корней
-    // 3) В Linux регистр имеет значение
+    // 3) В Windows регистр символов не имеет значения, но библиотека это не учитывает
     {
         fs::path m("\\привет\\hello/");
         auto aa = m.root_name();
