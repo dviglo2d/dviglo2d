@@ -98,11 +98,17 @@ void test_fs_path()
         assert(fs::path("").root_directory() == "");
         assert(fs::path("").root_path() == "");
 
-        std::cout << fs::path("/").root_directory().string() << endl;
-
+#if DV_WINDOWS
+        assert(fs::path("/").root_name() == "");
+        assert(fs::path("/").root_directory().string() == "\\");
+        assert(fs::path("/").root_path().string() == "\\");
+#elif DV_LINUX
         assert(fs::path("/").root_name() == "");
         assert(fs::path("/").root_directory().string() == "/");
         assert(fs::path("/").root_path().string() == "/");
+#else
+        #error
+#endif
 
 #if DV_WINDOWS
         // Это разделитель
@@ -117,7 +123,7 @@ void test_fs_path()
         assert(fs::path("\\").root_path() == "");
         assert(fs::path("\\").filename() == "\\");
 #else
-    #error
+        #error
 #endif
 
 #if DV_WINDOWS
@@ -145,7 +151,7 @@ void test_fs_path()
         assert(fs::path("z:").root_directory() == "");
         assert(fs::path("z:").root_path() == "");
 #else
-    #error
+        #error
 #endif
 
         assert(fs::path("/").root_name() == "");
@@ -161,7 +167,7 @@ void test_fs_path()
         assert(fs::path("\\").root_directory() == "");
         assert(fs::path("\\").root_path() == "");
 #else
-    #error
+        #error
 #endif
 
         assert(fs::path("/привет").root_name() == "");
@@ -178,7 +184,7 @@ void test_fs_path()
         assert(fs::path("//сервер").root_directory() == "/");
         assert(fs::path("//сервер").root_path() == "/");
 #else
-    #error
+        #error
 #endif
         assert(fs::path("///привет").root_name() == "");
         assert(fs::path("///привет").root_directory() == "/");
@@ -191,7 +197,7 @@ void test_fs_path()
         assert(fs::path("/usr\\///\\\\////lib") == "/usr\\/\\\\/lib");
         assert(fs::path("//\\usr\\///\\\\////lib/\\\\").lexically_normal().string() == "/\\usr\\/\\\\/lib/\\\\");
 #else
-    #error
+        #error
 #endif
 
         //assert(fs::path("/привет\\hello/").root_name() == "");
@@ -202,7 +208,7 @@ void test_fs_path()
 #elif DV_LINUX
         assert(fs::path("\\привет\\hello/").root_directory() == "");
 #else
-    #error
+        #error
 #endif
 
         assert(fs::path("/привет\\hello/").root_name() == "");
