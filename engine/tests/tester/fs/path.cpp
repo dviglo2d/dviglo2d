@@ -110,18 +110,18 @@ void test_fs_path()
         #error
 #endif
 
-#if DV_WINDOWS
+#if DV_WINDOWS_MSVC
         // Это разделитель
         assert(fs::path("\\").root_name() == "");
-        assert(fs::path("\\").root_directory() == "\\");
-        assert(fs::path("\\").root_path() == "\\");
+        assert(fs::path("\\").root_directory().string() == "\\");
+        assert(fs::path("\\").root_path().string() == "\\");
         assert(fs::path("\\").filename() == "");
 #elif DV_LINUX
         // Это имя файла
         assert(fs::path("\\").root_name() == "");
         assert(fs::path("\\").root_directory() == "");
         assert(fs::path("\\").root_path() == "");
-        assert(fs::path("\\").filename() == "\\");
+        assert(fs::path("\\").filename().string() == "\\");
 #else
         #error
 #endif
