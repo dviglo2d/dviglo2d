@@ -86,11 +86,12 @@ void test_fs_path()
     //    Windows: \\server_name или z: - имена корней
     // 3) В Windows регистр символов не имеет значения, но библиотека это не учитывает
     {
-        fs::path m("\\привет\\hello/");
+        fs::path m(R"(/привет\пока:/)");
         auto aa = m.root_name();
         auto bb = m.root_directory();
         auto cc = m.root_path();
         auto dd = fs::path("//\\usr\\///\\\\////lib/\\\\").lexically_normal().string();
+        auto ff = m.string();
 
         cout << fs::path("/привет/").root_directory().string() << endl;
         cout << fs::path(R"(//привет/\пока\/)").string() << endl;
@@ -98,6 +99,12 @@ void test_fs_path()
 
         // Такое сравнение не работает даже в Windows
         assert(fs::path("Hello") != fs::path("hello"));
+
+        // Библиотека запоминает путь как есть
+        assert(fs::path(R"(/привет\пока:/)").string() == R"(/привет\пока:/)");
+        assert(fs::path(R"(//привет/\пока\/)").string() == R"(//привет/\пока\/)");
+        assert(fs::path(R"(\\привет*?\//пока\/)").string() == R"(\\привет*?\//пока\/)");
+        assert(fs::path(R"(:\\//привет\//пока\/)").string() == R"(:\\//привет\//пока\/)");
 
 #if DV_WINDOWS
         // Обратный слэш - это разделитель
@@ -117,10 +124,6 @@ void test_fs_path()
 
 //#if DV_WINDOWS
         // MSVC и MinGW не меняют разделители в пути
-        assert(fs::path(R"(/привет\пока/)").string() == R"(/привет\пока/)");
-        assert(fs::path(R"(//привет/\пока\/)").string() == R"(//привет/\пока\/)");
-        assert(fs::path(R"(\\привет\//пока\/)").string() == R"(\\привет\//пока\/)");
-        assert(fs::path(R"(\\//привет\//пока\/)").string() == R"(\\//привет\//пока\/)");
 /*#elif DV_LINUX
         // \ - часть имени файла
         assert(fs::path(R"(/привет\пока/)").string() == R"(/привет\пока/)");
