@@ -5,6 +5,8 @@
 
 #include <dviglo/fs/path.hpp>
 
+#include <iostream>
+
 using namespace dviglo;
 using namespace std;
 
@@ -96,9 +98,11 @@ void test_fs_path()
         assert(fs::path("").root_directory() == "");
         assert(fs::path("").root_path() == "");
 
+        std::cout << fs::path("/").root_directory().string() << endl;
+
         assert(fs::path("/").root_name() == "");
-        assert(fs::path("/").root_directory() == "/");
-        assert(fs::path("/").root_path() == "/");
+        assert(fs::path("/").root_directory().string() == "/");
+        assert(fs::path("/").root_path().string() == "/");
 
 #if DV_WINDOWS
         // Это разделитель
@@ -165,11 +169,11 @@ void test_fs_path()
         assert(fs::path("/привет").root_path() == "/");
 
         // \\server\share\file
-#if DV_WINDOWS
+#if DV_WINDOWS_MSVC
         assert(fs::path("//сервер").root_name() == "//сервер");
         assert(fs::path("//сервер").root_directory() == "");
         assert(fs::path("//сервер").root_path() == "//сервер");
-#elif DV_LINUX
+#elif DV_LINUX_CLANG || DV_LINUX_GCC || DV_WINDOWS_MINGW
         assert(fs::path("//сервер").root_name() == "");
         assert(fs::path("//сервер").root_directory() == "/");
         assert(fs::path("//сервер").root_path() == "/");
