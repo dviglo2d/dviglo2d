@@ -115,6 +115,23 @@ void test_fs_path()
         #error
 #endif
 
+//#if DV_WINDOWS
+        // MSVC и MinGW не меняют разделители в пути
+        assert(fs::path(R"(/привет\пока/)").string() == R"(/привет\пока/)");
+        assert(fs::path(R"(//привет/\пока\/)").string() == R"(//привет/\пока\/)");
+        assert(fs::path(R"(\\привет\//пока\/)").string() == R"(\\привет\//пока\/)");
+        assert(fs::path(R"(\\//привет\//пока\/)").string() == R"(\\//привет\//пока\/)");
+/*#elif DV_LINUX
+        // \ - часть имени файла
+        assert(fs::path(R"(/привет\пока/)").string() == R"(/привет\пока/)");
+        assert(fs::path(R"(//привет/\пока\/)").string() == R"(//привет//пока//)");
+        assert(fs::path(R"(\\привет\//пока\/)").string() == R"(//привет///пока//)");
+        assert(fs::path(R"(\\//привет\//пока\/)").string() == R"(////привет///пока//)");
+//#else
+//        #error
+//#endif
+*/
+
 #if DV_WINDOWS
         assert(fs::path("z:\\").root_name() == "z:");
         assert(fs::path("z:\\").root_directory() == "\\");
@@ -143,20 +160,6 @@ void test_fs_path()
     #error
 #endif
 
-#if DV_WINDOWS
-        // MSVC и MinGW не меняют разделители в пути
-        assert(fs::path(R"(/привет\пока/)").string() == R"(/привет\пока/)");
-        assert(fs::path(R"(//привет/\пока\/)").string() == R"(//привет/\пока\/)");
-        assert(fs::path(R"(\\привет\//пока\/)").string() == R"(\\привет\//пока\/)");
-        assert(fs::path(R"(\\//привет\//пока\/)").string() == R"(\\//привет\//пока\/)");
-#elif DV_LINUX
-        assert(fs::path(R"(/привет\пока/)").string() == R"(/привет/пока/)");
-        assert(fs::path(R"(//привет/\пока\/)").string() == R"(//привет//пока//)");
-        assert(fs::path(R"(\\привет\//пока\/)").string() == R"(//привет///пока//)");
-        assert(fs::path(R"(\\//привет\//пока\/)").string() == R"(////привет///пока//)");
-#else
-        #error
-#endif
 
         assert(fs::path("/привет").root_name() == "");
         assert(fs::path("/привет").root_directory().string() == "/");
