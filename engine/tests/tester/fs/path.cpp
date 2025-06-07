@@ -98,6 +98,9 @@ void test_fs_path()
         cout << fs::path(R"(/привет\пока:/)").string() << endl;
         cout << fs::path(R"(\привет/)").root_directory().string() << endl;
 
+
+
+        
         // Такое сравнение не работает даже в Windows
         assert(fs::path("Hello") != fs::path("hello"));
 
@@ -107,9 +110,9 @@ void test_fs_path()
         assert(fs::path(R"(\\привет*?\//пока\/)").string() == R"(\\привет*?\//пока\/)");
         assert(fs::path(R"(:\\//привет\//пока\/)").string() == R"(:\\//привет\//пока\/)");
 
-        // Начальный обратный слэш интерпретируется по разному в разных ОС
+        // Начальный бэкслэш интерпретируется по разному в разных ОС
 #if DV_WINDOWS
-        // Обратный слэш - это разделитель
+        // Обратный слэш - это разделитель и имя корня
         assert(fs::path(R"(\)").root_name().string() == "");
         assert(fs::path(R"(\)").root_directory().string() == R"(\)");
         assert(fs::path(R"(\)").root_path().string() == R"(\)");
@@ -120,7 +123,7 @@ void test_fs_path()
         assert(fs::path(R"(\привет)").root_path().string() == R"(\)");
         assert(fs::path(R"(\привет)").filename().string() == "привет");
 #elif DV_LINUX
-        // Обратный слэш - это имя файла
+        // Обратный слэш - это часть имени файла
         assert(fs::path(R"(\)").root_name().string() == "");
         assert(fs::path(R"(\)").root_directory().string() == "");
         assert(fs::path(R"(\)").root_path().string() == "");
@@ -147,7 +150,7 @@ void test_fs_path()
         assert(fs::path("/").root_directory().string() == "/");
         assert(fs::path("/").root_path().string() == "/");
 #elif DV_WINDOWS_MINGW
-        // Тут MinGW противоречит предыдущим тестам и меняет слэш на обратный слэш.
+        // Тут MinGW противоречит предыдущим тестам и меняет слэш на бэкслэш.
         // Значит нужно всегда использовать generic_string()
         assert(fs::path("/").root_name().string() == "");
         assert(fs::path("/").root_directory().string() == R"(\)");
