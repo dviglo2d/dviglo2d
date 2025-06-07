@@ -96,6 +96,7 @@ void test_fs_path()
         cout << fs::path("/привет/").root_directory().string() << endl;
         cout << fs::path(R"(//привет/\пока\/)").string() << endl;
         cout << fs::path(R"(/привет\пока:/)").string() << endl;
+        cout << fs::path(R"(\привет/)").root_directory().string() << endl;
 
         // Такое сравнение не работает даже в Windows
         assert(fs::path("Hello") != fs::path("hello"));
@@ -106,34 +107,54 @@ void test_fs_path()
         assert(fs::path(R"(\\привет*?\//пока\/)").string() == R"(\\привет*?\//пока\/)");
         assert(fs::path(R"(:\\//привет\//пока\/)").string() == R"(:\\//привет\//пока\/)");
 
+        // Начальный обратный слэш интерпретируется по разному в разных ОС
 #if DV_WINDOWS
         // Обратный слэш - это разделитель
-        assert(fs::path(R"(\)").root_name() == "");
+        assert(fs::path(R"(\)").root_name().string() == "");
         assert(fs::path(R"(\)").root_directory().string() == R"(\)");
         assert(fs::path(R"(\)").root_path().string() == R"(\)");
-        assert(fs::path(R"(\)").filename() == "");
+        assert(fs::path(R"(\)").filename().string() == "");
+
+        assert(fs::path(R"(\привет)").root_name().string() == "");
+        assert(fs::path(R"(\привет)").root_directory().string() == R"(\)");
+        assert(fs::path(R"(\привет)").root_path().string() == R"(\)");
+        assert(fs::path(R"(\привет)").filename().string() == "привет");
 #elif DV_LINUX
         // Обратный слэш - это имя файла
-        assert(fs::path(R"(\)").root_name() == "");
-        assert(fs::path(R"(\)").root_directory() == "");
-        assert(fs::path(R"(\)").root_path() == "");
+        assert(fs::path(R"(\)").root_name().string() == "");
+        assert(fs::path(R"(\)").root_directory().string() == "");
+        assert(fs::path(R"(\)").root_path().string() == "");
         assert(fs::path(R"(\)").filename().string() == R"(\)");
+
+        assert(fs::path(R"(\привет)").root_name().string() == "");
+        assert(fs::path(R"(\привет)").root_directory().string() == "");
+        assert(fs::path(R"(\привет)").root_path().string() == "");
+        assert(fs::path(R"(\привет)").filename().string() == R"(\привет)");
 #else
         #error
 #endif
 
-//#if DV_WINDOWS
-        // MSVC и MinGW не меняют разделители в пути
-/*#elif DV_LINUX
-        // \ - часть имени файла
-        assert(fs::path(R"(/привет\пока/)").string() == R"(/привет\пока/)");
-        assert(fs::path(R"(//привет/\пока\/)").string() == R"(//привет//пока//)");
-        assert(fs::path(R"(\\привет\//пока\/)").string() == R"(//привет///пока//)");
-        assert(fs::path(R"(\\//привет\//пока\/)").string() == R"(////привет///пока//)");
-//#else
-//        #error
-//#endif
-*/
+        // Начальный слэш - это имя корня во всех ОС
+        assert(fs::path("/привет").root_name().string() == "");
+        assert(fs::path("/привет").root_directory().string() == "/");
+        assert(fs::path("/привет").root_path().string() == "/");
+        assert(fs::path("/привет").filename().string() == "привет");
+        assert(fs::path("/привет/").filename().string() == "");
+
+        // Путь, состоящий из одного слэша, имеет особенность в MinGW
+#if DV_WINDOWS_MSVC || DV_LINUX_GCC || DV_LINUX_CLANG
+        assert(fs::path("/").root_name().string() == "");
+        assert(fs::path("/").root_directory().string() == "/");
+        assert(fs::path("/").root_path().string() == "/");
+#elif DV_WINDOWS_MINGW
+        // Тут MinGW противоречит предыдущим тестам и меняет слэш на обратный слэш.
+        // Значит нужно всегда использовать generic_string()
+        assert(fs::path("/").root_name().string() == "");
+        assert(fs::path("/").root_directory().string() == R"(\)");
+        assert(fs::path("/").root_path().string() == R"(\)");
+#else
+        #error
+#endif
 
 #if DV_WINDOWS
         assert(fs::path("z:\\").root_name() == "z:");
@@ -162,87 +183,6 @@ void test_fs_path()
 #else
     #error
 #endif
-
-
-        assert(fs::path("/привет").root_name() == "");
-        assert(fs::path("/привет").root_directory().string() == "/");
-        assert(fs::path("/привет").root_path().string() == "/");
-        assert(fs::path("/привет").filename().string() == "привет");
-        assert(fs::path("/привет/").filename().string() == "");
-
-#if DV_WINDOWS
-        // MSVC и MinGW не меняют корневую папку
-        assert(fs::path(R"(\привет/)").root_name() == "");
-        assert(fs::path(R"(\привет/)").root_directory().string() == R"(\)");
-        assert(fs::path(R"(\привет/)").root_path().string() == R"(\)");
-#elif DV_LINUX
-        assert(fs::path(R"(\привет/)").root_name() == "");
-        assert(fs::path(R"(\привет/)").root_directory().string() == R"(/)");
-        assert(fs::path(R"(\привет/)").root_path().string() == R"(/)");
-#else
-        #error
-#endif
-
-#if DV_WINDOWS
-        // MSVC и MinGW не меняют корневую папку
-        assert(fs::path(R"(\)").root_name() == "");
-        assert(fs::path(R"(\)").root_directory().string() == R"(\)");
-        assert(fs::path(R"(\)").root_path().string() == R"(\)");
-#elif DV_LINUX
-        assert(fs::path(R"(\)").root_name() == "");
-        assert(fs::path(R"(\)").root_directory().string() == "/");
-        assert(fs::path(R"(\)").root_path().string() == "/");
-#else
-        #error
-#endif
-
-#if DV_WINDOWS_MSVC || DV_LINUX_GCC || DV_LINUX_CLANG
-        assert(fs::path("/").root_name() == "");
-        assert(fs::path("/").root_directory().string() == "/");
-        assert(fs::path("/").root_path().string() == "/");
-#elif DV_WINDOWS_MINGW
-        // Тут MinGW противоречит предыдущим тестам и меняет корневую папку, если путь состоит только из /.
-        // Значит нужно всегда использовать generic_string()
-        assert(fs::path("/").root_name() == "");
-        assert(fs::path("/").root_directory().string() == R"(\)");
-        assert(fs::path("/").root_path().string() == R"(\)");
-#else
-        #error
-#endif
-
-        assert(fs::path("/привет/").root_name() == "");
-        assert(fs::path("/привет/").root_directory().string() == "/");
-        assert(fs::path("/привет/").root_path().string() == "/");
-        assert(fs::path("/привет/").filename().string() == "");
-
-
-
-        assert(fs::path("/привет").root_path().string() == "/");
-        assert(fs::path("/привет").filename().string() == "привет");
-
-
-
-
-
-        assert(fs::path("/").root_name() == "");
-        assert(fs::path("/").root_directory() == "/");
-        assert(fs::path("/").root_path() == "/");
-
-#if DV_WINDOWS
-        assert(fs::path("\\").root_name() == "");
-        assert(fs::path("\\").root_directory() == "\\");
-        assert(fs::path("\\").root_path() == "\\");
-#elif DV_LINUX
-        assert(fs::path("\\").root_name() == "");
-        assert(fs::path("\\").root_directory() == "");
-        assert(fs::path("\\").root_path() == "");
-#else
-        #error
-#endif
-
-        assert(fs::path("/привет").root_name() == "");
-        assert(fs::path("/привет").root_directory() == "/");
-        assert(fs::path("/привет").root_path() == "/");
 
         // \\server\share\file
 #if DV_WINDOWS_MSVC
