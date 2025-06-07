@@ -204,11 +204,15 @@ void test_fs_path()
         assert(fs::path("///привет").root_path() == "/");
 
 #if DV_WINDOWS
-        assert(fs::path("/usr\\///\\\\////lib") == "/usr///lib");
-        assert(fs::path("//\\usr\\///\\\\////lib/\\\\").lexically_normal().string() == "\\usr\\lib\\");
+        // Идущие подряд слэши и бэкслеши интерпретируются как один разделитель
+        assert(fs::path(R"(/usr\///\////lib)").lexically_normal().string() == R"(\usr\lib)");
+        assert(fs::path(R"(//\usr\///\\////lib/\\)").lexically_normal().string() == R"(\usr\lib\)");
+        assert(fs::path(R"(\\\usr\///\\////lib/\\)").lexically_normal().string() == R"(\usr\lib\)");
 #elif DV_LINUX
-        assert(fs::path("/usr\\///\\\\////lib") == "/usr\\/\\\\/lib");
-        assert(fs::path("//\\usr\\///\\\\////lib/\\\\").lexically_normal().string() == "/\\usr\\/\\\\/lib/\\\\");
+        // Обратный слэш - это часть имени файла
+        assert(fs::path(R"(/usr\\///\////lib)").lexically_normal().string() == R"(/usr\\/\/lib)");
+        assert(fs::path(R"(//\usr\///\\////lib/\\)").lexically_normal().string() == R"(/\usr\/\\/lib/\\)");
+        assert(fs::path(R"(\\\usr\///\\////lib)").lexically_normal().string() == R"(\\\usr\/\\/lib)");
 #else
         #error
 #endif
