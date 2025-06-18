@@ -14,7 +14,7 @@ build_dir="$this_dir/../../build_engine"
 
 # Генерируем проекты
 cmake "$this_dir" -B "$build_dir" -G "Unix Makefiles" $build_type $compiler \
-  -D DV_WIN32_CONSOLE=1 -D DV_OPENMP=1 -D DV_ENGINE_TESTS=1
+  -D DV_OPENMP=1 -D DV_ENGINE_TESTS=1
 
 # Компилируем проекты
 cmake --build "$build_dir" --parallel
