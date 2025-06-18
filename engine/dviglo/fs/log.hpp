@@ -50,13 +50,19 @@ private:
     inline static Log* instance_ = nullptr;
 
     // Оригинальный std::cout.rdbuf()
-    std::streambuf* cout_orig_;
+    std::streambuf* cout_buf_orig_;
+
+    // Оригинальный std::cerr.rdbuf()
+    std::streambuf* cerr_buf_orig_;
 
     // Файл лога
     std::ofstream file_stream_;
 
     // Буфер этого разветвителя заменит буфер std::cout
-    TeeBuffer tee_buffer_;
+    TeeBuffer tee_cout_;
+
+    // Буфер этого разветвителя заменит буфер std::cerr
+    TeeBuffer tee_cerr_;
 
     std::mutex mutex_;
 

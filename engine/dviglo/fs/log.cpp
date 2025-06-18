@@ -80,9 +80,11 @@ static StrUtf8 time_to_str()
 }
 
 Log::Log(const fs::path& path)
-    : cout_orig_(cout.rdbuf())
+    : cout_buf_orig_(cout.rdbuf())
+    , cerr_buf_orig_(cerr.rdbuf())
     , file_stream_(path)
-    , tee_buffer_(cout_orig_, file_stream_.rdbuf(), mutex_)
+    , tee_cout_(cout_buf_orig_, file_stream_.rdbuf(), mutex_)
+    , tee_cerr_(cerr_buf_orig_, file_stream_.rdbuf(), mutex_)
 {
     assert(!instance_);
 
@@ -91,7 +93,10 @@ Log::Log(const fs::path& path)
     write_debug("Log constructed");
 
     // Заменям буфер std::cout разветвителем
-    cout.rdbuf(&tee_buffer_);
+    cout.rdbuf(&tee_cout_);
+
+    // Заменям буфер std::cerr разветвителем
+    cerr.rdbuf(&tee_cerr_);
 
     if (file_stream_)
         writef_info("Opened log file {}", path);
@@ -108,7 +113,10 @@ Log::~Log()
     }
 
     // Восстанавливаем оригинальный буфер std::cout
-    std::cout.rdbuf(cout_orig_);
+    std::cout.rdbuf(cout_buf_orig_);
+
+    // Восстанавливаем оригинальный буфер std::cerr
+    std::cerr.rdbuf(cerr_buf_orig_);
 
     instance_ = nullptr;
 
@@ -134,8 +142,12 @@ void Log::write(LogLevel message_type, StrViewUtf8 message)
     if (message_type == LogLevel::none)
         return;
 
-    // endl автоматически вызывает flush()
-    cout << format("[{}] {}: {}", time_to_str(), to_string(message_type), message) << endl;
+    std::string str = format("[{}] {}: {}", time_to_str(), to_string(message_type), message);
+
+    if (message_type == LogLevel::error)
+        cerr << str << endl; // endl автоматически вызывает flush()
+    else
+        cout << str << endl;
 }
 
 } // namespace dviglo
