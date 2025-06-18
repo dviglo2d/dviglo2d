@@ -13,6 +13,61 @@ using namespace std;
 namespace dviglo
 {
 
+// https://en.cppreference.com/w/cpp/io/basic_streambuf/overflow.html
+i32 Log::TeeBuffer::overflow(i32 ch)
+{
+    // https://en.cppreference.com/w/cpp/string/char_traits.html
+    static_assert(is_same_v<char_type, char>);
+
+    // Тип, который умещает все символы + EOF
+    // https://en.cppreference.com/w/cpp/named_req/CharTraits.html
+    static_assert(is_same_v<int_type, i32>);
+
+    // https://en.cppreference.com/w/cpp/string/char_traits/eof.html
+    static_assert(traits_type::eof() == EOF);
+    static_assert(traits_type::not_eof(EOF) == !EOF);
+
+    if (ch == EOF)
+        return !EOF;
+
+    lock_guard lock(mutex_);
+
+    if (file_buf_)
+        file_buf_->sputc(static_cast<char>(ch));
+
+    return cout_buf_->sputc(static_cast<char>(ch));
+}
+
+// https://en.cppreference.com/w/cpp/io/basic_streambuf/sputn.html
+streamsize Log::TeeBuffer::xsputn(const char* s, streamsize count)
+{
+    lock_guard lock(mutex_);
+
+    if (file_buf_)
+        file_buf_->sputn(s, count);
+
+    return cout_buf_->sputn(s, count);
+}
+
+// https://en.cppreference.com/w/cpp/io/basic_streambuf/pubsync.html
+i32 Log::TeeBuffer::sync()
+{
+    lock_guard lock(mutex_);
+
+    if (file_buf_)
+        file_buf_->pubsync();
+
+    return cout_buf_->pubsync();
+}
+
+Log::TeeBuffer::TeeBuffer(streambuf* cout_buf, streambuf* file_buf, mutex& mutex)
+    : cout_buf_(cout_buf)
+    , file_buf_(file_buf)
+    , mutex_(mutex)
+{
+    assert(cout_buf_ != nullptr);
+}
+
 static StrUtf8 time_to_str()
 {
     // Текущее время, округлённое до секунд
@@ -25,6 +80,9 @@ static StrUtf8 time_to_str()
 }
 
 Log::Log(const fs::path& path)
+    : cout_orig_(cout.rdbuf())
+    , file_stream_(path)
+    , tee_buffer_(cout_orig_, file_stream_.rdbuf(), mutex_)
 {
     assert(!instance_);
 
@@ -32,9 +90,10 @@ Log::Log(const fs::path& path)
 
     write_debug("Log constructed");
 
-    stream_.open(path);
+    // Заменям буфер std::cout разветвителем
+    cout.rdbuf(&tee_buffer_);
 
-    if (stream_)
+    if (file_stream_)
         writef_info("Opened log file {}", path);
     else
         writef_error("Failed to open log file {}", path);
@@ -42,11 +101,14 @@ Log::Log(const fs::path& path)
 
 Log::~Log()
 {
-    if (stream_.is_open())
+    if (file_stream_.is_open())
     {
         write_info("Closed log file");
-        stream_.close();
+        file_stream_.close();
     }
+
+    // Восстанавливаем оригинальный буфер std::cout
+    std::cout.rdbuf(cout_orig_);
 
     instance_ = nullptr;
 
@@ -72,14 +134,8 @@ void Log::write(LogLevel message_type, StrViewUtf8 message)
     if (message_type == LogLevel::none)
         return;
 
-    StrUtf8 str = format("[{}] {}: {}\n", time_to_str(), to_string(message_type), message);
-    cout << str;
-
-    if (stream_)
-    {
-        stream_ << str;
-        stream_.flush();
-    }
+    // endl автоматически вызывает flush()
+    cout << format("[{}] {}: {}", time_to_str(), to_string(message_type), message) << endl;
 }
 
 } // namespace dviglo
