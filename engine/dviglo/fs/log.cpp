@@ -50,6 +50,8 @@ streamsize Log::TeeBuffer::xsputn(const char* s, streamsize count)
 }
 
 // https://en.cppreference.com/w/cpp/io/basic_streambuf/pubsync.html
+// Функция должна всегда возвращать 0 (успех), иначе в Windows без консоли
+// в лог будет выведено только первое сообщение
 i32 Log::TeeBuffer::sync()
 {
     lock_guard lock(mutex_);
@@ -57,7 +59,9 @@ i32 Log::TeeBuffer::sync()
     if (file_buf_)
         file_buf_->pubsync();
 
-    return cout_buf_->pubsync();
+    cout_buf_->pubsync();
+
+    return 0; 
 }
 
 Log::TeeBuffer::TeeBuffer(streambuf* cout_buf, streambuf* file_buf, mutex& mutex)
