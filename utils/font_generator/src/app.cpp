@@ -55,6 +55,10 @@ void App::start()
     ImGui::GetStyle().Colors[ImGuiCol_WindowBg] = ImVec4(0.05f, 0.1f, 0.15f, 1.f);
 
     preview_window_ = make_unique<PreviewWindow>();
+
+    printf("printf -> stdout\n");
+    fprintf(stdout, "fprintf(stdout) -> stdout\n");
+    fprintf(stderr, "fprintf(stderr) -> stderr\n");
 }
 
 void App::handle_sdl_event(const SDL_Event& event)
