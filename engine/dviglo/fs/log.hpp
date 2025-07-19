@@ -28,6 +28,11 @@
 // printf(...) и fprintf(stderr, ...) не перехватываются
 #define DV_LOG_TEE_BUFFER 3
 
+// Выводим в std::cout и в std::cerr.
+// FileDescriptorTee перехватывает вывод в stdout и stderr и дублирует его в файл.
+// Это позволяет сохранять в файл даже вывод сторонних библиотек
+#define DV_LOG_FD_TEE 4
+
 // Выбираем один из методов журналирования
 #define DV_LOG_METHOD DV_LOG_TEE_BUFFER
 
@@ -93,11 +98,17 @@ private:
     // Оригинальный std::cerr.rdbuf()
     std::streambuf* cerr_buf_orig_;
 
+    // Оригинальный std::clog.rdbuf()
+    std::streambuf* clog_buf_orig_;
+
     // Буфер этого разветвителя заменит буфер std::cout
     TeeBuffer tee_cout_;
 
     // Буфер этого разветвителя заменит буфер std::cerr
     TeeBuffer tee_cerr_;
+
+    // Буфер этого разветвителя заменит буфер std::clog
+    TeeBuffer tee_clog_;
 
     std::mutex mutex_;
 #endif

@@ -94,8 +94,8 @@ i32 TeeBuffer::sync()
     return 0;
 }
 
-TeeBuffer::TeeBuffer(streambuf* cout_buf, streambuf* file_buf, mutex& mutex)
-    : std_buf_(cout_buf)
+TeeBuffer::TeeBuffer(streambuf* std_buf, streambuf* file_buf, mutex& mutex)
+    : std_buf_(std_buf)
     , file_buf_(file_buf)
     , mutex_(mutex)
 {
@@ -111,8 +111,10 @@ Log::Log(const fs::path& path)
 #if DV_LOG_METHOD == DV_LOG_TEE_BUFFER
     , cout_buf_orig_(cout.rdbuf())
     , cerr_buf_orig_(cerr.rdbuf())
-    , tee_cout_(cout_buf_orig_, file_stream_.rdbuf(), mutex_)
-    , tee_cerr_(cerr_buf_orig_, file_stream_.rdbuf(), mutex_)
+    , clog_buf_orig_(clog.rdbuf())
+    , tee_cout_(cout.rdbuf(), file_stream_.rdbuf(), mutex_)
+    , tee_cerr_(cerr.rdbuf(), file_stream_.rdbuf(), mutex_)
+    , tee_clog_(clog.rdbuf(), file_stream_.rdbuf(), mutex_)
 #endif
 {
     assert(!instance_);
@@ -127,6 +129,9 @@ Log::Log(const fs::path& path)
 
     // Заменям буфер std::cerr разветвителем
     cerr.rdbuf(&tee_cerr_);
+
+    // Заменям буфер std::clog разветвителем
+    clog.rdbuf(&tee_clog_);
 #endif
 
 #if (DV_LOG_METHOD == DV_LOG_NONE) || (DV_LOG_METHOD == DV_LOG_CONSOLE_ONLY)
@@ -155,6 +160,9 @@ Log::~Log()
 
     // Восстанавливаем оригинальный буфер std::cerr
     cerr.rdbuf(cerr_buf_orig_);
+
+    // Восстанавливаем оригинальный буфер std::clog
+    clog.rdbuf(clog_buf_orig_);
 #endif
 
     instance_ = nullptr;
