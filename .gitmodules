@@ -21,7 +21,7 @@
 [submodule "engine/third_party/external/sdl_mixer/repo"]
 	path = engine/third_party/external/sdl_mixer/repo
 	url = https://github.com/dviglo2d/sdl_mixer
-	branch = dv_2025_05_14
+	branch = dv_2025_07_26
 	shallow = true
 [submodule "engine/third_party/external/stb/repo"]
 	path = engine/third_party/external/stb/repo

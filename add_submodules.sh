@@ -25,7 +25,7 @@ git -C "$this_dir" submodule add --depth 1 https://github.com/dviglo2d/sdl $sm_p
 git -C "$this_dir" config -f .gitmodules submodule.$sm_path.shallow true
 
 sm_path=engine/third_party/external/sdl_mixer/repo
-sm_branch=dv_2025_05_14
+sm_branch=dv_2025_07_26
 # -b branch и --depth 1 вместе не работают
 git -C "$this_dir" submodule add -b $sm_branch https://github.com/dviglo2d/sdl_mixer $sm_path
 git -C "$this_dir" config -f .gitmodules submodule.$sm_path.shallow true

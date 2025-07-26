@@ -1,9 +1,10 @@
 От апстрима отличается только тем, что удалены все подмодули.
 
 Процесс обновления SDL_mixer:
-1) Обновить из апстрима ветку main форка https://github.com/dviglo2d/sdl_mixer
-2) Создать ветку dv_гггг_мм_дд. Если нужна вторая ветка в тот же день, то назвать её dv_гггг_мм_дд_2
-3) Удалить подмодули батником:
+1) Через сайт обновить из апстрима ветку main форка https://github.com/dviglo2d/sdl_mixer
+2) Скачать репозиторий: `git clone --recurse-submodules https://github.com/dviglo2d/sdl_mixer repo`
+3) Создать ветку dv_гггг_мм_дд. Если нужна вторая ветка в тот же день, то назвать её dv_гггг_мм_дд_2
+4) Удалить подмодули батником:
 
 ```
 cd repo
@@ -49,6 +50,6 @@ rmdir /s /q .git\modules\external\wavpack
 git rm external/wavpack
 ```
 
-4) Назвать коммит: `Dviglo: Удалил подмодули`
-5) В репозитории движка обновить ветку в файлах add_submodules.sh и update_submodules.sh
-6) Запустить update_submodules.sh
+5) Назвать коммит: `Dviglo: Удалил подмодули`
+6) В репозитории движка обновить ветку в файлах add_submodules.sh и update_submodules.sh
+7) Запустить update_submodules.sh
