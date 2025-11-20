@@ -44,7 +44,11 @@ struct MainSubsystems
         }
 
         config = std::make_unique<DV_CONFIG_CLASS>();
+
         os_window = std::make_unique<OsWindow>(*config);
+        if (os_window->is_invalid())
+            return SDL_APP_FAILURE;
+
         shader_cache = std::make_unique<ShaderCache>();
         texture_cache = std::make_unique<TextureCache>();
         audio = std::make_unique<Audio>();

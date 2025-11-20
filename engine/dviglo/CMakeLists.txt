@@ -18,10 +18,9 @@ if(MSVC)
     target_compile_definitions(${target_name} PRIVATE _CRT_SECURE_NO_WARNINGS=1)
 endif()
 
-# Подключаем библиотеки из папки third_party.
-# Так как движок компилируется только в виде статической библиотеки,
-# то приложения тоже могут использовать сторонние библиотеки без проблем
-target_link_libraries(${target_name} PUBLIC dv_sdl glad stb glm pugixml freetype miniz)
+# Подключаем Vulkan
+find_package(Vulkan REQUIRED)
+target_link_libraries(${target_name} PUBLIC Vulkan::Vulkan)
 
 if(DV_OPENMP)
     # Подключаем OpenMP для параллельных вычислений
@@ -29,6 +28,9 @@ if(DV_OPENMP)
     target_link_libraries(${target_name} PUBLIC OpenMP::OpenMP_CXX)
     target_compile_definitions(${target_name} PUBLIC DV_OPENMP=1)
 endif()
+
+# Подключаем остальные библиотеки
+target_link_libraries(${target_name} PUBLIC dv_sdl glad stb glm pugixml freetype miniz)
 
 # Опции, которые не требуют ничего, кроме создания дефайнов
 foreach(opt

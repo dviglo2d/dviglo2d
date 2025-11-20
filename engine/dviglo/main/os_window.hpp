@@ -18,6 +18,7 @@ private:
     // Инициализируется в конструкторе
     inline static OsWindow* instance_ = nullptr;
 
+    // Конструктор не может возвращать значений, поэтому используем флаг
     bool is_invalid_ = false;
 
     SDL_Window* window_ = nullptr;

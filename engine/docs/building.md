@@ -8,8 +8,7 @@
 1. Git для скачивания исходников из репозитория
 2. Один из поддерживаемых компиляторов (об этом ниже)
 3. CMake для генерации проектов для используемого компилятора
-
-В Windows `Git` можно скачать [отсюда](https://git-scm.com), а `CMake` [отсюда](https://cmake.org).
+4. Vulkan SDK
 
 --------------------------------------------------
 
@@ -43,7 +42,7 @@ sudo apt update
 
 # Без libxrandr-dev не получится узнать список поддерживаемых разрешений.
 # Без libxi-dev игра не сможет захватывать курсор
-sudo apt install libgl1-mesa-dev libxrandr-dev libxi-dev libasound2-dev libxcursor-dev libxss-dev libxtst-dev
+sudo apt install libvulkan-dev libgl1-mesa-dev libxrandr-dev libxi-dev libasound2-dev libxcursor-dev libxss-dev libxtst-dev
 ```
 
 Полный список зависимостей SDL: <https://github.com/dviglo2d/sdl/blob/main/docs/README-linux.md>
@@ -65,6 +64,9 @@ sudo apt install libomp-18-dev
 --------------------------------------------------
 
 # Сборка в Windows
+
+`Git` можно скачать [отсюда](https://git-scm.com),`CMake` [отсюда](https://cmake.org),
+а `Vulkan SDK` [отсюда](https://vulkan.lunarg.com/sdk/home).
 
 Поддерживаемые компиляторы:
 
