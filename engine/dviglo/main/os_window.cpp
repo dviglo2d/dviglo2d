@@ -16,12 +16,11 @@ using namespace std;
 namespace dviglo
 {
 
-// Список необходимых расширений
+// Список обязательных расширений Vulkan.
+// В Windows возвращает [VK_KHR_SURFACE_EXTENSION_NAME, VK_KHR_WIN32_SURFACE_EXTENSION_NAME]
 static vector<const char*> get_required_instance_extensions()
 {
     u32 count;
-    // В Windows возвращает [VK_KHR_SURFACE_EXTENSION_NAME ("VK_KHR_surface")
-    // VK_KHR_WIN32_SURFACE_EXTENSION_NAME ("VK_KHR_win32_surface")
     const char* const* extensions = SDL_Vulkan_GetInstanceExtensions(&count);
 
     // Можно копировать указатели, так как строки в статической памяти
@@ -35,6 +34,13 @@ static vector<const char*> get_required_instance_extensions()
 bool OsWindow::vk_create_instance()
 {
     vector<const char*> extensions = get_required_instance_extensions();
+    std::vector<const char*> layers;
+
+    // Отладка
+#if 1
+    layers.push_back("VK_LAYER_KHRONOS_validation");
+    extensions.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
+#endif
 
     VkApplicationInfo app_info{};
     app_info.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
@@ -43,6 +49,8 @@ bool OsWindow::vk_create_instance()
     VkInstanceCreateInfo create_info{};
     create_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
     create_info.pApplicationInfo = &app_info;
+    create_info.enabledLayerCount = static_cast<u32>(layers.size());
+    create_info.ppEnabledLayerNames = layers.data();
     create_info.enabledExtensionCount = static_cast<u32>(extensions.size());
     create_info.ppEnabledExtensionNames = extensions.data();
 
