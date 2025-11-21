@@ -7,6 +7,7 @@
 
 #include <glm/glm.hpp>
 #include <SDL3/SDL.h>
+#include <vulkan/vulkan.h>
 
 
 namespace dviglo
@@ -23,6 +24,9 @@ private:
 
     SDL_Window* window_ = nullptr;
     SDL_GLContext gl_context_ = nullptr;
+    VkInstance vk_instance_ = nullptr;
+
+    bool vk_create_instance();
 
 public:
     static OsWindow* instance() { return instance_; }

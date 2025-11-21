@@ -6,12 +6,56 @@
 #include <dv_log.hpp>
 #include <dv_sdl_props.hpp>
 #include <glad/gl.h>
+#include <SDL3/SDL_vulkan.h>
+#include <vulkan/vk_enum_string_helper.h>
 
 using namespace glm;
+using namespace std;
 
 
 namespace dviglo
 {
+
+// Список необходимых расширений
+static vector<const char*> get_required_instance_extensions()
+{
+    u32 count;
+    // В Windows возвращает [VK_KHR_SURFACE_EXTENSION_NAME ("VK_KHR_surface")
+    // VK_KHR_WIN32_SURFACE_EXTENSION_NAME ("VK_KHR_win32_surface")
+    const char* const* extensions = SDL_Vulkan_GetInstanceExtensions(&count);
+
+    // Можно копировать указатели, так как строки в статической памяти
+    vector<const char*> ret;
+    for (u32 i = 0; i < count; ++i)
+        ret.push_back(extensions[i]);
+
+    return ret;
+}
+
+bool OsWindow::vk_create_instance()
+{
+    vector<const char*> extensions = get_required_instance_extensions();
+
+    VkApplicationInfo app_info{};
+    app_info.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+    app_info.apiVersion = VK_API_VERSION_1_0;
+
+    VkInstanceCreateInfo create_info{};
+    create_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+    create_info.pApplicationInfo = &app_info;
+    create_info.enabledExtensionCount = static_cast<u32>(extensions.size());
+    create_info.ppEnabledExtensionNames = extensions.data();
+
+    VkResult vk_result = vkCreateInstance(&create_info, nullptr, &vk_instance_);
+    if (vk_result != VK_SUCCESS)
+    {
+        Log::writef_error("{} | vkCreateInstance(...) | {}", DV_FUNC_SIG, string_VkResult(vk_result));
+        is_invalid_ = true;
+        return false;
+    }
+
+    return true;
+}
 
 OsWindow::OsWindow(const ConfigBase& config)
 {
@@ -67,6 +111,9 @@ OsWindow::OsWindow(const ConfigBase& config)
         SDL_SetWindowFullscreenMode(window_, &mode);
     }
 
+    if (!vk_create_instance())
+        return;
+
     gl_context_ = SDL_GL_CreateContext(window_);
 
     if (!gl_context_)
@@ -112,6 +159,9 @@ OsWindow::~OsWindow()
 
     if (gl_context_)
         SDL_GL_DestroyContext(gl_context_);
+
+    if (vk_instance_)
+        vkDestroyInstance(vk_instance_, nullptr);
 
     if (window_)
         SDL_DestroyWindow(window_);
