@@ -249,7 +249,8 @@ OsWindow::OsWindow(const ConfigBase& config)
         SDL_SetWindowFullscreenMode(window_, &mode);
     }
 
-    // Загружаем базовые функции
+    // Загружаем базовые функции: vkGetInstanceProcAddr, vkCreateInstance, vkEnumerateInstanceExtensionProperties,
+    // vkEnumerateInstanceLayerProperties, vkEnumerateInstanceVersion
     VULKAN_HPP_DEFAULT_DISPATCHER.init();
 
     if (!vk_create_instance())
