@@ -31,7 +31,7 @@ namespace dviglo
 {
     Log::write_error(pCallbackData->pMessage);
 
-    return VK_FALSE;
+    return vk::False;
 }
 
 // Список обязательных расширений Vulkan.
