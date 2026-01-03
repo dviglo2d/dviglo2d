@@ -14,3 +14,7 @@
   * Qt использует int: https://doc.qt.io/qt-5/qlist.html
     (был беззнаковый в [Qt3](https://doc.qt.io/archives/3.3/qvaluevector.html#size_type),
     стал знаковый в [Qt4](https://doc.qt.io/archives/4.3/qvector.html#size_type-typedef))
+* На данный момент в Vulkan всего 6 dispatchable хэндлов (VkInstance, VkPhysicalDevice, VkDevice, VkQueue,
+  VkCommandBuffer, VkExternalComputeQueueNV) - это всегда указатели и их нужно инициализировать nullptr.
+  Остальные хэндлы (non-dispatchable) - 64-битные числа и их нужно инициализировать VK_NULL_HANDLE
+  ([источник](https://registry.khronos.org/vulkan/specs/latest/html/vkspec.html#fundamentals-validusage-handles))
