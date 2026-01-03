@@ -133,6 +133,8 @@ bool OsWindow::vk_pick_physical_device()
 
 bool OsWindow::vk_create_logical_device()
 {
+    VULKAN_HPP_ASSERT(1 == 1);
+
 
 #if 0
 

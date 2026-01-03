@@ -10,6 +10,6 @@
 #endif
 
 #define VULKAN_HPP_NO_CONSTRUCTORS // Убираем конструкторы, чтобы разрешить aggregate initialization
-#define VULKAN_HPP_ASSERT // Отключаем assert
+#define VULKAN_HPP_ASSERT (void) // Отключаем assert
 #define VULKAN_HPP_NO_EXCEPTIONS // Отключаем исключения
 #include <vulkan/vulkan.hpp>
