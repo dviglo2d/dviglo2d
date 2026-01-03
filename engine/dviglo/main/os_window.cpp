@@ -133,6 +133,8 @@ bool OsWindow::vk_pick_physical_device()
 
 bool OsWindow::vk_create_logical_device()
 {
+#if 0
+
     vector<const char*> device_extensions;
     device_extensions.push_back("VK_KHR_swapchain");
 
@@ -171,6 +173,8 @@ bool OsWindow::vk_create_logical_device()
         return false;
     }
     vkGetDeviceQueue(vk_device_, g_QueueFamilyIndex, 0, &vk_queue_);
+
+#endif
 
     return true;
 }
