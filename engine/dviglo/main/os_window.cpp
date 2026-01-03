@@ -24,7 +24,7 @@ namespace dviglo
 {
 
 // Callback для вывода сообщений Vulkan
-static VKAPI_ATTR  vk::Bool32 VKAPI_CALL vk_debug_callback(vk::DebugUtilsMessageSeverityFlagBitsEXT messageSeverity
+static VKAPI_ATTR  VkBool32 VKAPI_CALL vk_debug_callback(vk::DebugUtilsMessageSeverityFlagBitsEXT messageSeverity
                                     , vk::DebugUtilsMessageTypeFlagsEXT messageType
                                     , const vk::DebugUtilsMessengerCallbackDataEXT* pCallbackData
                                     , void* pUserData)
