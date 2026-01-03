@@ -7,7 +7,6 @@
 #include <dv_sdl_props.hpp>
 #include <glad/gl.h>
 #include <SDL3/SDL_vulkan.h>
-#include <vulkan/vk_enum_string_helper.h>
 
 #include <iostream>
 
