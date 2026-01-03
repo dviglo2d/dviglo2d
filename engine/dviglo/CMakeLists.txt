@@ -49,7 +49,7 @@ endforeach()
 if(MSVC)
     target_compile_options(${target_name} PRIVATE /W4)
 else()
-    #target_compile_options(${target_name} PRIVATE -Wall -Wextra -Wpedantic)
+    target_compile_options(${target_name} PRIVATE -Wall -Wextra -Wpedantic)
 endif()
 
 # Делаем hpp-файлы движка доступными приложениям
