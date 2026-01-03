@@ -133,6 +133,7 @@ bool OsWindow::vk_pick_physical_device()
 
 bool OsWindow::vk_create_logical_device()
 {
+
 #if 0
 
     vector<const char*> device_extensions;
