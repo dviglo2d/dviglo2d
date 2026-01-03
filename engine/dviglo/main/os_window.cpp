@@ -24,10 +24,10 @@ namespace dviglo
 {
 
 // Callback для вывода сообщений Vulkan
-static VKAPI_ATTR  vk::Bool32 VKAPI_CALL vk_debug_callback(vk::DebugUtilsMessageSeverityFlagBitsEXT messageSeverity
-                                    , vk::DebugUtilsMessageTypeFlagsEXT messageType
-                                    , const vk::DebugUtilsMessengerCallbackDataEXT* pCallbackData
-                                    , void* pUserData)
+    VKAPI_ATTR vk::Bool32 VKAPI_CALL vk_debug_callback(vk::DebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+        vk::DebugUtilsMessageTypeFlagsEXT messageTypes,
+        vk::DebugUtilsMessengerCallbackDataEXT const* pCallbackData,
+        void* /*pUserData*/)
 {
     Log::write_error(pCallbackData->pMessage);
 

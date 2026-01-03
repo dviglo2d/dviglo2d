@@ -8,6 +8,7 @@
 #include <glm/glm.hpp>
 #include <SDL3/SDL.h>
 
+#include <vulkan/vulkan.h>
 #include <vulkan/vulkan.hpp>
 
 
