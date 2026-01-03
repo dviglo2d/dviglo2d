@@ -37,7 +37,7 @@ jobs:
 
     steps:
     - name: Устанавливаем Vulkan SDK # В Ubuntu устаревшая версия
-      uses: humbletim/setup-vulkan-sdk@v1.2
+      uses: humbletim/setup-vulkan-sdk@v1.2.1
       with:
         vulkan-query-version: latest
         vulkan-components: Vulkan-Headers, Vulkan-Loader
@@ -89,7 +89,7 @@ jobs:
 
     steps:
     - name: Устанавливаем Vulkan SDK
-      uses: humbletim/setup-vulkan-sdk@v1.2
+      uses: humbletim/setup-vulkan-sdk@v1.2.1
       with:
         vulkan-query-version: latest
         vulkan-components: Vulkan-Headers, Vulkan-Loader
