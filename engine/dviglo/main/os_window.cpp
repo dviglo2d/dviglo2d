@@ -14,17 +14,20 @@ using namespace glm;
 using namespace std;
 
 
+// Хранилище для указателей на функции Vulkan
+// (требует #define VULKAN_HPP_DISPATCH_LOADER_DYNAMIC 1).
+// Дефолтный статический загрузчик не загружает расширения, поэтому vulkan-1.lib из SDK даже не линкуем
+VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
+
 
 namespace dviglo
 {
 
 // Callback для вывода сообщений Vulkan
-static VKAPI_ATTR VkBool32 VKAPI_CALL vk_debug_callback
-(
-    VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-    VkDebugUtilsMessageTypeFlagsEXT messageType,
-    const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
-    void* pUserData)
+static vk::Bool32 vk_debug_callback(vk::DebugUtilsMessageSeverityFlagBitsEXT messageSeverity
+                                    , vk::DebugUtilsMessageTypeFlagsEXT messageType
+                                    , const vk::DebugUtilsMessengerCallbackDataEXT* pCallbackData
+                                    , void* pUserData)
 {
     Log::write_error(pCallbackData->pMessage);
 
@@ -179,6 +182,7 @@ bool OsWindow::vk_create_logical_device()
     return true;
 }
 
+/*
 VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger) {
     auto func = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT");
     if (func != nullptr) {
@@ -188,6 +192,8 @@ VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMes
         return VK_ERROR_EXTENSION_NOT_PRESENT;
     }
 }
+*/
+
 
 OsWindow::OsWindow(const ConfigBase& config)
 {
@@ -243,35 +249,43 @@ OsWindow::OsWindow(const ConfigBase& config)
         SDL_SetWindowFullscreenMode(window_, &mode);
     }
 
+    // Загружаем базовые функции
+    VULKAN_HPP_DEFAULT_DISPATCHER.init();
+
     if (!vk_create_instance())
         return;
 
-#if 0
+    // Загружаем все остальные функции
+    VULKAN_HPP_DEFAULT_DISPATCHER.init(*vk_instance_);
 
-    // Доступно только, если при создании контекста было запрошено расширение VK_EXT_DEBUG_UTILS_EXTENSION_NAME 
+    // Доступно только, если при создании контекста было запрошено расширение vk::EXTDebugUtilsExtensionName
 #if 1
     {
-        VkDebugUtilsMessengerCreateInfoEXT createInfo{};
-        createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
-        createInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT |
-            VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT |
-            VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
-            VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
-        createInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
-            VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
-            VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
-        createInfo.pfnUserCallback = vk_debug_callback;
-        createInfo.pUserData = nullptr; // Optional
+        vk::DebugUtilsMessengerCreateInfoEXT create_info {
+            .messageSeverity = vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose
+                               | vk::DebugUtilsMessageSeverityFlagBitsEXT::eInfo
+                               | vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning
+                               | vk::DebugUtilsMessageSeverityFlagBitsEXT::eError,
+            .messageType = vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral
+                           | vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation
+                           | vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance,
+            .pfnUserCallback = vk_debug_callback
+        };
 
-        VkResult vk_result = CreateDebugUtilsMessengerEXT(vk_instance_, &createInfo, nullptr, &vk_debug_messenger_);
-        if (vk_result != VK_SUCCESS)
+        vk::Result vk_result;
+        tie(vk_result, vk_debug_messenger_) = vk_instance_->createDebugUtilsMessengerEXTUnique(create_info).asTuple();
+
+        if (vk_result != vk::Result::eSuccess)
         {
-            Log::writef_error("{} | CreateDebugUtilsMessengerEXT(...) | {}", DV_FUNC_SIG, string_VkResult(vk_result));
+            Log::writef_error("{} | CreateDebugUtilsMessengerEXT(...) | {}", DV_FUNC_SIG, to_string(vk_result));
             is_invalid_ = true;
             return;
         }
     }
 #endif
+
+#if 0
+
 
 
     // Принудительная ошибка
@@ -333,12 +347,14 @@ OsWindow::OsWindow(const ConfigBase& config)
     Log::writef_info("GL_VERSION: {}", reinterpret_cast<const char*>(glGetString(GL_VERSION)));
 }
 
+/*
 void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks* pAllocator) {
     auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT");
     if (func != nullptr) {
         func(instance, debugMessenger, pAllocator);
     }
 }
+*/
 
 OsWindow::~OsWindow()
 {
@@ -348,8 +364,8 @@ OsWindow::~OsWindow()
         SDL_GL_DestroyContext(gl_context_);
 
     // Если удалить, то при завершении будет ошибка, которая не попадает в лог
-    if (vk_device_)
-        vkDestroyDevice(vk_device_, nullptr);
+    //if (vk_device_)
+    //    vkDestroyDevice(vk_device_, nullptr);
 
 #if 0
 

@@ -8,7 +8,7 @@
 #include <glm/glm.hpp>
 #include <SDL3/SDL.h>
 
-#include "../vk_utils/vulkan_wrapped.hpp"
+#include <vulkan/vulkan.hpp>
 
 
 namespace dviglo
@@ -26,7 +26,7 @@ private:
     SDL_Window* window_ = nullptr;
     SDL_GLContext gl_context_ = nullptr;
     vk::UniqueInstance vk_instance_;
-    VkDebugUtilsMessengerEXT vk_debug_messenger_ = nullptr;
+    vk::UniqueDebugUtilsMessengerEXT vk_debug_messenger_;
     VkSurfaceKHR vk_surface_ = nullptr;
     VkPhysicalDevice vk_physical_device_ = nullptr;
     VkDevice vk_device_ = nullptr;

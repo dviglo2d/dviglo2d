@@ -20,7 +20,11 @@ endif()
 
 # Подключаем Vulkan
 find_package(Vulkan REQUIRED)
-target_link_libraries(${target_name} PUBLIC Vulkan::Vulkan)
+target_compile_definitions(${target_name} PUBLIC VULKAN_HPP_NO_CONSTRUCTORS=1 VULKAN_HPP_NO_EXCEPTIONS=1 VULKAN_HPP_DISPATCH_LOADER_DYNAMIC=1)
+# Не линкуем статический загрузчик vulkan-1.lib из SDK, так как используем VULKAN_HPP_DISPATCH_LOADER_DYNAMIC
+#target_link_libraries(${target_name} PUBLIC Vulkan::Vulkan)
+# Вместо этого подключаем только заголовки
+target_include_directories(${target_name} PUBLIC ${Vulkan_INCLUDE_DIRS})
 
 if(DV_OPENMP)
     # Подключаем OpenMP для параллельных вычислений
