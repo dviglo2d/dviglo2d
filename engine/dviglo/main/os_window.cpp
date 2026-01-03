@@ -20,6 +20,9 @@ using namespace std;
 VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 
 
+static_assert(VK_HEADER_VERSION == 328, "Wrong VK_HEADER_VERSION!");
+
+
 namespace dviglo
 {
 
