@@ -22,7 +22,18 @@ private:
     bool is_invalid_ = false;
 
     SDL_Window* window_ = nullptr;
-    SDL_GLContext gl_context_ = nullptr;
+
+    // Доступные расширения для VkInstance
+    std::vector<vk::ExtensionProperties> vk_instance_extensions_;
+    // Доступные слои валидации
+    std::vector<vk::LayerProperties> vk_layers_;
+
+    vk::UniqueInstance vk_instance_;
+    vk::UniqueDebugUtilsMessengerEXT vk_debug_utils_messenger_;
+    vk::UniqueDevice vk_device_; // Логическое устройство
+
+    bool vk_create_instance();
+    bool vk_create_device(const vk::PhysicalDevice& physical_device);
 
 public:
     static OsWindow* instance() { return instance_; }
@@ -33,7 +44,6 @@ public:
     bool is_invalid() const { return is_invalid_; }
 
     SDL_Window* window() const { return window_; }
-    SDL_GLContext gl_context() const { return gl_context_; }
 
     glm::ivec2 get_size_in_pixels() const;
 };

@@ -153,7 +153,7 @@ endfunction()
 
 # После компиляции копирует dll-ки к экзешнику
 function(dv_copy_shared_libs_to_bin_dir exe_target_name)
-    set(dlls $<TARGET_FILE:Vulkan::Loader>) # vulkan-1.dll
+    set(dlls "")
 
     if(MINGW)
         # dll-ки MinGW находятся рядом с компилятором, поэтому определяем путь к компилятору
@@ -176,7 +176,9 @@ function(dv_copy_shared_libs_to_bin_dir exe_target_name)
         endif()
     endif()
 
-    add_custom_command(TARGET ${exe_target_name} POST_BUILD
-                       COMMAND ${CMAKE_COMMAND} -E copy_if_different ${dlls} $<TARGET_FILE_DIR:${exe_target_name}>
-                       COMMAND_EXPAND_LISTS)
+    if(NOT dlls STREQUAL "")
+        add_custom_command(TARGET ${exe_target_name} POST_BUILD
+                           COMMAND ${CMAKE_COMMAND} -E copy_if_different ${dlls} $<TARGET_FILE_DIR:${exe_target_name}>
+                           COMMAND_EXPAND_LISTS)
+    endif()
 endfunction()
