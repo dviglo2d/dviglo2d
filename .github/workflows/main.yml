@@ -37,11 +37,17 @@ jobs:
     - name: Устанавливаем зависимости
       run: |
         sudo apt update
-        sudo apt install libgl1-mesa-dev libxrandr-dev libxi-dev libasound2-dev libxcursor-dev libxss-dev libxtst-dev
+        # mesa-vulkan-drivers содержит lavapipe для софтварной эмуляции Vulkan
+        sudo apt install libgl1-mesa-dev libxrandr-dev libxi-dev libasound2-dev libxcursor-dev libxss-dev libxtst-dev mesa-vulkan-drivers
 
         if [ "${{ matrix.compiler.id }}" == "clang" ]
         then
           sudo apt install libomp-18-dev
+        fi
+
+        if [ "${{ matrix.build_type }}" == "debug" ]
+        then
+          sudo apt install vulkan-validationlayers
         fi
 
     - name: Скачиваем репозиторий
@@ -64,7 +70,7 @@ jobs:
 
     - name: CTest
       run: |
-        export LIBGL_ALWAYS_SOFTWARE=true
+        export VK_LOADER_LAYERS_DISABLE=VK_LAYER_MESA_device_select # Этот слой вызывает ошибку
         xvfb-run ctest --verbose --test-dir build --timeout 60
 
   windows:
@@ -115,16 +121,24 @@ jobs:
 
         cmake "${args[@]}"
 
-    - name: Качаем Mesa
+    - name: Качаем Vulkan SDK # Нужен только слой валидации
+      if: matrix.build_type == 'debug'
+      uses: humbletim/install-vulkan-sdk@v1.2
+      with:
+        version: latest
+        cache: true
+
+    - name: Регистрируем слой валидации Vulkan
+      if: matrix.build_type == 'debug'
+      shell: bash
+      run: reg add "HKEY_LOCAL_MACHINE\\SOFTWARE\\Khronos\\Vulkan\\ExplicitLayers" //t REG_DWORD //v "${VULKAN_SDK//\//\\}\\Bin\\VkLayer_khronos_validation.json" //d 0 //f
+
+    - name: Качаем и регистрируем lavapipe
       shell: bash
       run: |
-        curl.exe --location --output mesa.7z --url https://github.com/pal1000/mesa-dist-win/releases/download/22.2.3/mesa3d-22.2.3-release-msvc.7z
+        curl.exe --location --output mesa.7z --url https://github.com/pal1000/mesa-dist-win/releases/download/25.3.3/mesa3d-25.3.3-release-msvc.7z
         7z x mesa.7z -omesa
-        rm mesa.7z
-
-        mv mesa/x64/libgallium_wgl.dll build/result
-        mv mesa/x64/libglapi.dll build/result
-        mv mesa/x64/opengl32.dll build/result
+        reg add "HKEY_LOCAL_MACHINE\\SOFTWARE\\Khronos\\Vulkan\\Drivers" //t REG_DWORD //v "${GITHUB_WORKSPACE//\//\\}\\mesa\\x64\\lvp_icd.x86_64.json" //d 0 //f
 
     - name: CTest
       shell: bash
@@ -136,5 +150,4 @@ jobs:
           args+=(-C ${{ matrix.build_type }})
         fi
 
-        export LIBGL_ALWAYS_SOFTWARE=true
         ctest "${args[@]}"

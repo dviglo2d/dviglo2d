@@ -18,11 +18,9 @@ if(MSVC)
     target_compile_definitions(${target_name} PRIVATE _CRT_SECURE_NO_WARNINGS=1)
 endif()
 
-# Подключаем Vulkan
+# Подключаем vulkan.hpp
 target_link_libraries(${target_name} PUBLIC Vulkan::Headers)
-target_compile_definitions(${target_name} PUBLIC VULKAN_HPP_NO_CONSTRUCTORS=1 VULKAN_HPP_NO_EXCEPTIONS=1 VULKAN_HPP_DISPATCH_LOADER_DYNAMIC=1 VK_NO_PROTOTYPES=1)
-# Таргет Vulkan::Loader не подключаем. Загрузчик vulkan-1.dll/libvulkan.so компилируется, но его статическая
-# библиотека vulkan-1.lib не линкуется. Адреса функций Vulkan извлекаются динамически в vulkan.hpp
+target_compile_definitions(${target_name} PUBLIC VULKAN_HPP_NO_CONSTRUCTORS=1 VULKAN_HPP_NO_EXCEPTIONS=1 VULKAN_HPP_DISPATCH_LOADER_DYNAMIC=1 VK_NO_PROTOTYPES=1 "VULKAN_HPP_ASSERT_ON_RESULT=(void)")
 
 # Подключаем  остальные библиотеки из папки third_party.
 # Так как движок компилируется только в виде статической библиотеки,

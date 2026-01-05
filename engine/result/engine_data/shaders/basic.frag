@@ -1,8 +1,11 @@
-#version 330 core
+#version 450
 
-uniform vec4 u_color;
+layout (push_constant) uniform FragConsts
+{
+    vec4 u_color;
+};
 
-out vec4 f_color;
+layout (location = 0) out vec4 f_color;
 
 void main()
 {
