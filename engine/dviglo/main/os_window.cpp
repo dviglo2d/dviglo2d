@@ -354,20 +354,11 @@ OsWindow::OsWindow(const ConfigBase& config)
 #if 1
     { // TODO: Просто тест
         fs::path base_path = get_base_path();
-        vector<byte> shader_code = read_all_data(base_path / "engine_data/shaders/basic.vert.spv");
+        vk::UniqueShaderModule shader_module = load_shader(*vk_device_, base_path / "engine_data/shaders/basic.vert.spv");
 
-        vk::ShaderModuleCreateInfo sm_create_info
+        if (!shader_module)
         {
-            .codeSize = shader_code.size(),
-            .pCode = reinterpret_cast<const uint32_t*>(shader_code.data()),
-        };
-
-        vk::UniqueShaderModule shader_module;
-        tie(vk_result, shader_module) = vk_device_->createShaderModuleUnique(sm_create_info).asTuple();
-
-        if (vk_result != vk::Result::eSuccess)
-        {
-            Log::writef_error("{} | vk_device_->createShaderModuleUnique(...) | {}", DV_FUNC_SIG, vk::to_string(vk_result));
+            Log::writef_error("{} | !shader_module", DV_FUNC_SIG);
             is_invalid_ = true;
             return;
         }

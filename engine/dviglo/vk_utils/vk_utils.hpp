@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include <dv_string.hpp>
+#include <dv_fs.hpp>
 #include <vulkan/vulkan.hpp>
 
 
@@ -54,5 +54,8 @@ constexpr bool contains(const std::vector<vk::LayerProperties>& layers, const St
 
     return false;
 }
+
+// Загружает SPIR-V шейдер из файла. Возвращает {} в случае неудачи
+vk::UniqueShaderModule load_shader(const vk::Device device, const fs::path& path);
 
 }  // namespace dviglo

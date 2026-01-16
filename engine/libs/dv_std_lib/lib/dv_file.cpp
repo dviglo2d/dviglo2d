@@ -3,9 +3,6 @@
 
 #include "dv_file.hpp"
 
-#include "dv_log.hpp"
-
-#include <array>
 #include <fstream>
 
 using namespace std;
@@ -13,28 +10,6 @@ using namespace std;
 
 namespace dviglo
 {
-
-vector<byte> read_all_data(const fs::path& path)
-{
-    vector<byte> ret;
-
-    // Открываем файл сразу в конце, чтобы получить его размер
-    ifstream stream(path, ios::binary | ios::ate);
-    if (!stream)
-    {
-        Log::writef_error("{} | !stream | {}", DV_FUNC_SIG, path);
-        return ret;
-    }
-
-    // Определяем размер файла и выделяем память
-    ret.resize(stream.tellg());
-
-    // Возвращаемся в начало файла и читаем содержимое
-    stream.seekg(0);
-    stream.read(reinterpret_cast<char*>(ret.data()), ret.size());
-
-    return ret;
-}
 
 StrUtf8 read_all_text(const fs::path& path)
 {
