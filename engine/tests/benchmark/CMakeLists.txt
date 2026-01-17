@@ -25,6 +25,20 @@ target_link_libraries(${target_name} PRIVATE dviglo)
 # Копируем динамические библиотеки в папку с приложением
 dv_copy_shared_libs_to_bin_dir(${target_name})
 
+# Компилируем шейдеры
+add_dependencies(${target_name} dv_compile_engine_shaders)
+
+# Копируем ресурсы в result
+add_custom_command(TARGET ${target_name} POST_BUILD
+                   COMMAND ${CMAKE_COMMAND} -E copy_directory_if_newer
+                       ${CMAKE_BINARY_DIR}/shaders
+                       $<TARGET_FILE_DIR:${target_name}>/engine_data/shaders)
+
+add_custom_command(TARGET ${target_name} POST_BUILD
+                   COMMAND ${CMAKE_COMMAND} -E copy_directory_if_newer
+                       ${CMAKE_CURRENT_SOURCE_DIR}/../../engine_test_data
+                       $<TARGET_FILE_DIR:${target_name}>/engine_test_data)
+
 # Заставляем VS отображать дерево каталогов
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${source_files})
 

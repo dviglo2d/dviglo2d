@@ -65,6 +65,10 @@ if(MSVC)
     add_compile_options(/MP)
 endif()
 
+# Ищем компилятор шейдеров в SPIR-V
+find_program(dv_glslc_executable glslc HINTS "$ENV{VULKAN_SDK}/bin" REQUIRED)
+message(STATUS "Найден glslc: ${dv_glslc_executable}")
+
 # ==================== Опции движка ====================
 
 # Получаем доступ к макросу cmake_dependent_option
@@ -101,33 +105,6 @@ function(dv_add_all_subdirs)
         # Все лишние аргументы помещаются в ARGN
         add_subdirectory(${child} ${ARGN})
     endforeach()
-endfunction()
-
-# Создаёт ссылку для папки. Если ссылку создать не удалось, то копирует папку
-function(dv_create_dir_link from to)
-    if(EXISTS ${to})
-        return()
-    endif()
-
-    if(NOT CMAKE_HOST_WIN32)
-        execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${from} ${to}
-                        OUTPUT_QUIET ERROR_QUIET RESULT_VARIABLE RESULT)
-    else()
-        # Не используем create_symlink в Windows, так как создание symbolic links
-        # [требует админских прав](https://ss64.com/nt/mklink.html),
-        # а поддержка junctions из CMake
-        # [была удалена](https://gitlab.kitware.com/cmake/cmake/-/merge_requests/7530)
-        string(REPLACE / \\ from ${from})
-        string(REPLACE / \\ to ${to})
-        execute_process(COMMAND cmd /C mklink /J ${to} ${from}
-                        OUTPUT_QUIET ERROR_QUIET RESULT_VARIABLE RESULT)
-    endif()
-
-    if(NOT RESULT EQUAL 0)
-        # Причиной неудачи может быть перезаписанная переменная PATH, в которой нет %SystemRoot%\system32
-        message("Не удалось создать ссылку для папки, поэтому копируем папку")
-        execute_process(COMMAND ${CMAKE_COMMAND} -E copy_directory  ${from} ${to})
-    endif()
 endfunction()
 
 # Куда будут помещены следующие скомпилированные экзешники и динамические библиотеки.

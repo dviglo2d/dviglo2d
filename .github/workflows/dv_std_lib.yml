@@ -36,6 +36,9 @@ jobs:
     name: 🐧-${{ matrix.compiler.id }}-${{ matrix.build_type }}
 
     steps:
+    - name: Устанавливаем новейший CMake
+      uses: ssrobins/install-cmake@v1
+
     - name: Скачиваем репозиторий
       uses: actions/checkout@v4
       with:
@@ -69,6 +72,9 @@ jobs:
     name: 🔲-${{ matrix.compiler }}-${{ matrix.build_type }}
 
     steps:
+    - name: Устанавливаем новейший CMake
+      uses: ssrobins/install-cmake@v1
+
     - name: Скачиваем репозиторий
       uses: actions/checkout@v4
       with:

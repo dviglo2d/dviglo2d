@@ -7,9 +7,8 @@
 Необходимый софт:
 1. Git для скачивания исходников из репозитория
 2. Один из поддерживаемых компиляторов (об этом ниже)
-3. CMake для генерации проектов для используемого компилятора
-
-В Windows `Git` можно скачать [отсюда](https://git-scm.com), а `CMake` [отсюда](https://cmake.org).
+3. CMake 4.2+ для генерации проектов для используемого компилятора
+4. Vulkan SDK для компиляции шейдеров в SPIR-V, а также для отладки, так как содержит слои валидации
 
 --------------------------------------------------
 
@@ -42,8 +41,9 @@ sudo apt install gcc-13 g++-13 -y
 sudo apt update
 
 # Без libxrandr-dev не получится узнать список поддерживаемых разрешений.
-# Без libxi-dev игра не сможет захватывать курсор
-sudo apt install libgl1-mesa-dev libxrandr-dev libxi-dev libasound2-dev libxcursor-dev libxss-dev libxtst-dev
+# Без libxi-dev игра не сможет захватывать курсор.
+# glslc - компилятор шейдеров в SPIR-V, vulkan-validationlayers - слои валидации Vulkan
+sudo apt install glslc vulkan-validationlayers libgl1-mesa-dev libxrandr-dev libxi-dev libasound2-dev libxcursor-dev libxss-dev libxtst-dev
 ```
 
 Полный список зависимостей SDL: <https://github.com/dviglo2d/sdl/blob/main/docs/README-linux.md>
@@ -58,6 +58,16 @@ sudo apt install libomp-18-dev
 Это добавит в зависимости пакет libomp5-18t64, который должен быть установлен
 у конечного пользователя. Впрочем, движок можно скомпилировать и без поддержки OpenMP: `DV_OPENMP=0`.
 
+## Установка CMake
+
+В репозитории Linux Mint устаревшая версия CMake.
+
+1) Скачайте [cmake-*-linux-x86_64.tar.gz](https://cmake.org/download/)
+2) Распакуйте в `~/files/programs/cmake/`
+3) В файл `~/.profile` добавьте `export PATH="/home/user/files/programs/cmake/bin/:$PATH"`
+   (создайте файл, если его нет)
+4) Перелогиньте текущего пользователя
+
 ## Сборка
 
 Запустите скрипт `build_linux.sh`.
@@ -65,6 +75,9 @@ sudo apt install libomp-18-dev
 --------------------------------------------------
 
 # Сборка в Windows
+
+`Git` можно скачать [отсюда](https://git-scm.com),`CMake` [отсюда](https://cmake.org),
+а `Vulkan SDK` [отсюда](https://vulkan.lunarg.com/sdk/home).
 
 Поддерживаемые компиляторы:
 

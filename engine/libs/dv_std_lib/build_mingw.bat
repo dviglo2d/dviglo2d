@@ -1,5 +1,5 @@
 :: Меняем кодировку консоли на UTF-8
-chcp 65001
+chcp 65001 >nul
 
 :: Указываем путь к cmake.exe и MinGW. Без system32 в PATH ссылки на папки не создаются
 set "PATH=%SystemRoot%\system32;c:\programs\cmake\bin;c:\msys64\ucrt64\bin"

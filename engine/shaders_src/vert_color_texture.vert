@@ -1,18 +1,21 @@
-#version 330 core
+#version 450
 
-// Вертикальное отражение необходимо при рендеринге в текстуру
-uniform bool u_flip_vertically;
+layout (push_constant) uniform VertConsts
+{
+    // Вертикальное отражение при рендеринге в текстуру в Vulkan не нужно
+    bool u_flip_vertically; // TODO: В C++ должен быть VkBool32, который гарантированно 32 бита
 
-// Чтобы не вычислять (2 / ширина_экрана, 2 / высота_экрана) для каждой вершины, вычисляется 1 раз на CPU
-uniform vec2 u_pixel_size;
+    // Чтобы не вычислять (2 / ширина_экрана, 2 / высота_экрана) для каждой вершины, вычисляется 1 раз на CPU
+    vec2 u_pixel_size;
+};
 
 // Атрибуты вершины
 layout (location = 0) in vec2 a_pos;
 layout (location = 1) in vec4 a_color;
 layout (location = 2) in vec2 a_uv;
 
-out vec4 v_color;
-out vec2 v_uv;
+layout (location = 0) out vec4 v_color;
+layout (location = 1) out vec2 v_uv;
 
 void main()
 {

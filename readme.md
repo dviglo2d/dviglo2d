@@ -10,6 +10,10 @@
 
 Поддерживаемые ОС: Linux и Windows 10+.
 
+Используемый графический API: Vulkan 1.0.
+
+Vulkan-версия находится на этапе разработки и сломана. Старая OpenGL-версия находится [тут](https://github.com/dviglo2d/dviglo2d_gl).
+
 Скачивание репозитория с подмодулями в папку repo: `git clone --recurse-submodules --shallow-submodules https://github.com/dviglo2d/dviglo2d repo`.
 
 Для компиляции в Linux запустите `build_linux.sh`. Необходимые зависимости: [engine/docs/building.md](engine/docs/building.md).
