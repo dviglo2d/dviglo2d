@@ -18,6 +18,7 @@ using namespace std;
 namespace dviglo
 {
 
+// Печатает список доступных расширений Instance
 static void vk_print_instance_extensions(const vector<vk::ExtensionProperties>& vk_instance_extensions)
 {
     StrAscii str;
@@ -32,6 +33,7 @@ static void vk_print_instance_extensions(const vector<vk::ExtensionProperties>& 
     Log::writef_info("Vulkan instance extensions (with specVersion): {}", str);
 }
 
+// Печатает список доступных слоёв валидации
 static void vk_print_instance_layers(const std::vector<vk::LayerProperties>& vk_layers)
 {
     if (!vk_layers.size())
@@ -51,6 +53,7 @@ static void vk_print_instance_layers(const std::vector<vk::LayerProperties>& vk_
     }
 }
 
+// Колбэк для вывода сообщений от слоёв валидации
 static VKAPI_ATTR vk::Bool32 VKAPI_CALL vk_debug_callback(vk::DebugUtilsMessageSeverityFlagBitsEXT message_severity,
                                                           vk::DebugUtilsMessageTypeFlagsEXT /*message_types*/,
                                                           vk::DebugUtilsMessengerCallbackDataEXT const* callback_data,
@@ -83,7 +86,7 @@ static VKAPI_ATTR vk::Bool32 VKAPI_CALL vk_debug_callback(vk::DebugUtilsMessageS
     return vk::False;
 }
 
-// Создаёт структуру vk::DebugUtilsMessengerCreateInfoEXT
+// Создаёт и заполняет структуру vk::DebugUtilsMessengerCreateInfoEXT
 static constexpr vk::DebugUtilsMessengerCreateInfoEXT create_debug_info()
 {
     vk::DebugUtilsMessengerCreateInfoEXT ret
@@ -438,7 +441,6 @@ OsWindow::OsWindow(const ConfigBase& config)
             return;
         }
     }
-
 
     // Командный пул
     {
