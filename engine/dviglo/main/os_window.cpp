@@ -263,6 +263,8 @@ bool OsWindow::vk_pick_physical_device(const vector<vk::PhysicalDevice>& physica
     vk_present_family_index_ = 0;
     vk_physical_device_ = physical_devices[0];
 
+    // TODO: Проверить наличие расширения VK_KHR_SWAPCHAIN_EXTENSION_NAME
+
     if (!vk_physical_device_)
     {
         Log::writef_error("{} | Failed to find a suitable GPU!", DV_FUNC_SIG);
@@ -297,14 +299,16 @@ bool OsWindow::vk_create_device()
         queue_infos.push_back(queue_info);
     }
 
+    vector<const char*> extensions { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
     vk::PhysicalDeviceFeatures features = vk_physical_device_.getFeatures();
 
     vk::DeviceCreateInfo device_info
     {
-        .queueCreateInfoCount = static_cast<u32>(queue_infos.size()),
-        .pQueueCreateInfos = queue_infos.data(),
         .pEnabledFeatures = &features, // TODO: Включать только то, что нужно
     };
+
+    device_info.setQueueCreateInfos(queue_infos)
+               .setPEnabledExtensionNames(extensions);
 
     // Слои валидации для устройств являются deprecated даже в спецификации 1.0
 
