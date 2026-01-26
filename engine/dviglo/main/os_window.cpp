@@ -18,11 +18,11 @@ using namespace std;
 namespace dviglo
 {
 
-// Печатает список доступных расширений Instance
-static void vk_print_instance_extensions(const vector<vk::ExtensionProperties>& vk_instance_extensions)
+// Печатает список доступных расширений Instance или Device
+static void vk_print_extensions(const StrUtf8& prefix, const vector<vk::ExtensionProperties>& extensions, const StrUtf8& indent = "")
 {
     StrAscii str;
-    for (const vk::ExtensionProperties& ext : vk_instance_extensions)
+    for (const vk::ExtensionProperties& ext : extensions)
     {
         if (!str.empty())
             str += ", ";
@@ -30,26 +30,30 @@ static void vk_print_instance_extensions(const vector<vk::ExtensionProperties>& 
         str += StrAscii(ext.extensionName.data()) + " (" + vk_version_to_string(ext.specVersion) + ")";
     }
 
-    Log::writef_info("Vulkan instance extensions (with specVersion): {}", str);
+    if (str.empty())
+        str = "none";
+
+    Log::writef_info("{}{} extensions (with specVersion): {}", indent, prefix, str);
 }
 
-// Печатает список доступных слоёв валидации
-static void vk_print_instance_layers(const std::vector<vk::LayerProperties>& vk_layers)
+// Печатает список доступных слоёв валидации Instance или Device
+static void vk_print_layers(const StrUtf8& prefix, const vector<vk::LayerProperties>& layers, const StrUtf8& indent = "")
 {
-    if (!vk_layers.size())
+    if (!layers.size())
     {
-        Log::write_info("No Vulkan instance layers available");
+        Log::writef_info("{}{} layers: none", indent, prefix);
         return;
     }
 
-    Log::write_info("Vulkan instance layers (layerName | specVersion | implementationVersion | description):");
+    Log::writef_info("{}{} layers (layerName | specVersion | implementationVersion | description):", indent, prefix);
 
-    for (const vk::LayerProperties& layer : vk_layers)
+    for (const vk::LayerProperties& layer : layers)
     {
-        Log::writef_info("* {} | {} | {} | {}", layer.layerName.data(),
-                                                vk_version_to_string(layer.specVersion),
-                                                vk_version_to_string(layer.implementationVersion),
-                                                layer.description.data());
+        Log::writef_info("{}* {} | {} | {} | {}", indent,
+                                                  layer.layerName.data(),
+                                                  vk_version_to_string(layer.specVersion),
+                                                  vk_version_to_string(layer.implementationVersion),
+                                                  layer.description.data());
     }
 }
 
@@ -220,9 +224,35 @@ static void vk_print_physical_devices(const vector<vk::PhysicalDevice>& physical
                 vk::MemoryType& type = memory_properties.memoryTypes[i];
                 Log::writef_info("   * Type {}: heap_index = {}, flags = {}", i, type.heapIndex, vk::to_string(type.propertyFlags));
             }
+        }
 
-            // В стандарте гарантируется не менее 128 байтов
-            Log::writef_info("   Push constants limit = {} B", properties.limits.maxPushConstantsSize);
+        // В стандарте гарантируется не менее 128 байтов
+        Log::writef_info("   Push constants limit = {} B", properties.limits.maxPushConstantsSize);
+
+        // Печатаем доступные расширений для устройства
+        {
+            auto [vk_result, extensions] = physical_device.enumerateDeviceExtensionProperties();
+
+            if (vk_result != vk::Result::eSuccess)
+            {
+                Log::writef_error("{} | physical_device.enumerateDeviceExtensionProperties() | {}", DV_FUNC_SIG, vk::to_string(vk_result));
+                continue;
+            }
+
+            vk_print_extensions("Vulkan device", extensions, "   ");
+        }
+
+        // Печатаем доступные слои валидации для устройства (их использовать нельзя, они deprecated)
+        {
+            auto [vk_result, layers] = physical_device.enumerateDeviceLayerProperties();
+
+            if (vk_result != vk::Result::eSuccess)
+            {
+                Log::writef_error("{} | physical_device.enumerateDeviceLayerProperties() | {}", DV_FUNC_SIG, vk::to_string(vk_result));
+                continue;
+            }
+
+            vk_print_layers("Vulkan device", layers, "   ");
         }
     }
 }
@@ -318,7 +348,7 @@ OsWindow::OsWindow(const ConfigBase& config)
             return;
         }
 
-        vk_print_instance_extensions(vk_instance_extensions_);
+        vk_print_extensions("Vulkan instance", vk_instance_extensions_);
     }
 
     // Печатаем доступные слои валидации
@@ -331,7 +361,7 @@ OsWindow::OsWindow(const ConfigBase& config)
             return;
         }
 
-        vk_print_instance_layers(vk_layers_);
+        vk_print_layers("Vulkan instance", vk_layers_);
     }
 
     if (!SDL_InitSubSystem(SDL_INIT_VIDEO))
