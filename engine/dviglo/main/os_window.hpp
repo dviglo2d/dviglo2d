@@ -37,13 +37,12 @@ private:
     // Эти два семейства очередей скорее всего будут одним семейством
     u32 vk_graphics_family_index_ = std::numeric_limits<u32>::max();
     u32 vk_present_family_index_ = std::numeric_limits<u32>::max();
-    vk::Queue vk_graphics_queue_;
-    vk::Queue vk_present_queue_;
-
     vk::PhysicalDevice vk_physical_device_;
     bool vk_pick_physical_device(const std::vector<vk::PhysicalDevice>& physical_devices);
 
     vk::UniqueDevice vk_device_; // Логическое устройство
+    vk::Queue vk_graphics_queue_;
+    vk::Queue vk_present_queue_;
     bool vk_create_device();
 
     vma::UniqueAllocator vma_allocator_;
