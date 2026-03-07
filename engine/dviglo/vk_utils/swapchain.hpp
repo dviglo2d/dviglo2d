@@ -14,13 +14,15 @@ namespace dviglo
 class Swapchain
 {
 private:
+    // Поля расположены в порядке инициализации
+
     vk::PresentModeKHR   present_mode_ = vk::PresentModeKHR::eImmediate;
     vk::Extent2D         image_extent_ = {};
     vk::SurfaceFormatKHR surface_format_ = {};
 
     vk::UniqueSwapchainKHR value_ = {};
 
-    // Их уничтожать не надо, будут уничтожены при уничтожении value_
+    // Изображения уничтожать не надо, будут уничтожены при уничтожении value_
     std::vector<vk::Image> images_ = {};
 
     std::vector<vk::UniqueImageView> image_views_ = {};

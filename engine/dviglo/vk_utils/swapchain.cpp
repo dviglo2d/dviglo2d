@@ -101,12 +101,12 @@ std::optional<Swapchain> Swapchain::construct(vk::PhysicalDevice physical_device
         else
         {
             ret.image_extent_.width = glm::clamp(static_cast<u32>(window_size.x),
-                                             surface_capabilities.minImageExtent.width,
-                                             surface_capabilities.maxImageExtent.width);
+                                                 surface_capabilities.minImageExtent.width,
+                                                 surface_capabilities.maxImageExtent.width);
 
             ret.image_extent_.height = glm::clamp(static_cast<u32>(window_size.y),
-                                              surface_capabilities.minImageExtent.height,
-                                              surface_capabilities.maxImageExtent.height);
+                                                  surface_capabilities.minImageExtent.height,
+                                                  surface_capabilities.maxImageExtent.height);
         }
 
     }
