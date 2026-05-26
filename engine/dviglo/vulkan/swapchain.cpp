@@ -568,7 +568,7 @@ std::optional<Swapchain> Swapchain::construct(vk::PhysicalDevice physical_device
                 .queueFamilyIndex = 0, // TODO: Индекс может быть другим
             };
 
-            tie(vk_result, ret.vk_command_pool_) = device.createCommandPoolUnique(command_pool_info).asTuple();
+            tie(vk_result, ret.command_pool_) = device.createCommandPoolUnique(command_pool_info).asTuple();
 
             if (vk_result != vk::Result::eSuccess)
             {
@@ -579,18 +579,18 @@ std::optional<Swapchain> Swapchain::construct(vk::PhysicalDevice physical_device
 
         {
             vk::CommandBufferAllocateInfo cb_alloc_info{
-                .commandPool = ret.vk_command_pool_.get(),
+                .commandPool = ret.command_pool_.get(),
                 .level = vk::CommandBufferLevel::ePrimary,
                 .commandBufferCount = image_count,
             };
-            std::tie(vk_result, ret.cmd_buffers) = device.allocateCommandBuffersUnique(cb_alloc_info).asTuple();
+            std::tie(vk_result, ret.command_buffers_) = device.allocateCommandBuffers(cb_alloc_info).asTuple();
             assert(vk_result == vk::Result::eSuccess); // LOG
 
 
             // Сразу заполняем все
             for (size_t image_index = 0; image_index < image_count; ++image_index)
             {
-                vk::CommandBuffer cmd = ret.cmd_buffers[image_index].get();
+                vk::CommandBuffer cmd = ret.command_buffers_[image_index];
 
                 vk::CommandBufferBeginInfo command_buffer_begin_info;
                 vk_result = cmd.begin(command_buffer_begin_info);
@@ -671,7 +671,7 @@ vk::Result Swapchain::present(vk::Queue graphics_queue, vk::Queue present_queue,
 
  // --- Вывод offscreen-текстуры с преобразованием через to_srgb.frag -------------------------------
 
-    vk::CommandBuffer cmd = cmd_buffers[image_index].get();
+    vk::CommandBuffer cmd = command_buffers_[image_index];
 
 // Сабмит (как в #if 1)
 vk::SubmitInfo submit_info{

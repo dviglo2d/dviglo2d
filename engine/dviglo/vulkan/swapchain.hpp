@@ -48,8 +48,11 @@ private:
     vk::UniquePipeline pipeline;
     std::vector<vk::UniqueFramebuffer> swapchain_framebuffers_;
 
-    vk::UniqueCommandPool vk_command_pool_; // Не обязательно, но пусть будет свой командный пул, чтобы не передавать
-    std::vector<vk::UniqueCommandBuffer> cmd_buffers; // Отдельный статический командный буфер для каждого изображения
+    vk::UniqueCommandPool command_pool_; // Не обязательно, но пусть будет свой командный пул, чтобы не передавать
+
+    // Отдельный статический командный буфер для каждого изображения.
+    // Будут уничтожены при уничтожении пула
+    std::vector<vk::CommandBuffer> command_buffers_;
 
     vk::UniqueFence fence;
 
