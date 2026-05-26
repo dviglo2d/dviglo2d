@@ -9,6 +9,7 @@
 namespace dviglo
 {
 
+// Закадровое (внеэкранное) изображение
 struct OffscreenImage
 {
     VmaAllocatedImage   allocated_image;
