@@ -408,7 +408,7 @@ public:
 
        // DV_OS_WINDOW->vk_device_->resetFences(1, &(*in_flight_fence_));
 
-#if 1 // Отправка оистки не нужна
+#if 0 // Отправка оистки не нужна
 
         //vk::PipelineStageFlags wait_stages[] = { vk::PipelineStageFlagBits::eColorAttachmentOutput };
         vk::PipelineStageFlags wait_stages[] = { vk::PipelineStageFlagBits::eTransfer };
