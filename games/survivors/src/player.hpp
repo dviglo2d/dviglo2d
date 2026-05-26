@@ -2,7 +2,7 @@
 
 #include "map.hpp"
 
-#include <dviglo/graphics/sprite_batch.hpp>
+#include <dviglo/graphics/sprite_batch_old.hpp>
 #include <glm/glm.hpp>
 
 using namespace dviglo;

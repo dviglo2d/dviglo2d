@@ -4,7 +4,7 @@
 
 #include <dviglo/audio/audio.hpp>
 #include <dviglo/gl_utils/texture.hpp>
-#include <dviglo/graphics/sprite_batch.hpp>
+#include <dviglo/graphics/sprite_batch_old.hpp>
 
 #include <SDL3_mixer/SDL_mixer.h>
 
@@ -23,5 +23,5 @@ public:
     ~PuzzleInterface();
 
     void on_click(vec2 mouse_pos);
-    void draw(SpriteBatch* sprite_batch);
+    void draw(SpriteBatchOld* sprite_batch);
 };

@@ -90,17 +90,17 @@ void App::draw()
     glClearColor(0.f, 0.3f, 0.3f, 1.f);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    sprite_batch_->prepare_ogl();
+    sprite_batch_old_->prepare_ogl();
 
     // Рисуем игровое поле
-    puzzle_interface_->draw(sprite_batch_.get());
+    puzzle_interface_->draw(sprite_batch_old_.get());
 
     // Рисуем кнопку "Новая игра"
-    sprite_batch_->draw_sprite(spritesheet_.get(), new_game_pos, &new_game_uv);
+    sprite_batch_old_->draw_sprite(spritesheet_.get(), new_game_pos, &new_game_uv);
 
     if (puzzle_logic_->check_win())
-        sprite_batch_->draw_string("Победа!", my_font_.get(), vec2{216.f, 340.f});
+        sprite_batch_old_->draw_string("Победа!", my_font_.get(), vec2{216.f, 340.f});
 
     // Выводим накопленные спрайты
-    sprite_batch_->flush();
+    sprite_batch_old_->flush();
 }

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <dv_subsystem_index.hpp>
-#include <dviglo/graphics/sprite_batch.hpp>
+#include <dviglo/graphics/sprite_batch_old.hpp>
 #include <entt/entt.hpp>
 #include <glm/glm.hpp>
 
@@ -17,7 +17,7 @@ private:
     // Инициализируется в конструкторе
     inline static Global* instance_ = nullptr;
 
-    unique_ptr<SpriteBatch> sprite_batch_;
+    unique_ptr<SpriteBatchOld> sprite_batch_;
     unique_ptr<SpriteFont> r_20_font_;
     shared_ptr<Texture> spritesheet_;
     unique_ptr<registry> reg_;
@@ -31,7 +31,7 @@ public:
     // Рисовать ли коллайдеры объектов
     bool debug_draw = false;
 
-    SpriteBatch* sprite_batch() const { return sprite_batch_.get(); }
+    SpriteBatchOld* sprite_batch() const { return sprite_batch_.get(); }
     SpriteFont* r_20_font() const { return r_20_font_.get(); }
     Texture* spritesheet() const { return spritesheet_.get(); }
     registry* reg() const { return reg_.get(); }

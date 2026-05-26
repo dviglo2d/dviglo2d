@@ -44,7 +44,7 @@ void s_update_drone_velocities(i64 ns)
 void s_draw_enemies()
 {
     registry& reg = *GLOBAL->reg();
-    SpriteBatch& sprite_batch = *GLOBAL->sprite_batch();
+    SpriteBatchOld& sprite_batch = *GLOBAL->sprite_batch();
 
     auto view = reg.view<CObject, CEnemy>();
     for (entity ent : view)
@@ -57,7 +57,7 @@ void s_draw_enemies()
 void s_draw_enemy_hitboxes()
 {
     registry& reg = *GLOBAL->reg();
-    SpriteBatch& sprite_batch = *GLOBAL->sprite_batch();
+    SpriteBatchOld& sprite_batch = *GLOBAL->sprite_batch();
 
     auto view = reg.view<CObject, CEnemy>();
     for (auto [ent, obj, enemy] : view.each())

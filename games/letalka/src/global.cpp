@@ -10,7 +10,7 @@ Global::Global()
     instance_ = this;
 
     reg_ = make_unique<registry>();
-    sprite_batch_ = make_unique<SpriteBatch>();
+    sprite_batch_ = make_unique<SpriteBatchOld>();
 
     fs::path base_path = get_base_path();
     spritesheet_ = DV_TEXTURE_CACHE->get(base_path / "letalka_data/textures/spritesheet.png");

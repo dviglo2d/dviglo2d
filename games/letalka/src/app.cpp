@@ -78,7 +78,7 @@ void App::draw()
     ecs_draw();
 
     SpriteFont* font = GLOBAL->r_20_font();
-    SpriteBatch* sprite_batch = global_->sprite_batch();
+    SpriteBatchOld* sprite_batch = global_->sprite_batch();
 
     StrUtf8 debug_text = StrUtf8("Отладка (F2): ") + (global_->debug_draw ? "ВКЛ" : "ВЫКЛ");
     Rect debug_rect = sprite_batch->measure_string_sprites(debug_text, font);

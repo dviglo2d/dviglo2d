@@ -18,7 +18,7 @@ App::App()
     Log::writef_info("Папка программы: {}", base_path.string());
 
     texture_ = DV_TEXTURE_CACHE->get(base_path / "engine_test_data/textures/tile128.png");
-    sprite_batch_ = make_unique<SpriteBatch>();
+    sprite_batch_ = make_unique<SpriteBatchOld>();
 
     font_ = make_unique<SpriteFont>(SFSettingsSimple(base_path / "engine_test_data/fonts/ubuntu/Ubuntu-R.ttf", 20));
 

@@ -8,7 +8,7 @@
 class App final : public ApplicationBase
 {
     shared_ptr<Texture> spritesheet_;
-    unique_ptr<SpriteBatch> sprite_batch_;
+    unique_ptr<SpriteBatchOld> sprite_batch_old_;
     unique_ptr<SpriteFont> my_font_;
     shared_ptr<PuzzleLogic> puzzle_logic_;
     shared_ptr<PuzzleInterface> puzzle_interface_;

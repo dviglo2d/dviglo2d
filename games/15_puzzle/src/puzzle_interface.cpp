@@ -75,7 +75,7 @@ void PuzzleInterface::on_click(vec2 mouse_pos)
     }
 }
 
-void PuzzleInterface::draw(SpriteBatch* sprite_batch)
+void PuzzleInterface::draw(SpriteBatchOld* sprite_batch)
 {
     shared_ptr<PuzzleLogic> logic = logic_.lock();
 

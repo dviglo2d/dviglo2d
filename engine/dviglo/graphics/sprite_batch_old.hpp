@@ -27,7 +27,7 @@ enum class FlipModes : u32
 DV_FLAGS(FlipModes);
 
 
-class SpriteBatch
+class SpriteBatchOld
 {
     // ============================ Пакетный рендеринг треугольников ============================
 
@@ -144,7 +144,7 @@ private:
 
 public:
 
-    SpriteBatch();
+    SpriteBatchOld();
 
     // Настраивает OpenGL для работы со SpriteBatch.
     // Для корректного рендеринга текста альфа-смешение должно быть включено.

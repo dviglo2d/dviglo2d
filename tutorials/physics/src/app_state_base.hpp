@@ -1,6 +1,6 @@
 #pragma once
 
-#include <dviglo/graphics/sprite_batch.hpp>
+#include <dviglo/graphics/sprite_batch_old.hpp>
 #include <SDL3/SDL.h>
 
 using namespace dviglo;
@@ -11,7 +11,7 @@ using namespace std;
 class AppStateBase
 {
 public:
-    unique_ptr<SpriteBatch> sprite_batch_;
+    unique_ptr<SpriteBatchOld> sprite_batch_;
     unique_ptr<SpriteFont> r_20_font_;
 
     AppStateBase();

@@ -12,7 +12,7 @@ using namespace glm;
 App::App()
 {
     fs::path base_path = get_base_path();
-    sprite_batch_ = make_unique<SpriteBatch>();
+    sprite_batch_ = make_unique<SpriteBatchOld>();
     r_20_font_ = make_unique<SpriteFont>(SFSettingsSimple(base_path / "engine_test_data/fonts/ubuntu/Ubuntu-R.ttf", 20));
     r_60_colored_font_ = make_unique<SpriteFont>(SFSettingsOutlined(base_path / "engine_test_data/fonts/ubuntu/Ubuntu-R.ttf", 60, 0xFFFFFFFF, 0xFFFF9000, 4, 8));
     r_60_gray_font_ = make_unique<SpriteFont>(SFSettingsOutlined(base_path / "engine_test_data/fonts/ubuntu/Ubuntu-R.ttf", 60, 0xFF909090, 0xFF505050, 4, 8));

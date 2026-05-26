@@ -1,6 +1,6 @@
 #pragma once
 
-#include <dviglo/graphics/sprite_batch.hpp>
+#include <dviglo/graphics/sprite_batch_old.hpp>
 #include <dviglo/main/application_base.hpp>
 
 using namespace dviglo;
@@ -11,7 +11,7 @@ class App final : public ApplicationBase
 {
 private:
     shared_ptr<Texture> texture_;
-    unique_ptr<SpriteBatch> sprite_batch_;
+    unique_ptr<SpriteBatchOld> sprite_batch_;
     unique_ptr<SpriteFont> font_;
 
 public:

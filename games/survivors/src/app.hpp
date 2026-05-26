@@ -3,7 +3,7 @@
 #include "map.hpp"
 #include "player.hpp"
 
-#include <dviglo/graphics/sprite_batch.hpp>
+#include <dviglo/graphics/sprite_batch_old.hpp>
 #include <dviglo/main/application_base.hpp>
 
 using namespace dviglo;
@@ -12,7 +12,7 @@ using namespace std;
 
 class App final : public ApplicationBase
 {
-    unique_ptr<SpriteBatch> sprite_batch_;
+    unique_ptr<SpriteBatchOld> sprite_batch_;
     unique_ptr<SpriteFont> r_20_font_;
     unique_ptr<Map> map_;
     unique_ptr<Player> player_;

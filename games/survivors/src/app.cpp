@@ -9,7 +9,7 @@ using namespace glm;
 App::App()
 {
     fs::path base_path = get_base_path();
-    sprite_batch_ = make_unique<SpriteBatch>();
+    sprite_batch_ = make_unique<SpriteBatchOld>();
     r_20_font_ = make_unique<SpriteFont>(SFSettingsSimple(base_path / "engine_test_data/fonts/ubuntu/Ubuntu-R.ttf", 20));
     map_ = make_unique<Map>();
     player_ = make_unique<Player>();

@@ -15,7 +15,7 @@ App::App()
     fs::path base_path = get_base_path();
     texture_ = DV_TEXTURE_CACHE->get(base_path / "engine_test_data/textures/tile128.png");
     font_ = make_unique<SpriteFont>(SFSettingsSimple(base_path / "engine_test_data/fonts/ubuntu/Ubuntu-R.ttf", 20));
-    sprite_batch_ = make_unique<SpriteBatch>();
+    sprite_batch_ = make_unique<SpriteBatchOld>();
 
     // Возвращаемся к рендерингу в default framebuffer, так как текущий FBO меняется при генерации шрифта
     glBindFramebuffer(GL_FRAMEBUFFER, 0);

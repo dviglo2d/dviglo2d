@@ -57,7 +57,7 @@ void s_draw_player()
 void s_draw_score()
 {
     registry& reg = *GLOBAL->reg();
-    SpriteBatch& sprite_batch = *GLOBAL->sprite_batch();
+    SpriteBatchOld& sprite_batch = *GLOBAL->sprite_batch();
     entity ent = get_player();
     CPlayer& player = reg.get<CPlayer>(ent);
     StrUtf8 score_text = "Счёт: " + to_string(player.score);

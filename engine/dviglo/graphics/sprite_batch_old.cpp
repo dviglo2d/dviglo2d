@@ -1,7 +1,7 @@
 // Copyright (c) the Dviglo project
 // License: MIT
 
-#include "sprite_batch.hpp"
+#include "sprite_batch_old.hpp"
 
 #include "../gl_utils/gl_utils.hpp"
 #include "../gl_utils/shader_cache_old.hpp"
@@ -16,7 +16,7 @@ using namespace std;
 namespace dviglo
 {
 
-void SpriteBatch::add_triangle()
+void SpriteBatchOld::add_triangle()
 {
     // Рендерили четырёхугольники, а теперь нужно рендерить треугольники
     if (q_num_vertices_ > 0)
@@ -30,14 +30,14 @@ void SpriteBatch::add_triangle()
         flush();
 }
 
-void SpriteBatch::set_shape_color(u32 color)
+void SpriteBatchOld::set_shape_color(u32 color)
 {
     triangle_.v0.color = color;
     triangle_.v1.color = color;
     triangle_.v2.color = color;
 }
 
-void SpriteBatch::add_quad()
+void SpriteBatchOld::add_quad()
 {
     // Рендерили треугольники, а теперь нужно рендерить четырёхугольники
     if (t_num_vertices_ > 0)
@@ -59,7 +59,7 @@ void SpriteBatch::add_quad()
         flush();
 }
 
-void SpriteBatch::prepare_ogl(bool alpha_blending, bool flip_vertically)
+void SpriteBatchOld::prepare_ogl(bool alpha_blending, bool flip_vertically)
 {
     flush(); // На случай, если параметры меняются посередине рендеринга
 
@@ -88,7 +88,7 @@ void SpriteBatch::prepare_ogl(bool alpha_blending, bool flip_vertically)
     }
 }
 
-SpriteBatch::SpriteBatch()
+SpriteBatchOld::SpriteBatchOld()
 {
     t_vertex_buffer_ = make_unique<VertexBuffer>(max_triangles_in_portion_ * vertices_per_triangle_,
         VertexAttributes::position | VertexAttributes::color, BufferUsage::dynamic_draw, nullptr);
@@ -124,7 +124,7 @@ SpriteBatch::SpriteBatch()
                                                BufferUsage::static_draw, indices.get());
 }
 
-void SpriteBatch::flush()
+void SpriteBatchOld::flush()
 {
     if (t_num_vertices_ > 0)
     {
@@ -166,7 +166,7 @@ void SpriteBatch::flush()
 
 // ======================= Используем пакетный рендеринг треугольников =======================
 
-void SpriteBatch::draw_triangle(vec2 v0, vec2 v1, vec2 v2)
+void SpriteBatchOld::draw_triangle(vec2 v0, vec2 v1, vec2 v2)
 {
     triangle_.v0.position = v0;
     triangle_.v1.position = v1;
@@ -174,7 +174,7 @@ void SpriteBatch::draw_triangle(vec2 v0, vec2 v1, vec2 v2)
     add_triangle();
 }
 
-void SpriteBatch::draw_rect(const Rect& rect)
+void SpriteBatchOld::draw_rect(const Rect& rect)
 {
     vec2 far_corner = rect.pos + rect.size;
 
@@ -189,7 +189,7 @@ void SpriteBatch::draw_rect(const Rect& rect)
     add_triangle();
 }
 
-void SpriteBatch::draw_disk(vec2 center_pos, f32 radius, i32 num_segments)
+void SpriteBatchOld::draw_disk(vec2 center_pos, f32 radius, i32 num_segments)
 {
     vector<vec2> points(num_segments);
 
@@ -211,7 +211,7 @@ void SpriteBatch::draw_disk(vec2 center_pos, f32 radius, i32 num_segments)
 
 // ======================= Используем пакетный рендеринг четырёхугольников =======================
 
-void SpriteBatch::transform_sprite_internal()
+void SpriteBatchOld::transform_sprite_internal()
 {
         // Если спрайт не отмасштабирован и не повёрнут, то прорисовка очень проста
     if (sprite.rotation == 0.f && sprite.scale == vec2(1.f, 1.f))
@@ -273,7 +273,7 @@ void SpriteBatch::transform_sprite_internal()
     }
 }
 
-void SpriteBatch::draw_sprite_internal()
+void SpriteBatchOld::draw_sprite_internal()
 {
     quad.shader_program = sprite.shader_program;
     quad.texture = sprite.texture;
@@ -308,7 +308,7 @@ void SpriteBatch::draw_sprite_internal()
     add_quad();
 }
 
-Aabb SpriteBatch::measure_sprite_internal()
+Aabb SpriteBatchOld::measure_sprite_internal()
 {
     // Вычисляем координаты вершин
     transform_sprite_internal();
@@ -355,7 +355,7 @@ static Rect pos_to_dest(vec2 position, Texture* texture, const Rect* src)
     }
 }
 
-void SpriteBatch::draw_sprite(Texture* texture, const Rect& destination, const Rect* source, u32 color,
+void SpriteBatchOld::draw_sprite(Texture* texture, const Rect& destination, const Rect* source, u32 color,
     f32 rotation, vec2 origin, vec2 scale, FlipModes flip_modes)
 {
     if (!texture)
@@ -377,7 +377,7 @@ void SpriteBatch::draw_sprite(Texture* texture, const Rect& destination, const R
     draw_sprite_internal();
 }
 
-Rect SpriteBatch::measure_sprite(const Rect& destination,
+Rect SpriteBatchOld::measure_sprite(const Rect& destination,
     f32 rotation, vec2 origin, vec2 scale)
 {
     //sprite.texture = texture;
@@ -396,7 +396,7 @@ Rect SpriteBatch::measure_sprite(const Rect& destination,
     return measure_sprite_internal().to_rect();
 }
 
-void SpriteBatch::draw_sprite(Texture* texture, vec2 position, const Rect* source, u32 color,
+void SpriteBatchOld::draw_sprite(Texture* texture, vec2 position, const Rect* source, u32 color,
     f32 rotation, vec2 origin, vec2 scale, FlipModes flip_modes)
 {
     if (!texture)
@@ -418,7 +418,7 @@ void SpriteBatch::draw_sprite(Texture* texture, vec2 position, const Rect* sourc
     draw_sprite_internal();
 }
 
-Rect SpriteBatch::measure_sprite(Texture* texture, vec2 position, const Rect* source,
+Rect SpriteBatchOld::measure_sprite(Texture* texture, vec2 position, const Rect* source,
     f32 rotation, vec2 origin, vec2 scale)
 {
     if (!texture && !source) // Размер определить невозможно
@@ -440,7 +440,7 @@ Rect SpriteBatch::measure_sprite(Texture* texture, vec2 position, const Rect* so
     return measure_sprite_internal().to_rect();
 }
 
-void SpriteBatch::draw_string(const StrUtf8& text, SpriteFont* font, vec2 position, u32 color,
+void SpriteBatchOld::draw_string(const StrUtf8& text, SpriteFont* font, vec2 position, u32 color,
     f32 rotation, vec2 origin, vec2 scale, FlipModes flip_modes)
 {
     if (text.length() == 0)
@@ -492,7 +492,7 @@ void SpriteBatch::draw_string(const StrUtf8& text, SpriteFont* font, vec2 positi
     }
 }
 
-Rect SpriteBatch::measure_string_sprites(const StrUtf8& text, SpriteFont* font, vec2 position,
+Rect SpriteBatchOld::measure_string_sprites(const StrUtf8& text, SpriteFont* font, vec2 position,
     f32 rotation, vec2 origin, vec2 scale, FlipModes flip_modes)
 {
     if (text.length() == 0)
@@ -549,7 +549,7 @@ Rect SpriteBatch::measure_string_sprites(const StrUtf8& text, SpriteFont* font, 
     return string_aabb.to_rect();
 }
 
-vec2 SpriteBatch::measure_string(const StrUtf8& text, SpriteFont* font, vec2 scale)
+vec2 SpriteBatchOld::measure_string(const StrUtf8& text, SpriteFont* font, vec2 scale)
 {
     f32 width = 0.f;
     vector<c32> unicode_text = to_utf32(text);

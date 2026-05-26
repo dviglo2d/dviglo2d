@@ -31,7 +31,7 @@ void s_apply_velocities(i64 ns)
 void s_draw_colliders()
 {
     registry& reg = *GLOBAL->reg();
-    SpriteBatch& sprite_batch = *GLOBAL->sprite_batch();
+    SpriteBatchOld& sprite_batch = *GLOBAL->sprite_batch();
 
     auto view = reg.view<CObject>();
     for (auto [ent, obj] : view.each())
