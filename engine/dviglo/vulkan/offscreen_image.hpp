@@ -27,16 +27,12 @@ struct OffscreenImage
     vk::Image image() const noexcept { return allocated_image.second.get(); }
 };
 
-// Нет конструктора копирования
+// Нельзя копировать
 static_assert(!std::is_copy_constructible_v<OffscreenImage>);
-
-// Нет оператора копирования
 static_assert(!std::is_copy_assignable_v<OffscreenImage>);
 
-// Есть конструктор перемещения
+// Можно перемещать
 static_assert(std::is_move_constructible_v<OffscreenImage>);
-
-// Есть оператор перемещения
 static_assert(std::is_move_assignable_v<OffscreenImage>);
 
 } // namespace dviglo

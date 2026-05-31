@@ -30,7 +30,6 @@ protected:
         ++count_;
     }
 
-    // Деструктор намеренно не virtual
     virtual ~SubsystemIndex()
     {
         assert(count_ > 0);
