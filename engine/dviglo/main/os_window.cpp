@@ -540,6 +540,9 @@ bool OsWindow::vk_create_device()
     // https://docs.vulkan.org/refpages/latest/refpages/source/VkPhysicalDeviceDescriptorIndexingFeatures.html
     vk::PhysicalDeviceDescriptorIndexingFeaturesEXT indexing_features
     {
+        // TODO: Соседние пиксели на экране могут запрашивать разные текстуры
+        //.shaderSampledImageArrayNonUniformIndexing = vk::True,
+
         // Разрешаем частично заполненные массивы
         .descriptorBindingPartiallyBound = vk::True,
 
