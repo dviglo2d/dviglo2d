@@ -42,7 +42,8 @@ protected:
     SubsystemIndex& operator =(const SubsystemIndex&) = delete;
 
     // Перемещать тоже нельзя
-    static_assert(!std::movable<SubsystemIndex>);
+    static_assert(!std::is_move_constructible_v<SubsystemIndex>);
+    static_assert(!std::is_move_assignable_v<SubsystemIndex>);
 
 public:
     // Порядковый номер подсистемы
