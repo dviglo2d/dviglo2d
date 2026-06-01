@@ -10,7 +10,7 @@
 
 Поддерживаемые ОС: Linux и Windows 10+.
 
-Используемый графический API: Vulkan 1.0 + расширение устройства VK_EXT_descriptor_indexing (или просто Vulkan 1.2).
+Используемый графический API: Vulkan 1.4.
 
 Vulkan-версия находится на этапе разработки и сломана. Старая OpenGL-версия находится [тут](https://github.com/dviglo2d/dviglo2d_gl).
 
