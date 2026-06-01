@@ -248,95 +248,6 @@ std::optional<Swapchain> Swapchain::construct(vk::PhysicalDevice physical_device
         }
     }
 
-    // ============================= RenderPass =============================
-    {
-        vk::AttachmentDescription color_attachment
-        {
-            .format = ret.surface_format_.format,
-            .samples = vk::SampleCountFlagBits::e1,
-            .loadOp = vk::AttachmentLoadOp::eClear,
-            .storeOp = vk::AttachmentStoreOp::eStore,
-            .stencilLoadOp = vk::AttachmentLoadOp::eDontCare,
-            .stencilStoreOp = vk::AttachmentStoreOp::eDontCare,
-
-            // Состояние прикрепления в начале render pass
-            .initialLayout = vk::ImageLayout::eUndefined,
-
-            // Состояние прикрепления в конце render pass
-            .finalLayout = vk::ImageLayout::ePresentSrcKHR,
-        };
-
-        vk::AttachmentReference color_attachment_ref
-        {
-            // layout(location = 0) out vec4 out_color; во фрагментном шейдере
-            .attachment = 0,
-
-            .layout = vk::ImageLayout::eColorAttachmentOptimal,
-        };
-
-        vk::SubpassDescription subpass
-        {
-            .pipelineBindPoint = vk::PipelineBindPoint::eGraphics,
-            .colorAttachmentCount = 1,
-            .pColorAttachments = &color_attachment_ref,
-        };
-
-        /*vk::SubpassDependency dependency
-        {
-            .srcSubpass = VK_SUBPASS_EXTERNAL,
-            .dstSubpass = 0,
-            .srcStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput,
-            .dstStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput,
-            .srcAccessMask = {},
-            .dstAccessMask = vk::AccessFlagBits::eColorAttachmentWrite,
-        };*/
-
-        std::array<vk::SubpassDependency, 2> dependencies = {
-            // ВХОД: Внешнее состояние -> Subpass 0
-            // Переводит layout из initialLayout (eUndefined) в layout привязки (eColorAttachmentOptimal)
-            vk::SubpassDependency{
-                .srcSubpass = VK_SUBPASS_EXTERNAL,
-                .dstSubpass = 0,
-                .srcStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput,
-                .dstStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput,
-                .srcAccessMask = {},
-                .dstAccessMask = vk::AccessFlagBits::eColorAttachmentWrite,
-            },
-            // ВЫХОД: Subpass 0 -> Внешнее состояние
-            // Гарантирует завершение записи и переводит layout в finalLayout (ePresentSrcKHR)
-            vk::SubpassDependency{
-                .srcSubpass = 0,
-                .dstSubpass = VK_SUBPASS_EXTERNAL,
-                .srcStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput,
-                .dstStageMask = vk::PipelineStageFlagBits::eBottomOfPipe,
-                .srcAccessMask = vk::AccessFlagBits::eColorAttachmentWrite,
-                .dstAccessMask = {},
-            },
-        };
-
-        vk::RenderPassCreateInfo render_pass_create_info
-        {
-            .attachmentCount = 1,
-            .pAttachments = &color_attachment,
-            .subpassCount = 1,
-            .pSubpasses = &subpass,
-            //.dependencyCount = 1,
-            //.pDependencies = &dependency,
-
-            //.dependencyCount = static_cast<u32>(dependencies.size()),
-            //.pDependencies = dependencies.data(),
-        };
-
-        std::tie(vk_result, ret.render_pass_) = device.createRenderPassUnique(render_pass_create_info).asTuple();
-
-        if (vk_result != vk::Result::eSuccess)
-        {
-            Log::writef_error("{} | device.createRenderPassUnique(...) | {}", DV_FUNC_SIG, vk::to_string(vk_result));
-            return std::nullopt;
-        }
-    }
-
-
     {
         std::optional<OffscreenImage> opt = OffscreenImage::create(vma_allocator, offscreen_size);
 
@@ -372,57 +283,12 @@ std::optional<Swapchain> Swapchain::construct(vk::PhysicalDevice physical_device
                 .stageFlags = vk::ShaderStageFlagBits::eFragment,
             };
             vk::DescriptorSetLayoutCreateInfo dsl_info{
+                .flags = vk::DescriptorSetLayoutCreateFlagBits::ePushDescriptor,
                 .bindingCount = 1,
                 .pBindings = &binding,
             };
             std::tie(vk_result, ret.dsl_) = device.createDescriptorSetLayoutUnique(dsl_info).asTuple();
             assert(vk_result == vk::Result::eSuccess);
-        }
-
-        // Descriptor Pool
-        
-        {
-            vk::DescriptorPoolSize pool_size{ vk::DescriptorType::eCombinedImageSampler, 1 };
-            vk::DescriptorPoolCreateInfo pool_info{
-                .flags = vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet,
-                .maxSets = 1,
-                .poolSizeCount = 1,
-                .pPoolSizes = &pool_size,
-            };
-            std::tie(vk_result, ret.pool_) = device.createDescriptorPoolUnique(pool_info).asTuple();
-            assert(vk_result == vk::Result::eSuccess);
-        }
-
-        // Descriptor Set
-       
-        {
-            vk::DescriptorSetAllocateInfo alloc_info{
-                .descriptorPool = *ret.pool_,
-                .descriptorSetCount = 1,
-                .pSetLayouts = &*ret.dsl_,
-            };
-            std::vector<vk::UniqueDescriptorSet> sets;
-            std::tie(vk_result, sets) = device.allocateDescriptorSetsUnique(alloc_info).asTuple();
-            assert(vk_result == vk::Result::eSuccess);
-            ret.unique_desc_set_ = std::move(sets[0]);
-        }
-
-
-        // Обновляем дескриптор
-        {
-            vk::DescriptorImageInfo image_info{
-                .sampler = *ret.sampler_,
-                .imageView = ret.offscreen_image_.view.get(),
-                .imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal,
-            };
-            vk::WriteDescriptorSet write{
-                .dstSet = ret.unique_desc_set_.get(),
-                .dstBinding = 0,
-                .descriptorCount = 1,
-                .descriptorType = vk::DescriptorType::eCombinedImageSampler,
-                .pImageInfo = &image_info,
-            };
-            device.updateDescriptorSets(1, &write, 0, nullptr);
         }
 
         // Pipeline Layout
@@ -521,7 +387,15 @@ std::optional<Swapchain> Swapchain::construct(vk::PhysicalDevice physical_device
                 .pAttachments = &blend_attachment,
             };
 
+            vk::Format color_format = ret.surface_format_.format;
+            vk::PipelineRenderingCreateInfo pipeline_rendering_info{
+                .colorAttachmentCount = 1,
+                .pColorAttachmentFormats = &color_format,
+            };
+
+
             vk::GraphicsPipelineCreateInfo pipeline_info{
+                .pNext = &pipeline_rendering_info,
                 .stageCount = 2,
                 .pStages = stages,
                 .pVertexInputState = &vertex_input,
@@ -531,36 +405,13 @@ std::optional<Swapchain> Swapchain::construct(vk::PhysicalDevice physical_device
                 .pMultisampleState = &multisample,
                 .pColorBlendState = &color_blend,
                 .layout = *ret.pipeline_layout,
-                .renderPass = *ret.render_pass_,
-                .subpass = 0,
             };
 
             std::tie(vk_result, ret.pipeline) = device.createGraphicsPipelineUnique(nullptr, pipeline_info).asTuple();
             assert(vk_result == vk::Result::eSuccess);
         }
 
-
-        ret.swapchain_framebuffers_.reserve(image_count);
-        for (size_t image_index = 0; image_index < image_count; ++image_index)
-        {
-            vk::ImageView swapchain_view = ret.swapchain_image_views_[image_index].get();
-            vk::FramebufferCreateInfo fb_info{
-                .renderPass = *ret.render_pass_,
-                .attachmentCount = 1,
-                .pAttachments = &swapchain_view,
-                .width = ret.swapchain_image_extent_.width,
-                .height = ret.swapchain_image_extent_.height,
-                .layers = 1,
-            };
-            vk::UniqueFramebuffer framebuffer;
-            std::tie(vk_result, framebuffer) = device.createFramebufferUnique(fb_info).asTuple();
-            //assert(vk_result == vk::Result::eSuccess); // TODO В лог
-
-            ret.swapchain_framebuffers_.push_back(std::move(framebuffer));
-        }
-
-
-        // Заранее готовим командные буферы для каждого фреймбуфера
+        // Заранее готовим командные буферы для каждого фреймбуфера (TODO: фреймбуферов больше нет, но изображения разные)
         // Свой командный пул
         {
             vk::CommandPoolCreateInfo command_pool_info
@@ -591,6 +442,7 @@ std::optional<Swapchain> Swapchain::construct(vk::PhysicalDevice physical_device
             for (size_t image_index = 0; image_index < image_count; ++image_index)
             {
                 vk::CommandBuffer cmd = ret.command_buffers_[image_index];
+                vk::Image swapchain_image = ret.swapchain_images_[image_index];
 
                 vk::CommandBufferBeginInfo command_buffer_begin_info;
                 vk_result = cmd.begin(command_buffer_begin_info);
@@ -600,22 +452,78 @@ std::optional<Swapchain> Swapchain::construct(vk::PhysicalDevice physical_device
                     return std::nullopt;
                 }
 
-                vk::ClearValue clear_color{};
-                vk::RenderPassBeginInfo render_pass_begin_info
+                // 1. Переводим swapchain_image в состояние ColorAttachment
+                    vk::ImageMemoryBarrier2 barrier_to_attach
                 {
-                    .renderPass = ret.render_pass_.get(),
-                    .framebuffer = ret.swapchain_framebuffers_[image_index].get(),
-                    .renderArea{ .offset = {0, 0}, .extent = ret.swapchain_image_extent_ },
-                    .clearValueCount = 1,
-                    .pClearValues = &clear_color,
+                    .srcStageMask = vk::PipelineStageFlagBits2::eColorAttachmentOutput,
+                    .srcAccessMask = vk::AccessFlagBits2::eNone,
+                    .dstStageMask = vk::PipelineStageFlagBits2::eColorAttachmentOutput,
+                    .dstAccessMask = vk::AccessFlagBits2::eColorAttachmentWrite,
+                    .oldLayout = vk::ImageLayout::eUndefined,
+                    .newLayout = vk::ImageLayout::eColorAttachmentOptimal,
+                    .image = swapchain_image,
+                    .subresourceRange = { vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 }
                 };
-                cmd.beginRenderPass(render_pass_begin_info, vk::SubpassContents::eInline);
+                vk::DependencyInfo dep_info_attach{ .imageMemoryBarrierCount = 1, .pImageMemoryBarriers = &barrier_to_attach };
+                cmd.pipelineBarrier2(dep_info_attach);
+
+                // 2. Рендер (Dynamic Rendering)
+                vk::RenderingAttachmentInfo color_attachment
+                {
+                    .imageView = ret.swapchain_image_views_[image_index].get(),
+                    .imageLayout = vk::ImageLayout::eColorAttachmentOptimal,
+                    .loadOp = vk::AttachmentLoadOp::eClear,
+                    .storeOp = vk::AttachmentStoreOp::eStore,
+                    .clearValue = { vk::ClearColorValue{ std::array<float, 4>{0.0f, 0.0f, 0.0f, 1.0f} } }
+                };
+
+                vk::RenderingInfo rendering_info
+                {
+                    .renderArea = { {0, 0}, ret.swapchain_image_extent_ },
+                    .layerCount = 1,
+                    .colorAttachmentCount = 1,
+                    .pColorAttachments = &color_attachment
+                };
+
+
+
+                cmd.beginRendering(rendering_info);
 
                 cmd.bindPipeline(vk::PipelineBindPoint::eGraphics, *ret.pipeline);
-                cmd.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, *ret.pipeline_layout, 0, *ret.unique_desc_set_, nullptr);
+
+
+                // Push Descriptors: прямо в буфер записываем данные дескриптора
+                vk::DescriptorImageInfo image_info{
+                    .sampler = *ret.sampler_,
+                    .imageView = ret.offscreen_image_.view.get(),
+                    .imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal,
+                };
+                vk::WriteDescriptorSet write{
+                    .dstBinding = 0,
+                    .descriptorCount = 1,
+                    .descriptorType = vk::DescriptorType::eCombinedImageSampler,
+                    .pImageInfo = &image_info,
+                };
+                cmd.pushDescriptorSet(vk::PipelineBindPoint::eGraphics, *ret.pipeline_layout, 0, 1, &write);
+
                 cmd.draw(3, 1, 0, 0);
 
-                cmd.endRenderPass();
+                cmd.endRendering();
+
+                // 3. Переводим swapchain_image в состояние для вывода на экран
+                vk::ImageMemoryBarrier2 barrier_to_present
+                {
+                    .srcStageMask = vk::PipelineStageFlagBits2::eColorAttachmentOutput,
+                    .srcAccessMask = vk::AccessFlagBits2::eColorAttachmentWrite,
+                    .dstStageMask = vk::PipelineStageFlagBits2::eNone,
+                    .dstAccessMask = vk::AccessFlagBits2::eNone,
+                    .oldLayout = vk::ImageLayout::eColorAttachmentOptimal,
+                    .newLayout = vk::ImageLayout::ePresentSrcKHR,
+                    .image = swapchain_image,
+                    .subresourceRange = { vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 }
+                };
+                vk::DependencyInfo dep_info_present{ .imageMemoryBarrierCount = 1, .pImageMemoryBarriers = &barrier_to_present };
+                cmd.pipelineBarrier2(dep_info_present);
 
                 vk_result = cmd.end();
                 if (vk_result != vk::Result::eSuccess)
@@ -674,14 +582,41 @@ vk::Result Swapchain::present(vk::Queue graphics_queue, vk::Queue present_queue,
     vk::CommandBuffer cmd = command_buffers_[image_index];
 
 // Сабмит (как в #if 1)
-vk::SubmitInfo submit_info{
+/*vk::SubmitInfo submit_info{
     .commandBufferCount = 1,
     .pCommandBuffers = &cmd,
 };
 device.resetFences(1, &fence.get());
 
 graphics_queue.submit(1, &submit_info, *fence);
-device.waitForFences(1, &fence.get(), vk::True, UINT64_MAX); // TODO: А что если убрать
+device.waitForFences(1, &fence.get(), vk::True, UINT64_MAX); // TODO: А что если убрать*/
+
+
+// Ожидаем завершения рендера сцены перед наложением гаммы
+    vk::SemaphoreSubmitInfo wait_info{
+        .semaphore = wait_semaphore,
+        .stageMask = vk::PipelineStageFlagBits2::eColorAttachmentOutput
+    };
+
+    vk::CommandBufferSubmitInfo cmd_info{ .commandBuffer = cmd };
+
+    vk::SubmitInfo2 submit_info{
+        .waitSemaphoreInfoCount = wait_semaphore ? 1u : 0u,
+        .pWaitSemaphoreInfos = wait_semaphore ? &wait_info : nullptr,
+        .commandBufferInfoCount = 1,
+        .pCommandBufferInfos = &cmd_info,
+        .signalSemaphoreInfoCount = 0,
+        .pSignalSemaphoreInfos = nullptr
+    };
+
+    // Отправляем буфер и просим дернуть забор по завершению
+    device.resetFences(1, &fence.get());
+    graphics_queue.submit2(1, &submit_info, fence.get());
+
+    // ЖЁСТКАЯ СИНХРОНИЗАЦИЯ : Ждём видеокарту на процессоре(уменьшает инпут - лаг, устраняя очередь кадров)
+        vk::Result wait_res = device.waitForFences(1, &fence.get(), vk::True, UINT64_MAX);
+    if (wait_res != vk::Result::eSuccess)
+        Log::writef_error("{} | device.waitForFences(...) | {}", DV_FUNC_SIG, vk::to_string(wait_res));
 
 
 ////// ---------- Конец вывода offscreen текстуры
@@ -691,8 +626,8 @@ device.waitForFences(1, &fence.get(), vk::True, UINT64_MAX); // TODO: А что 
 
     vk::PresentInfoKHR present_info
     {
-        .waitSemaphoreCount = wait_semaphore ? 1u : 0u,
-        .pWaitSemaphores = wait_semaphore ? &wait_semaphore : nullptr,
+        //.waitSemaphoreCount = wait_semaphore ? 1u : 0u,
+        //.pWaitSemaphores = wait_semaphore ? &wait_semaphore : nullptr,
         .swapchainCount = 1,
         .pSwapchains = &value_.get(),
         .pImageIndices = &image_index

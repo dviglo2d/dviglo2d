@@ -30,9 +30,6 @@ private:
 
     std::vector<vk::UniqueImageView> swapchain_image_views_;
 
-    vk::UniqueRenderPass render_pass_;
-
-
 public:
     OffscreenImage offscreen_image_;
 
@@ -42,11 +39,9 @@ private:
     vk::UniqueSampler sampler_;
 
     vk::UniqueDescriptorSetLayout dsl_;
-    vk::UniqueDescriptorPool pool_;
-    vk::UniqueDescriptorSet unique_desc_set_;
+
     vk::UniquePipelineLayout pipeline_layout;
     vk::UniquePipeline pipeline;
-    std::vector<vk::UniqueFramebuffer> swapchain_framebuffers_;
 
     vk::UniqueCommandPool command_pool_; // Не обязательно, но пусть будет свой командный пул, чтобы не передавать
 
@@ -81,8 +76,6 @@ public:
     vk::SurfaceFormatKHR surface_format() const { return surface_format_; }
     vk::SwapchainKHR get() const { return *value_; }
     const std::vector<vk::UniqueImageView>& swapchain_image_views() const { return swapchain_image_views_; }
-    vk::RenderPass render_pass() const { return *render_pass_; }
-    vk::Framebuffer offscreen_framebuffer() const { return offscreen_image_.framebuffer.get(); }
 
     // Запрашивает у Vulkan следующее изображение.
     // fence - забор, который Vulkan откроет, когда изображение станет доступно.

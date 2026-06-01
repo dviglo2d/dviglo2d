@@ -151,7 +151,7 @@ bool OsWindow::vk_create_instance()
     // https://docs.vulkan.org/refpages/latest/refpages/source/VK_EXT_descriptor_indexing.html
     extensions.push_back(vk::KHRGetPhysicalDeviceProperties2ExtensionName);
 
-    vk::ApplicationInfo app_info { .apiVersion = VK_API_VERSION_1_0 };
+    vk::ApplicationInfo app_info { .apiVersion = VK_API_VERSION_1_4 };
 
     vk::InstanceCreateInfo instance_info { .pApplicationInfo = &app_info };
     instance_info.setPEnabledLayerNames(layers)
@@ -536,10 +536,26 @@ bool OsWindow::vk_create_device()
 
     vk::PhysicalDeviceFeatures features = vk_physical_device_.getFeatures();
 
+    vk::PhysicalDeviceVulkan14Features features_1_4
+    {
+        .pushDescriptor = vk::True,
+    };
+
+    // 2. Фичи Vulkan 1.3 (Dynamic Rendering и Synchronization2)
+    vk::PhysicalDeviceVulkan13Features features_1_3
+    {
+        .pNext = &features_1_4,       // <-- Линкуем с 1.4
+
+        .synchronization2 = vk::True, // Включает vkCmdPipelineBarrier2
+        .dynamicRendering = vk::True, // Включает рендер без RenderPass
+    };
+
     // https://docs.vulkan.org/refpages/latest/refpages/source/VK_EXT_descriptor_indexing.html
     // https://docs.vulkan.org/refpages/latest/refpages/source/VkPhysicalDeviceDescriptorIndexingFeatures.html
     vk::PhysicalDeviceDescriptorIndexingFeaturesEXT indexing_features
     {
+        .pNext = &features_1_3,
+
         // TODO: Соседние пиксели на экране могут запрашивать разные текстуры
         //.shaderSampledImageArrayNonUniformIndexing = vk::True,
 

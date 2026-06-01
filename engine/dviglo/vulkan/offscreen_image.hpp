@@ -14,13 +14,7 @@ struct OffscreenImage
 {
     VmaAllocatedImage   allocated_image;
     vk::UniqueImageView view;
-
-    // Проход рендера с предварительной очисткой. В конце переводит раскладку изображения
-    // в vk::ImageLayout::eShaderReadOnlyOptimal
-    vk::UniqueRenderPass render_pass;
-
-    vk::UniqueFramebuffer framebuffer;
-    vk::Extent2D          extent;
+    vk::Extent2D        extent;
 
     static std::optional<OffscreenImage> create(const vma::Allocator& vma_allocator, glm::uvec2 size);
 

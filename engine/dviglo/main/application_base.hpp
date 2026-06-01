@@ -128,6 +128,9 @@ public:
 
         static vk::UniqueFence     acquire_fence;
 
+        // [НОВОЕ]: Семафор, который скажет функции present(), что треугольник нарисован
+        static vk::UniqueSemaphore     render_finished_sem_;
+
         static std::vector<vk::Image> swapchain_images;
 
         vk::Result result;
@@ -136,6 +139,12 @@ public:
         {
             vk::SemaphoreCreateInfo sem_info{ .sType = vk::StructureType::eSemaphoreCreateInfo };
             std::tie(result, image_available_sem_) = DV_OS_WINDOW->vk_device_->createSemaphoreUnique(sem_info).asTuple();
+        }
+
+        // Создаем семафор окончания рендера один раз
+        if (!render_finished_sem_)
+        {
+            std::tie(result, render_finished_sem_) = DV_OS_WINDOW->vk_device_->createSemaphoreUnique({}).asTuple();
         }
 
 
@@ -565,8 +574,16 @@ public:
 
             // -------------------------------- Пайплайн
 
+            vk::Format offscreen_format = vk::Format::eB8G8R8A8Unorm;
+            vk::PipelineRenderingCreateInfo pipeline_rendering_info
+            {
+                .colorAttachmentCount = 1,
+                .pColorAttachmentFormats = &offscreen_format,
+            };
+
             vk::GraphicsPipelineCreateInfo graphics_pipeline_info
             {
+                .pNext = &pipeline_rendering_info,
                 .stageCount = 2,
                 .pStages = shader_stages,
                 .pVertexInputState = &vertex_input_info,
@@ -576,7 +593,6 @@ public:
                 .pMultisampleState = &multisampling,
                 .pColorBlendState = &color_blending,
                 .layout = *vk_graphics_pipeline_layout,
-                .renderPass = DV_OS_WINDOW->swapchain_->offscreen_image_.render_pass.get(),
             };
 
             vk::UniquePipeline vk_graphics_pipeline;
@@ -621,6 +637,25 @@ public:
                 //return;
             }
 
+            // В Vulkan 1.4 без RenderPass мы сами должны подготовить картинку к рендеру.
+            // Переводим её из eUndefined в eColorAttachmentOptimal.
+            // =========================================================================
+            vk::ImageMemoryBarrier2 barrier_to_attach
+            {
+                .srcStageMask = vk::PipelineStageFlagBits2::eNone,
+                .srcAccessMask = vk::AccessFlagBits2::eNone,
+                .dstStageMask = vk::PipelineStageFlagBits2::eColorAttachmentOutput,
+                .dstAccessMask = vk::AccessFlagBits2::eColorAttachmentWrite,
+                .oldLayout = vk::ImageLayout::eUndefined,
+                .newLayout = vk::ImageLayout::eColorAttachmentOptimal,
+                .image = DV_OS_WINDOW->swapchain_->offscreen_image_.image(),
+                .subresourceRange = { vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 }
+            };
+            vk::DependencyInfo dep_info_attach{ .imageMemoryBarrierCount = 1, .pImageMemoryBarriers = &barrier_to_attach };
+            command_buffer.pipelineBarrier2(dep_info_attach);
+
+
+            /*
             vk::ClearValue clear_color
             {
                 .color
@@ -639,9 +674,50 @@ public:
             };
 
             command_buffer.beginRenderPass(rp_info, vk::SubpassContents::eInline);
+            */
+
+            vk::RenderingAttachmentInfo color_attachment
+            {
+                .imageView = DV_OS_WINDOW->swapchain_->offscreen_image_.view.get(),
+                .imageLayout = vk::ImageLayout::eColorAttachmentOptimal,
+                .loadOp = vk::AttachmentLoadOp::eClear,
+                .storeOp = vk::AttachmentStoreOp::eStore,
+                .clearValue = { vk::ClearColorValue{ std::array<float, 4>{0.25f, 0.15f, 0.7f, 1.0f} } }
+            };
+
+            vk::RenderingInfo rendering_info
+            {
+                .renderArea = { {0, 0}, DV_OS_WINDOW->swapchain_->offscreen_image_extent() },
+                .layerCount = 1,
+                .colorAttachmentCount = 1,
+                .pColorAttachments = &color_attachment
+            };
+
+            command_buffer.beginRendering(rendering_info);
+
+
             command_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, *vk_graphics_pipeline);
             command_buffer.draw(3, 1, 0, 0);
-            command_buffer.endRenderPass();
+
+            //command_buffer.endRenderPass();
+            command_buffer.endRendering();
+
+
+            // Подготавливаем отрендеренную картинку для функции Swapchain::present.
+            // Переводим в ShaderReadOnlyOptimal, так как на неё будет накладываться гамма
+            vk::ImageMemoryBarrier2 barrier_to_read
+            {
+                .srcStageMask = vk::PipelineStageFlagBits2::eColorAttachmentOutput,
+                .srcAccessMask = vk::AccessFlagBits2::eColorAttachmentWrite,
+                .dstStageMask = vk::PipelineStageFlagBits2::eFragmentShader,
+                .dstAccessMask = vk::AccessFlagBits2::eShaderRead,
+                .oldLayout = vk::ImageLayout::eColorAttachmentOptimal,
+                .newLayout = vk::ImageLayout::eShaderReadOnlyOptimal,
+                .image = DV_OS_WINDOW->swapchain_->offscreen_image_.image(),
+                .subresourceRange = { vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 }
+            };
+            vk::DependencyInfo dep_info_read{ .imageMemoryBarrierCount = 1, .pImageMemoryBarriers = &barrier_to_read };
+            command_buffer.pipelineBarrier2(dep_info_read);
 
             vk_result = command_buffer.end();
 
@@ -667,6 +743,7 @@ public:
 
             // -------------------------------- Отправляем в очередь
 
+            /*
             vk::SubmitInfo submit_info
             {
                 .commandBufferCount = 1,
@@ -675,11 +752,34 @@ public:
 
             vk_result = DV_OS_WINDOW->vk_graphics_queue_.submit(1, &submit_info, *fence);
 
+
             if (vk_result != vk::Result::eSuccess)
             {
                 Log::writef_error("{} | compute_queue.submit(...) | {}", DV_FUNC_SIG, vk::to_string(vk_result));
                // return;
             }
+
+            */
+
+            // Теперь используем submit2 чтобы ждать треугольник на GPU
+
+            vk::CommandBufferSubmitInfo cmd_info{ .commandBuffer = command_buffer };
+
+            vk::SemaphoreSubmitInfo signal_info
+            {
+                .semaphore = render_finished_sem_.get(),
+                .stageMask = vk::PipelineStageFlagBits2::eColorAttachmentOutput
+            };
+
+            vk::SubmitInfo2 submit_info_2
+            {
+                .commandBufferInfoCount = 1,
+                .pCommandBufferInfos = &cmd_info,
+                .signalSemaphoreInfoCount = 1,
+                .pSignalSemaphoreInfos = &signal_info
+            };
+
+            DV_OS_WINDOW->vk_graphics_queue_.submit2(1, &submit_info_2, *fence);
 
             // -------------------------------- Ждем результат
 
@@ -708,8 +808,13 @@ public:
 // Блокируем CPU, пока видеокарта не обработает submit
         //DV_OS_WINDOW->vk_device_->waitForFences(1, &(*in_flight_fence_), VK_TRUE, UINT64_MAX);
 
+       // vk::Result present_result = DV_OS_WINDOW->swapchain_->present(DV_OS_WINDOW->vk_graphics_queue_, DV_OS_WINDOW->vk_present_queue_, idx,
+       //     DV_OS_WINDOW->vk_device_.get(), DV_OS_WINDOW->vk_command_pool_.get());
+
+        // TODO: Надо передалть на семафор, чтобы ждало треугольник на GPU
         vk::Result present_result = DV_OS_WINDOW->swapchain_->present(DV_OS_WINDOW->vk_graphics_queue_, DV_OS_WINDOW->vk_present_queue_, idx,
-            DV_OS_WINDOW->vk_device_.get(), DV_OS_WINDOW->vk_command_pool_.get());
+            DV_OS_WINDOW->vk_device_.get(), DV_OS_WINDOW->vk_command_pool_.get(),
+            render_finished_sem_.get());
 
         if (present_result == vk::Result::eErrorOutOfDateKHR || present_result == vk::Result::eSuboptimalKHR)
         {
