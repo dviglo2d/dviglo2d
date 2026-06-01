@@ -497,22 +497,8 @@ std::optional<Swapchain> Swapchain::construct(vk::PhysicalDevice physical_device
                     return std::nullopt;
                 }
 
-                // 1. Переводим swapchain_image в состояние ColorAttachment
-                    vk::ImageMemoryBarrier2 barrier_to_attach
-                {
-                    .srcStageMask = vk::PipelineStageFlagBits2::eColorAttachmentOutput,
-                    .srcAccessMask = vk::AccessFlagBits2::eNone,
-                    .dstStageMask = vk::PipelineStageFlagBits2::eColorAttachmentOutput,
-                    .dstAccessMask = vk::AccessFlagBits2::eColorAttachmentWrite,
-                    .oldLayout = vk::ImageLayout::eUndefined,
-                    .newLayout = vk::ImageLayout::eColorAttachmentOptimal,
-                    .image = swapchain_image,
-                    .subresourceRange = { vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 }
-                };
-                vk::DependencyInfo dep_info_attach{ .imageMemoryBarrierCount = 1, .pImageMemoryBarriers = &barrier_to_attach };
-                cmd.pipelineBarrier2(dep_info_attach);
+                transition(cmd, swapchain_image, vk::ImageLayout::eUndefined, vk::ImageLayout::eColorAttachmentOptimal);
 
-                // 2. Рендер (Dynamic Rendering)
                 vk::RenderingAttachmentInfo color_attachment
                 {
                     .imageView = ret.swapchain_image_views_[image_index].get(),
@@ -530,32 +516,13 @@ std::optional<Swapchain> Swapchain::construct(vk::PhysicalDevice physical_device
                     .pColorAttachments = &color_attachment
                 };
 
-
-
                 cmd.beginRendering(rendering_info);
-
                 cmd.bindPipeline(vk::PipelineBindPoint::eGraphics, *ret.pipeline);
-
                 cmd.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, *ret.pipeline_layout, 0, *ret.unique_desc_set_, nullptr);
-
                 cmd.draw(3, 1, 0, 0);
-
                 cmd.endRendering();
 
-                // 3. Переводим swapchain_image в состояние для вывода на экран
-                vk::ImageMemoryBarrier2 barrier_to_present
-                {
-                    .srcStageMask = vk::PipelineStageFlagBits2::eColorAttachmentOutput,
-                    .srcAccessMask = vk::AccessFlagBits2::eColorAttachmentWrite,
-                    .dstStageMask = vk::PipelineStageFlagBits2::eNone,
-                    .dstAccessMask = vk::AccessFlagBits2::eNone,
-                    .oldLayout = vk::ImageLayout::eColorAttachmentOptimal,
-                    .newLayout = vk::ImageLayout::ePresentSrcKHR,
-                    .image = swapchain_image,
-                    .subresourceRange = { vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 }
-                };
-                vk::DependencyInfo dep_info_present{ .imageMemoryBarrierCount = 1, .pImageMemoryBarriers = &barrier_to_present };
-                cmd.pipelineBarrier2(dep_info_present);
+                transition(cmd, swapchain_image, vk::ImageLayout::eColorAttachmentOptimal, vk::ImageLayout::ePresentSrcKHR);
 
                 vk_result = cmd.end();
                 if (vk_result != vk::Result::eSuccess)

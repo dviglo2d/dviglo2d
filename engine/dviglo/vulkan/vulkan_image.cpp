@@ -9,6 +9,96 @@
 namespace dviglo
 {
 
+void transition(vk::CommandBuffer cmd, vk::Image image, vk::ImageLayout old_layout, vk::ImageLayout new_layout)
+{
+    if (old_layout == new_layout)
+    {
+        Log::writef_warning("{} | old_layout == new_layout | {}", DV_FUNC_SIG, vk::to_string(old_layout));
+        return;
+    }
+
+    vk::ImageMemoryBarrier2 barrier
+    {
+        .oldLayout = old_layout,
+        .newLayout = new_layout,
+        .image = image,
+
+        .subresourceRange = vk::ImageSubresourceRange
+        {
+            .aspectMask = vk::ImageAspectFlagBits::eColor,
+            .baseMipLevel = 0,
+            .levelCount = 1,
+            .baseArrayLayer = 0,
+            .layerCount = 1,
+        }
+    };
+
+    if (old_layout == vk::ImageLayout::eUndefined)
+    {
+        barrier.srcStageMask = vk::PipelineStageFlagBits2::eNone;
+        barrier.srcAccessMask = vk::AccessFlagBits2::eNone;
+    }
+    else if (old_layout == vk::ImageLayout::eColorAttachmentOptimal)
+    {
+        barrier.srcStageMask = vk::PipelineStageFlagBits2::eColorAttachmentOutput;
+        barrier.srcAccessMask = vk::AccessFlagBits2::eColorAttachmentWrite;
+    }
+    else if (old_layout == vk::ImageLayout::eTransferDstOptimal)
+    {
+        barrier.srcStageMask = vk::PipelineStageFlagBits2::eTransfer;
+        barrier.srcAccessMask = vk::AccessFlagBits2::eTransferWrite;
+    }
+    else if (old_layout == vk::ImageLayout::eTransferSrcOptimal)
+    {
+        barrier.srcStageMask = vk::PipelineStageFlagBits2::eTransfer;
+        barrier.srcAccessMask = vk::AccessFlagBits2::eTransferRead;
+    }
+    else
+    {
+        Log::writef_error("{} | Unexpected old_layout | {}", DV_FUNC_SIG, vk::to_string(old_layout));
+        return;
+    }
+
+    if (new_layout == vk::ImageLayout::eColorAttachmentOptimal)
+    {
+        barrier.dstStageMask = vk::PipelineStageFlagBits2::eColorAttachmentOutput;
+        barrier.dstAccessMask = vk::AccessFlagBits2::eColorAttachmentWrite;
+    }
+    else if (new_layout == vk::ImageLayout::eTransferDstOptimal)
+    {
+        barrier.dstStageMask = vk::PipelineStageFlagBits2::eTransfer;
+        barrier.dstAccessMask = vk::AccessFlagBits2::eTransferWrite;
+    }
+    else if (new_layout == vk::ImageLayout::eTransferSrcOptimal)
+    {
+        barrier.dstStageMask = vk::PipelineStageFlagBits2::eTransfer;
+        barrier.dstAccessMask = vk::AccessFlagBits2::eTransferRead;
+    }
+    else if (new_layout == vk::ImageLayout::eShaderReadOnlyOptimal)
+    {
+        barrier.dstStageMask = vk::PipelineStageFlagBits2::eFragmentShader;
+        barrier.dstAccessMask = vk::AccessFlagBits2::eShaderRead;
+    }
+    else if (new_layout == vk::ImageLayout::ePresentSrcKHR)
+    {
+        barrier.dstStageMask = vk::PipelineStageFlagBits2::eNone;
+        barrier.dstAccessMask = vk::AccessFlagBits2::eNone;
+    }
+    else
+    {
+        Log::writef_error("{} | Unexpected new_layout | {}", DV_FUNC_SIG, vk::to_string(new_layout));
+        return;
+    }
+
+    vk::DependencyInfo dependency_info
+    {
+        .imageMemoryBarrierCount = 1,
+        .pImageMemoryBarriers = &barrier
+    };
+
+    cmd.pipelineBarrier2(dependency_info);
+}
+
 std::optional<VulkanImage> VulkanImage::create(const vma::Allocator& vma_allocator, glm::uvec2 size)
 {
     VulkanImage ret;
@@ -83,100 +173,15 @@ std::optional<VulkanImage> VulkanImage::create(const vma::Allocator& vma_allocat
 
 void VulkanImage::transition(vk::CommandBuffer cmd, vk::ImageLayout new_layout)
 {
-    if (layout == new_layout)
-    {
-        Log::writef_warning("{} | layout == new_layout | {}", DV_FUNC_SIG, vk::to_string(layout));
-        return;
-    }
-
-    vk::ImageMemoryBarrier2 barrier
-    {
-        .oldLayout = layout,
-        .newLayout = new_layout,
-        .image = image(),
-
-        .subresourceRange = vk::ImageSubresourceRange
-        {
-            .aspectMask = vk::ImageAspectFlagBits::eColor,
-            .baseMipLevel = 0,
-            .levelCount = 1,
-            .baseArrayLayer = 0,
-            .layerCount = 1,
-        }
-    };
-
-    if (layout == vk::ImageLayout::eUndefined)
-    {
-        barrier.srcStageMask = vk::PipelineStageFlagBits2::eNone;
-        barrier.srcAccessMask = vk::AccessFlagBits2::eNone;
-    }
-    else if (layout == vk::ImageLayout::eColorAttachmentOptimal)
-    {
-        barrier.srcStageMask = vk::PipelineStageFlagBits2::eColorAttachmentOutput;
-        barrier.srcAccessMask = vk::AccessFlagBits2::eColorAttachmentWrite;
-    }
-    else if (layout == vk::ImageLayout::eTransferDstOptimal)
-    {
-        barrier.srcStageMask = vk::PipelineStageFlagBits2::eTransfer;
-        barrier.srcAccessMask = vk::AccessFlagBits2::eTransferWrite;
-    }
-    else if (layout == vk::ImageLayout::eTransferSrcOptimal)
-    {
-        barrier.srcStageMask = vk::PipelineStageFlagBits2::eTransfer;
-        barrier.srcAccessMask = vk::AccessFlagBits2::eTransferRead;
-    }
-    else
-    {
-        Log::writef_error("{} | Unexpected image layout | {}", DV_FUNC_SIG, vk::to_string(layout));
-        return;
-    }
-
-    if (new_layout == vk::ImageLayout::eColorAttachmentOptimal)
-    {
-        barrier.dstStageMask = vk::PipelineStageFlagBits2::eColorAttachmentOutput;
-        barrier.dstAccessMask = vk::AccessFlagBits2::eColorAttachmentWrite;
-    }
-    else if (new_layout == vk::ImageLayout::eTransferDstOptimal)
-    {
-        barrier.dstStageMask = vk::PipelineStageFlagBits2::eTransfer;
-        barrier.dstAccessMask = vk::AccessFlagBits2::eTransferWrite;
-    }
-    else if (new_layout == vk::ImageLayout::eTransferSrcOptimal)
-    {
-        barrier.dstStageMask = vk::PipelineStageFlagBits2::eTransfer;
-        barrier.dstAccessMask = vk::AccessFlagBits2::eTransferRead;
-    }
-    else if (new_layout == vk::ImageLayout::eShaderReadOnlyOptimal)
-    {
-        barrier.dstStageMask = vk::PipelineStageFlagBits2::eFragmentShader;
-        barrier.dstAccessMask = vk::AccessFlagBits2::eShaderRead;
-    }
-    else if (new_layout == vk::ImageLayout::ePresentSrcKHR)
-    {
-        barrier.dstStageMask = vk::PipelineStageFlagBits2::eNone;
-        barrier.dstAccessMask = vk::AccessFlagBits2::eNone;
-    }
-    else
-    {
-        Log::writef_error("{} | Unexpected new image layout | {}", DV_FUNC_SIG, vk::to_string(new_layout));
-        return;
-    }
-
-    vk::DependencyInfo dependency_info
-    {
-        .imageMemoryBarrierCount = 1,
-        .pImageMemoryBarriers = &barrier
-    };
-
-    cmd.pipelineBarrier2(dependency_info);
-
+    ::dviglo::transition(cmd, image(), layout, new_layout);
     layout = new_layout;
 }
 
 void VulkanImage::transition(vk::CommandBuffer cmd, vk::ImageLayout old_layout, vk::ImageLayout new_layout)
 {
     layout = old_layout;
-    transition(cmd, new_layout);
+    ::dviglo::transition(cmd, image(), layout, new_layout);
+    layout = new_layout;
 }
 
 } // namespace dviglo

@@ -9,6 +9,8 @@
 namespace dviglo
 {
 
+void transition(vk::CommandBuffer cmd, vk::Image image, vk::ImageLayout old_layout, vk::ImageLayout new_layout);
+
 struct VulkanImage
 {
     VmaAllocatedImage   allocated_image;
