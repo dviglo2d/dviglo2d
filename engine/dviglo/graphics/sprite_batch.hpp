@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "../vulkan/offscreen_image.hpp"
+#include "../vulkan/vulkan_image.hpp"
 
 
 namespace dviglo
@@ -12,9 +12,9 @@ namespace dviglo
 class SpriteBatch
 {
 private:
-    OffscreenImage offscreen_image_;
+    VulkanImage offscreen_image_;
 
-    SpriteBatch(OffscreenImage&& offscreen_image);
+    SpriteBatch(VulkanImage&& offscreen_image);
 
 public:
     static std::optional<SpriteBatch> create(const vma::Allocator& vma_allocator, glm::uvec2 size);

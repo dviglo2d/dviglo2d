@@ -249,7 +249,7 @@ std::optional<Swapchain> Swapchain::construct(vk::PhysicalDevice physical_device
     }
 
     {
-        std::optional<OffscreenImage> opt = OffscreenImage::create(vma_allocator, offscreen_size);
+        std::optional<VulkanImage> opt = VulkanImage::create(vma_allocator, offscreen_size);
 
         if (!opt)
             return std::nullopt; // Сообщение в лог уже выведено

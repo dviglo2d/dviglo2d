@@ -640,20 +640,7 @@ public:
             // В Vulkan 1.4 без RenderPass мы сами должны подготовить картинку к рендеру.
             // Переводим её из eUndefined в eColorAttachmentOptimal.
             // =========================================================================
-            vk::ImageMemoryBarrier2 barrier_to_attach
-            {
-                .srcStageMask = vk::PipelineStageFlagBits2::eNone,
-                .srcAccessMask = vk::AccessFlagBits2::eNone,
-                .dstStageMask = vk::PipelineStageFlagBits2::eColorAttachmentOutput,
-                .dstAccessMask = vk::AccessFlagBits2::eColorAttachmentWrite,
-                .oldLayout = vk::ImageLayout::eUndefined,
-                .newLayout = vk::ImageLayout::eColorAttachmentOptimal,
-                .image = DV_OS_WINDOW->swapchain_->offscreen_image_.image(),
-                .subresourceRange = { vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 }
-            };
-            vk::DependencyInfo dep_info_attach{ .imageMemoryBarrierCount = 1, .pImageMemoryBarriers = &barrier_to_attach };
-            command_buffer.pipelineBarrier2(dep_info_attach);
-
+            DV_OS_WINDOW->swapchain_->offscreen_image_.transition(command_buffer, vk::ImageLayout::eUndefined, vk::ImageLayout::eColorAttachmentOptimal);
 
             /*
             vk::ClearValue clear_color
@@ -705,19 +692,7 @@ public:
 
             // Подготавливаем отрендеренную картинку для функции Swapchain::present.
             // Переводим в ShaderReadOnlyOptimal, так как на неё будет накладываться гамма
-            vk::ImageMemoryBarrier2 barrier_to_read
-            {
-                .srcStageMask = vk::PipelineStageFlagBits2::eColorAttachmentOutput,
-                .srcAccessMask = vk::AccessFlagBits2::eColorAttachmentWrite,
-                .dstStageMask = vk::PipelineStageFlagBits2::eFragmentShader,
-                .dstAccessMask = vk::AccessFlagBits2::eShaderRead,
-                .oldLayout = vk::ImageLayout::eColorAttachmentOptimal,
-                .newLayout = vk::ImageLayout::eShaderReadOnlyOptimal,
-                .image = DV_OS_WINDOW->swapchain_->offscreen_image_.image(),
-                .subresourceRange = { vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 }
-            };
-            vk::DependencyInfo dep_info_read{ .imageMemoryBarrierCount = 1, .pImageMemoryBarriers = &barrier_to_read };
-            command_buffer.pipelineBarrier2(dep_info_read);
+            DV_OS_WINDOW->swapchain_->offscreen_image_.transition(command_buffer, vk::ImageLayout::eShaderReadOnlyOptimal);
 
             vk_result = command_buffer.end();
 

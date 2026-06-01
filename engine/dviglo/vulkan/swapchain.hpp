@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "offscreen_image.hpp"
+#include "vulkan_image.hpp"
 
 #include <dv_primitive_types.hpp>
 
@@ -31,7 +31,7 @@ private:
     std::vector<vk::UniqueImageView> swapchain_image_views_;
 
 public:
-    OffscreenImage offscreen_image_;
+    VulkanImage offscreen_image_;
 
 private:
 
