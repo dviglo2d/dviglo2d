@@ -767,7 +767,7 @@ OsWindow::OsWindow(const ConfigBase& config)
 
     swapchain_ = make_unique<Swapchain>(std::move(*swaphain));
 
-#if 1
+#if 0
     { // TODO: Тест вычислительного шейдера
 
         // -------------------------------- Загружаем шейдер из файла
