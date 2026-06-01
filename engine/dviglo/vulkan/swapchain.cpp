@@ -283,12 +283,57 @@ std::optional<Swapchain> Swapchain::construct(vk::PhysicalDevice physical_device
                 .stageFlags = vk::ShaderStageFlagBits::eFragment,
             };
             vk::DescriptorSetLayoutCreateInfo dsl_info{
-                .flags = vk::DescriptorSetLayoutCreateFlagBits::ePushDescriptor,
                 .bindingCount = 1,
                 .pBindings = &binding,
             };
             std::tie(vk_result, ret.dsl_) = device.createDescriptorSetLayoutUnique(dsl_info).asTuple();
             assert(vk_result == vk::Result::eSuccess);
+        }
+
+        // Descriptor Pool
+
+        {
+            vk::DescriptorPoolSize pool_size{ vk::DescriptorType::eCombinedImageSampler, 1 };
+            vk::DescriptorPoolCreateInfo pool_info{
+                .flags = vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet,
+                .maxSets = 1,
+                .poolSizeCount = 1,
+                .pPoolSizes = &pool_size,
+            };
+            std::tie(vk_result, ret.pool_) = device.createDescriptorPoolUnique(pool_info).asTuple();
+            assert(vk_result == vk::Result::eSuccess);
+        }
+
+        // Descriptor Set
+
+        {
+            vk::DescriptorSetAllocateInfo alloc_info{
+                .descriptorPool = *ret.pool_,
+                .descriptorSetCount = 1,
+                .pSetLayouts = &*ret.dsl_,
+            };
+            std::vector<vk::UniqueDescriptorSet> sets;
+            std::tie(vk_result, sets) = device.allocateDescriptorSetsUnique(alloc_info).asTuple();
+            assert(vk_result == vk::Result::eSuccess);
+            ret.unique_desc_set_ = std::move(sets[0]);
+        }
+
+
+        // Обновляем дескриптор
+        {
+            vk::DescriptorImageInfo image_info{
+                .sampler = *ret.sampler_,
+                .imageView = ret.offscreen_image_.view.get(),
+                .imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal,
+            };
+            vk::WriteDescriptorSet write{
+                .dstSet = ret.unique_desc_set_.get(),
+                .dstBinding = 0,
+                .descriptorCount = 1,
+                .descriptorType = vk::DescriptorType::eCombinedImageSampler,
+                .pImageInfo = &image_info,
+            };
+            device.updateDescriptorSets(1, &write, 0, nullptr);
         }
 
         // Pipeline Layout
@@ -491,20 +536,7 @@ std::optional<Swapchain> Swapchain::construct(vk::PhysicalDevice physical_device
 
                 cmd.bindPipeline(vk::PipelineBindPoint::eGraphics, *ret.pipeline);
 
-
-                // Push Descriptors: прямо в буфер записываем данные дескриптора
-                vk::DescriptorImageInfo image_info{
-                    .sampler = *ret.sampler_,
-                    .imageView = ret.offscreen_image_.view.get(),
-                    .imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal,
-                };
-                vk::WriteDescriptorSet write{
-                    .dstBinding = 0,
-                    .descriptorCount = 1,
-                    .descriptorType = vk::DescriptorType::eCombinedImageSampler,
-                    .pImageInfo = &image_info,
-                };
-                cmd.pushDescriptorSet(vk::PipelineBindPoint::eGraphics, *ret.pipeline_layout, 0, 1, &write);
+                cmd.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, *ret.pipeline_layout, 0, *ret.unique_desc_set_, nullptr);
 
                 cmd.draw(3, 1, 0, 0);
 

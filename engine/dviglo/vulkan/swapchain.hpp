@@ -40,6 +40,9 @@ private:
 
     vk::UniqueDescriptorSetLayout dsl_;
 
+    vk::UniqueDescriptorPool pool_;
+    vk::UniqueDescriptorSet unique_desc_set_;
+
     vk::UniquePipelineLayout pipeline_layout;
     vk::UniquePipeline pipeline;
 
