@@ -85,7 +85,7 @@ void VulkanImage::transition(vk::CommandBuffer cmd, vk::ImageLayout new_layout)
 {
     if (layout == new_layout)
     {
-        Log::writef_error("{} | layout == new_layout | {}", DV_FUNC_SIG, vk::to_string(layout));
+        Log::writef_warning("{} | layout == new_layout | {}", DV_FUNC_SIG, vk::to_string(layout));
         return;
     }
 
