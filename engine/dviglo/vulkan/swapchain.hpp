@@ -54,7 +54,7 @@ private:
 
     vk::UniqueFence fence;
 
-    Swapchain(VulkanImage&& offscreen_image);
+    Swapchain() = default;
 
 public:
     static std::optional<Swapchain> construct(vk::PhysicalDevice physical_device, vk::Device device,
@@ -75,7 +75,7 @@ public:
 
     vk::PresentModeKHR present_mode() const { return present_mode_; }
     vk::Extent2D swapchain_image_extent() const { return swapchain_image_extent_; }
-    vk::Extent2D offscreen_image_extent() const { return offscreen_image_.extent(); }
+    vk::Extent2D offscreen_image_extent() const { return offscreen_image_.extent; }
     vk::SurfaceFormatKHR surface_format() const { return surface_format_; }
     vk::SwapchainKHR get() const { return *value_; }
     const std::vector<vk::UniqueImageView>& swapchain_image_views() const { return swapchain_image_views_; }

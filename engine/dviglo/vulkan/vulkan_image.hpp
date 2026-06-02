@@ -9,30 +9,22 @@
 namespace dviglo
 {
 
-// Меняет раскладку изображения
 void transition(vk::CommandBuffer cmd, vk::Image image, vk::ImageLayout old_layout, vk::ImageLayout new_layout);
 
-class VulkanImage
+struct VulkanImage
 {
-    VmaAllocatedImage   allocated_image_;
-    vk::UniqueImageView view_;
-    vk::Extent2D        extent_;
-    vk::ImageLayout     layout_;
+    VmaAllocatedImage   allocated_image;
+    vk::UniqueImageView view;
+    vk::Extent2D        extent;
+    vk::ImageLayout     layout;
 
-    VulkanImage() = default;
-
-public:
     static std::optional<VulkanImage> create(const vma::Allocator& vma_allocator, glm::uvec2 size);
 
-    vk::Image       image()  const noexcept { return allocated_image_.second.get(); }
-    vk::ImageView   view()   const noexcept { return view_.get(); }
-    vk::Extent2D    extent() const noexcept { return extent_; }
-    vk::ImageLayout layout() const noexcept { return layout_; }
+    vk::Image image() const noexcept { return allocated_image.second.get(); }
 
-    // Меняет раскладку изображения
     void transition(vk::CommandBuffer cmd, vk::ImageLayout new_layout);
 
-    // Перезаписывает текущий layout, а потом меняет раскладку изображения
+    // Перезаписывает текущий layout
     void transition(vk::CommandBuffer cmd, vk::ImageLayout old_layout, vk::ImageLayout new_layout);
 };
 
