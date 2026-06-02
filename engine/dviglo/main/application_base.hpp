@@ -665,7 +665,7 @@ public:
 
             vk::RenderingAttachmentInfo color_attachment
             {
-                .imageView = DV_OS_WINDOW->swapchain_->offscreen_image_.view.get(),
+                .imageView = DV_OS_WINDOW->swapchain_->offscreen_image_.view(),
                 .imageLayout = vk::ImageLayout::eColorAttachmentOptimal,
                 .loadOp = vk::AttachmentLoadOp::eClear,
                 .storeOp = vk::AttachmentStoreOp::eStore,

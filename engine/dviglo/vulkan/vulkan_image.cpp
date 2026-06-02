@@ -125,7 +125,7 @@ std::optional<VulkanImage> VulkanImage::create(const vma::Allocator& vma_allocat
             .usage = vma::MemoryUsage::eAuto,
         };
 
-        std::tie(vk_result, ret.allocated_image) = vma_allocator.createImageUnique(image_create_info, vma_allocation_create_info).asTuple();
+        std::tie(vk_result, ret.allocated_image_) = vma_allocator.createImageUnique(image_create_info, vma_allocation_create_info).asTuple();
 
         if (vk_result != vk::Result::eSuccess)
         {
@@ -138,7 +138,7 @@ std::optional<VulkanImage> VulkanImage::create(const vma::Allocator& vma_allocat
     {
         vk::ImageViewCreateInfo image_view_create_info
         {
-            .image = ret.allocated_image.second.get(),
+            .image = ret.allocated_image_.second.get(),
             .viewType = vk::ImageViewType::e2D,
             .format = vk::Format::eB8G8R8A8Unorm,
 
@@ -153,7 +153,7 @@ std::optional<VulkanImage> VulkanImage::create(const vma::Allocator& vma_allocat
         };
 
         vk::Device device = vma_allocator.getAllocatorInfo().device;
-        std::tie(vk_result, ret.view) = device.createImageViewUnique(image_view_create_info).asTuple();
+        std::tie(vk_result, ret.view_) = device.createImageViewUnique(image_view_create_info).asTuple();
 
         if (vk_result != vk::Result::eSuccess)
         {
@@ -164,8 +164,8 @@ std::optional<VulkanImage> VulkanImage::create(const vma::Allocator& vma_allocat
 
     // ============================= Остальные поля =============================
     {
-        ret.extent = { size.x, size.y };
-        ret.layout = vk::ImageLayout::eUndefined;
+        ret.extent_ = { size.x, size.y };
+        ret.layout_ = vk::ImageLayout::eUndefined;
     }
 
     return ret;
@@ -173,15 +173,15 @@ std::optional<VulkanImage> VulkanImage::create(const vma::Allocator& vma_allocat
 
 void VulkanImage::transition(vk::CommandBuffer cmd, vk::ImageLayout new_layout)
 {
-    ::dviglo::transition(cmd, image(), layout, new_layout);
-    layout = new_layout;
+    ::dviglo::transition(cmd, image(), layout_, new_layout);
+    layout_ = new_layout;
 }
 
 void VulkanImage::transition(vk::CommandBuffer cmd, vk::ImageLayout old_layout, vk::ImageLayout new_layout)
 {
-    layout = old_layout;
-    ::dviglo::transition(cmd, image(), layout, new_layout);
-    layout = new_layout;
+    layout_ = old_layout;
+    ::dviglo::transition(cmd, image(), layout_, new_layout);
+    layout_ = new_layout;
 }
 
 } // namespace dviglo

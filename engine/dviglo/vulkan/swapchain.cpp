@@ -12,6 +12,11 @@ using namespace std;
 namespace dviglo
 {
 
+Swapchain::Swapchain(VulkanImage&& offscreen_image)
+    : offscreen_image_(std::move(offscreen_image))
+{
+}
+
 std::optional<Swapchain> Swapchain::construct(vk::PhysicalDevice physical_device, vk::Device device,
                                               u32 graphics_queue_family_index, u32 present_queue_family_index,
                                               vk::SurfaceKHR surface,
@@ -20,7 +25,12 @@ std::optional<Swapchain> Swapchain::construct(vk::PhysicalDevice physical_device
                                               vma::Allocator& vma_allocator,
                                               vk::PresentModeKHR present_mode)
 {
-    Swapchain ret;
+    std::optional<VulkanImage> optional_offscreen_image = VulkanImage::create(vma_allocator, offscreen_size);
+
+    if (!optional_offscreen_image)
+        return std::nullopt; // Сообщение об ошибке уже выведено
+
+    Swapchain ret(std::move(*optional_offscreen_image));
 
     vk::Result vk_result;
 
@@ -323,7 +333,7 @@ std::optional<Swapchain> Swapchain::construct(vk::PhysicalDevice physical_device
         {
             vk::DescriptorImageInfo image_info{
                 .sampler = *ret.sampler_,
-                .imageView = ret.offscreen_image_.view.get(),
+                .imageView = ret.offscreen_image_.view(),
                 .imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal,
             };
             vk::WriteDescriptorSet write{
@@ -384,10 +394,10 @@ std::optional<Swapchain> Swapchain::construct(vk::PhysicalDevice physical_device
                 .topology = vk::PrimitiveTopology::eTriangleList,
             };
 
-            float scale = std::min(static_cast<float>(ret.swapchain_image_extent_.width) / ret.offscreen_image_.extent.width,
-                static_cast<float>(ret.swapchain_image_extent_.height) / ret.offscreen_image_.extent.height);
-            float targetW = static_cast<float>(ret.offscreen_image_.extent.width) * scale;
-            float targetH = static_cast<float>(ret.offscreen_image_.extent.height) * scale;
+            float scale = std::min(static_cast<float>(ret.swapchain_image_extent_.width) / ret.offscreen_image_.extent().width,
+                static_cast<float>(ret.swapchain_image_extent_.height) / ret.offscreen_image_.extent().height);
+            float targetW = static_cast<float>(ret.offscreen_image_.extent().width) * scale;
+            float targetH = static_cast<float>(ret.offscreen_image_.extent().height) * scale;
             float offsetX = (static_cast<float>(ret.swapchain_image_extent_.width) - targetW) / 2.0f;
             float offsetY = (static_cast<float>(ret.swapchain_image_extent_.height) - targetH) / 2.0f;
 
