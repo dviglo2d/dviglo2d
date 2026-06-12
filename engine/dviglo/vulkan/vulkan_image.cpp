@@ -99,23 +99,28 @@ void transition(vk::CommandBuffer cmd, vk::Image image, vk::ImageLayout old_layo
     cmd.pipelineBarrier2(dependency_info);
 }
 
-std::optional<VulkanImage> VulkanImage::create(const vma::Allocator& vma_allocator, glm::uvec2 size)
+std::optional<VulkanImage> VulkanImage::create(const vma::Allocator& vma_allocator, glm::uvec2 size, vk::ImageUsageFlags usage)
 {
     VulkanImage ret;
     vk::Result vk_result;
+
+    {
+        ret.extent = { size.x, size.y };
+        // ret.layout и ret.format уже проинициализированы
+    }
 
     // ============================= VmaAllocatedImage allocated_image =============================
     {
         vk::ImageCreateInfo image_create_info
         {
             .imageType = vk::ImageType::e2D,
-            .format = vk::Format::eB8G8R8A8Unorm,
+            .format = ret.format,
             .extent = { size.x, size.y, 1 },
             .mipLevels = 1,
             .arrayLayers = 1,
             .samples = vk::SampleCountFlagBits::e1,
             .tiling = vk::ImageTiling::eOptimal,
-            .usage = vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled,
+            .usage = usage,
             .sharingMode = vk::SharingMode::eExclusive,
             .initialLayout = vk::ImageLayout::eUndefined,
         };
@@ -140,7 +145,7 @@ std::optional<VulkanImage> VulkanImage::create(const vma::Allocator& vma_allocat
         {
             .image = ret.allocated_image.second.get(),
             .viewType = vk::ImageViewType::e2D,
-            .format = vk::Format::eB8G8R8A8Unorm,
+            .format = ret.format,
 
             .subresourceRange = vk::ImageSubresourceRange
             {
@@ -160,12 +165,6 @@ std::optional<VulkanImage> VulkanImage::create(const vma::Allocator& vma_allocat
             Log::writef_error("{} | device.createImageViewUnique(...) | {}", DV_FUNC_SIG, vk::to_string(vk_result));
             return std::nullopt;
         }
-    }
-
-    // ============================= Остальные поля =============================
-    {
-        ret.extent = { size.x, size.y };
-        ret.layout = vk::ImageLayout::eUndefined;
     }
 
     return ret;

@@ -1550,7 +1550,6 @@ OsWindow::OsWindow(const ConfigBase& config)
 
     //is_valid_ = false;
     is_valid_ = true;
-    return;
 }
 
 OsWindow::~OsWindow()

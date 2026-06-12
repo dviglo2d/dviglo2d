@@ -25,6 +25,7 @@ struct MainSubsystems
     std::unique_ptr<OsWindow> os_window;
     std::unique_ptr<ShaderCacheOld> shader_cache_old;
     std::unique_ptr<TextureCache> texture_cache;
+    std::unique_ptr<TextureCacheNew> texture_cache_new;
     std::unique_ptr<Audio> audio;
     std::unique_ptr<FreeType> freetype;
     std::unique_ptr<DV_APPLICATION_CLASS> application;
@@ -48,12 +49,21 @@ struct MainSubsystems
         os_window = std::make_unique<OsWindow>(*config);
         if (!os_window->is_valid())
         {
-            Log::writef_error("{} | os_window->is_invalid()", DV_FUNC_SIG);
+            Log::writef_error("{} | !os_window->is_valid()", DV_FUNC_SIG);
             return SDL_APP_FAILURE;
         }
 
         shader_cache_old = std::make_unique<ShaderCacheOld>();
         texture_cache = std::make_unique<TextureCache>();
+
+        texture_cache_new = std::make_unique<TextureCacheNew>(DV_OS_WINDOW->vma_allocator(), DV_OS_WINDOW->graphics_queue(), DV_OS_WINDOW->graphics_queue_index());
+
+        if (!texture_cache_new->is_valid())
+        {
+            Log::writef_error("{} | !texture_cache_new->is_valid()", DV_FUNC_SIG);
+            return SDL_APP_FAILURE;
+        }
+
         audio = std::make_unique<Audio>();
         freetype = std::make_unique<FreeType>();
         application = std::make_unique<DV_APPLICATION_CLASS>();

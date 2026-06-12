@@ -60,6 +60,10 @@ public:
 
     bool is_valid() const { return is_valid_; }
 
+    vma::Allocator vma_allocator() const { return *vma_allocator_; }
+    vk::Queue graphics_queue() const { return vk_present_queue_; }
+    u32 graphics_queue_index() const { return 0; } // TODO
+
     SDL_Window* window() const { return window_; }
 
     glm::ivec2 get_size_in_pixels() const;

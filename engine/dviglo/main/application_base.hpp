@@ -10,6 +10,7 @@
 #include "../audio/audio.hpp"
 #include "../gl_utils/shader_cache_old.hpp"
 #include "../gl_utils/texture_cache.hpp"
+#include "../vulkan/texture_cache_new.hpp"
 #include "../res/freetype.hpp"
 
 #include <dv_log.hpp>
@@ -19,6 +20,8 @@
 #include <memory>
 
 #include "../vulkan/vulkan_utils.hpp"
+
+#include "../graphics/sprite_batch.hpp"
 
 
 namespace dviglo
@@ -574,11 +577,10 @@ public:
 
             // -------------------------------- Пайплайн
 
-            vk::Format offscreen_format = vk::Format::eB8G8R8A8Unorm;
             vk::PipelineRenderingCreateInfo pipeline_rendering_info
             {
                 .colorAttachmentCount = 1,
-                .pColorAttachmentFormats = &offscreen_format,
+                .pColorAttachmentFormats = &DV_OS_WINDOW->swapchain_->offscreen_image_.format,
             };
 
             vk::GraphicsPipelineCreateInfo graphics_pipeline_info
@@ -772,7 +774,223 @@ public:
 #endif
 
 
+#if 1 // Тест спрайт батча
+        vk::Result vk_result;
 
+        // -------------------------------- Загружаем шейдеры из файлов
+        fs::path base_path = get_base_path();
+        vk::UniqueShaderModule vert_shader_module = load_shader(DV_OS_WINDOW->vk_device_.get(), base_path / "engine_data/shaders/sb.vert.spv");
+        if (!vert_shader_module) { Log::writef_error("{} | !vert_shader_module", DV_FUNC_SIG); }
+
+        vk::UniqueShaderModule frag_shader_module = load_shader(DV_OS_WINDOW->vk_device_.get(), base_path / "engine_data/shaders/sb.frag.spv");
+        if (!frag_shader_module) { Log::writef_error("{} | !frag_shader_module", DV_FUNC_SIG); }
+
+        // -------------------------------- Шейдерные стадии
+        vk::PipelineShaderStageCreateInfo pipeline_vert_shader_stage_create_info{
+            .stage = vk::ShaderStageFlagBits::eVertex,
+            .module = *vert_shader_module,
+            .pName = "main",
+        };
+
+        vk::PipelineShaderStageCreateInfo pipeline_frag_shader_stage_create_info{
+            .stage = vk::ShaderStageFlagBits::eFragment,
+            .module = *frag_shader_module,
+            .pName = "main",
+        };
+
+        vk::PipelineShaderStageCreateInfo shader_stages[] = { pipeline_vert_shader_stage_create_info, pipeline_frag_shader_stage_create_info };
+
+        // --- НОВОЕ: Стадия сборки примитивов из вершин (Описываем BatchVertex) ---
+
+        vk::VertexInputBindingDescription binding_desc{
+            .binding = 0,
+            .stride = sizeof(BatchVertex), // 24 байта
+            .inputRate = vk::VertexInputRate::eVertex
+        };
+
+        vk::VertexInputAttributeDescription attrs[] = {
+            // Location 0: Позиция (vec2)
+            {.location = 0, .binding = 0, .format = vk::Format::eR32G32Sfloat,   .offset = offsetof(BatchVertex, position) },
+            // Location 1: UV (vec2)
+            {.location = 1, .binding = 0, .format = vk::Format::eR32G32Sfloat,   .offset = offsetof(BatchVertex, uv) },
+            // Location 2: Цвет. Формат eR8G8B8A8Unorm автоматически превратит uint32_t в vec4(r,g,b,a) от 0.0 до 1.0!
+            {.location = 2, .binding = 0, .format = vk::Format::eR8G8B8A8Unorm,  .offset = offsetof(BatchVertex, color) },
+            // Location 3: Индекс текстуры (uint)
+            {.location = 3, .binding = 0, .format = vk::Format::eR32Uint,        .offset = offsetof(BatchVertex, textureIndex) }
+        };
+
+        vk::PipelineVertexInputStateCreateInfo vertex_input_info{
+            .vertexBindingDescriptionCount = 1,
+            .pVertexBindingDescriptions = &binding_desc,
+            .vertexAttributeDescriptionCount = 4,
+            .pVertexAttributeDescriptions = attrs
+        };
+        // -------------------------------------------------------------------------
+
+        vk::PipelineInputAssemblyStateCreateInfo assemply_info{
+            .topology = vk::PrimitiveTopology::eTriangleList,
+        };
+
+        vk::Viewport viewport{
+            .x = 0.f, .y = 0.f,
+            .width = 512.f, .height = 512.f,
+            .minDepth = 0.f, .maxDepth = 1.f,
+        };
+
+        vk::Rect2D scissor{
+            .offset = {0, 0},
+            .extent = {512, 512},
+        };
+
+        vk::PipelineViewportStateCreateInfo viewport_state{
+            .viewportCount = 1, .pViewports = &viewport,
+            .scissorCount = 1, .pScissors = &scissor,
+        };
+
+        vk::PipelineRasterizationStateCreateInfo rasterizer{
+            .polygonMode = vk::PolygonMode::eFill,
+            // ВАЖНО: для 2D графики часто отключают CullMode, чтобы не думать о порядке обхода вершин
+            .cullMode = vk::CullModeFlagBits::eNone,
+            .frontFace = vk::FrontFace::eClockwise,
+            .lineWidth = 1.f,
+        };
+
+        vk::PipelineMultisampleStateCreateInfo multisampling{
+            .rasterizationSamples = vk::SampleCountFlagBits::e1,
+            .minSampleShading = 1.f,
+        };
+
+        vk::PipelineColorBlendAttachmentState color_blend_attachment{
+            // --- НОВОЕ: Включил прозрачность (Альфа-блендинг) ---
+            .blendEnable = true,
+            .srcColorBlendFactor = vk::BlendFactor::eSrcAlpha,
+            .dstColorBlendFactor = vk::BlendFactor::eOneMinusSrcAlpha,
+            .colorBlendOp = vk::BlendOp::eAdd,
+            .srcAlphaBlendFactor = vk::BlendFactor::eOne,
+            .dstAlphaBlendFactor = vk::BlendFactor::eZero,
+            .alphaBlendOp = vk::BlendOp::eAdd,
+            .colorWriteMask = vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA,
+        };
+
+        vk::PipelineColorBlendStateCreateInfo color_blending{
+            .attachmentCount = 1,
+            .pAttachments = &color_blend_attachment,
+        };
+
+        // Макет пайплайна (здесь в будущем вы привяжете DescriptorSetLayout для Bindless текстур)
+        vk::PipelineLayoutCreateInfo pipeline_layout_info;
+        vk::UniquePipelineLayout vk_graphics_pipeline_layout;
+        std::tie(vk_result, vk_graphics_pipeline_layout) = DV_OS_WINDOW->vk_device_->createPipelineLayoutUnique(pipeline_layout_info).asTuple();
+
+        vk::PipelineRenderingCreateInfo pipeline_rendering_info{
+            .colorAttachmentCount = 1,
+            .pColorAttachmentFormats = &DV_OS_WINDOW->swapchain_->offscreen_image_.format,
+        };
+
+        vk::GraphicsPipelineCreateInfo graphics_pipeline_info{
+            .pNext = &pipeline_rendering_info,
+            .stageCount = 2,
+            .pStages = shader_stages,
+            .pVertexInputState = &vertex_input_info, // Теперь тут наши атрибуты!
+            .pInputAssemblyState = &assemply_info,
+            .pViewportState = &viewport_state,
+            .pRasterizationState = &rasterizer,
+            .pMultisampleState = &multisampling,
+            .pColorBlendState = &color_blending,
+            .layout = *vk_graphics_pipeline_layout,
+        };
+
+        vk::UniquePipeline vk_graphics_pipeline;
+        std::tie(vk_result, vk_graphics_pipeline) = DV_OS_WINDOW->vk_device_->createGraphicsPipelineUnique(nullptr, graphics_pipeline_info).asTuple();
+
+        // -------------------------------- Рендерим
+
+        vk::CommandBufferAllocateInfo cb_alloc_info{
+            .commandPool = DV_OS_WINDOW->vk_command_pool_.get(),
+            .commandBufferCount = 1,
+        };
+
+        std::vector<vk::UniqueCommandBuffer> command_buffers;
+        std::tie(vk_result, command_buffers) = DV_OS_WINDOW->vk_device_->allocateCommandBuffersUnique(cb_alloc_info).asTuple();
+        vk::CommandBuffer command_buffer2 = *(command_buffers[0]);
+
+        vk::CommandBufferBeginInfo command_buffer_begin_info;
+        command_buffer2.begin(command_buffer_begin_info);
+
+        DV_OS_WINDOW->swapchain_->offscreen_image_.transition_from_undefined(command_buffer2, vk::ImageLayout::eColorAttachmentOptimal);
+
+        vk::RenderingAttachmentInfo color_attachment{
+            .imageView = DV_OS_WINDOW->swapchain_->offscreen_image_.view.get(),
+            .imageLayout = vk::ImageLayout::eColorAttachmentOptimal,
+            .loadOp = vk::AttachmentLoadOp::eClear,
+            .storeOp = vk::AttachmentStoreOp::eStore,
+            .clearValue = { vk::ClearColorValue{ std::array<float, 4>{0.25f, 0.15f, 0.7f, 1.0f} } }
+        };
+
+        vk::RenderingInfo rendering_info{
+            .renderArea = { {0, 0}, DV_OS_WINDOW->swapchain_->offscreen_image_extent() },
+            .layerCount = 1,
+            .colorAttachmentCount = 1,
+            .pColorAttachments = &color_attachment
+        };
+
+        command_buffer2.beginRendering(rendering_info);
+        command_buffer2.bindPipeline(vk::PipelineBindPoint::eGraphics, *vk_graphics_pipeline);
+
+        // =========================================================================
+        // --- НОВОЕ: ИСПОЛЬЗУЕМ НАШ BATCHER ---
+        // (Инициализировать батчер лучше 1 раз при старте движка, а не каждый кадр!)
+        // =========================================================================
+
+        // Предположим, VMA аллокатор у вас доступен тут:
+        SpriteBatch batcher(DV_OS_WINDOW->vk_device_.get(), DV_OS_WINDOW->vma_allocator_.get());
+
+        batcher.Begin(command_buffer2);
+
+        // 1. Рисуем квадрат (например, фон окна)
+        // Аргументы: Pos, Size, UV, Color(ABGR в памяти), TextureIndex
+        batcher.DrawSprite({ 50.f, 50.f }, { 200.f, 200.f }, { 0.f, 0.f, 1.f, 1.f }, 0xFF0000FF, 0); // Красный квадрат
+
+        // 2. Рисуем зеленый треугольник ПОВЕРХ квадрата
+        //batcher.DrawTriangle({ 300.f, 100.f }, { 400.f, 300.f }, { 200.f, 300.f }, 0xFF00FF00, 0);
+
+        // 3. Рисуем полупрозрачный синий квадрат
+        batcher.DrawSprite({ 150.f, 150.f }, { 150.f, 150.f }, { 0.f, 0.f, 1.f, 1.f }, 0x88FF0000, 0);
+
+        batcher.End(); // Здесь вызываются vkCmdBindVertexBuffers и vkCmdDrawIndexed !
+
+        // =========================================================================
+
+        command_buffer2.endRendering();
+
+        DV_OS_WINDOW->swapchain_->offscreen_image_.transition(command_buffer2, vk::ImageLayout::eShaderReadOnlyOptimal);
+        command_buffer2.end();
+
+        // -------------------------------- Забор
+        vk::UniqueFence fence;
+        vk::FenceCreateInfo fence_info;
+        std::tie(vk_result, fence) = DV_OS_WINDOW->vk_device_->createFenceUnique(fence_info).asTuple();
+
+        // -------------------------------- Отправляем в очередь
+        vk::CommandBufferSubmitInfo cmd_info{ .commandBuffer = command_buffer2 };
+        vk::SemaphoreSubmitInfo signal_info{
+            .semaphore = render_finished_sem_.get(),
+            .stageMask = vk::PipelineStageFlagBits2::eColorAttachmentOutput
+        };
+
+        vk::SubmitInfo2 submit_info_2{
+            .commandBufferInfoCount = 1,
+            .pCommandBufferInfos = &cmd_info,
+            .signalSemaphoreInfoCount = 1,
+            .pSignalSemaphoreInfos = &signal_info
+        };
+
+        DV_OS_WINDOW->vk_graphics_queue_.submit2(1, &submit_info_2, *fence);
+        DV_OS_WINDOW->vk_device_->waitForFences(1, &fence.get(), vk::True, 100000000000);
+
+
+
+#endif
 
 
 

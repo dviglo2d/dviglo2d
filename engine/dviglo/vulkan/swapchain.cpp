@@ -161,6 +161,8 @@ std::optional<Swapchain> Swapchain::construct(vk::PhysicalDevice physical_device
             Log::writef_error("{} | !ranges::contains(surface_formats, surface_format_)", DV_FUNC_SIG);
             return std::nullopt;
         }
+
+        // TODO: сперва проверить RGBA формат, а потом BGRA
     }
 
     // ============================= Свопчейн =============================
@@ -249,7 +251,7 @@ std::optional<Swapchain> Swapchain::construct(vk::PhysicalDevice physical_device
     }
 
     {
-        std::optional<VulkanImage> opt = VulkanImage::create(vma_allocator, offscreen_size);
+        std::optional<VulkanImage> opt = VulkanImage::create(vma_allocator, offscreen_size, vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eColorAttachment);
 
         if (!opt)
             return std::nullopt; // Сообщение в лог уже выведено

@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include "vulkan_image.hpp"
+
 #include <dv_subsystem_index.hpp>
 
 
@@ -17,13 +19,22 @@ private:
     // Инициализируется в конструкторе
     inline static TextureCacheNew* instance_ = nullptr;
 
+    // Отдельный командный пул для пересылки изображений в видеопамять
+    vk::UniqueCommandPool vk_command_pool_;
+
+    vma::Allocator vma_allocator_;
+    bool is_valid_ = false;
+
+    std::unique_ptr<VulkanImage> white_pixel_;
+
 public:
     static TextureCacheNew* instance() { return instance_; }
 
-    TextureCacheNew();
+    TextureCacheNew(vma::Allocator vma_allocator, vk::Queue queue, u32 queue_family_index);
     ~TextureCacheNew() override;
-};
 
+    bool is_valid() const { return is_valid_; }
+};
 
 } // namespace dviglo
 
