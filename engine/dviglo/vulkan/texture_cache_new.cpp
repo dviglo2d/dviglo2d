@@ -54,6 +54,7 @@ TextureCacheNew::TextureCacheNew(vma::Allocator vma_allocator, vk::Queue queue, 
         VmaAllocatedBuffer staging_buffer;
 
         {
+            // 0xAABBGGRR интрпретируется как 4 байта r g b a, так как little-endian
             const u32 white_pixel = 0xFFFFFFFF;
 
             vk::BufferCreateInfo buffer_create_info

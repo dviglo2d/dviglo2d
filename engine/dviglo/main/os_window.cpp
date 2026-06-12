@@ -550,14 +550,20 @@ bool OsWindow::vk_create_device()
         .dynamicRendering = vk::True, // Включает рендер без RenderPass
     };
 
+    // Требуется для VK_EXT_descriptor_indexing:
     // https://docs.vulkan.org/refpages/latest/refpages/source/VK_EXT_descriptor_indexing.html
     // https://docs.vulkan.org/refpages/latest/refpages/source/VkPhysicalDeviceDescriptorIndexingFeatures.html
-    vk::PhysicalDeviceDescriptorIndexingFeaturesEXT indexing_features
+    vk::PhysicalDeviceVulkan12Features features_1_2
     {
         .pNext = &features_1_3,
 
-        // TODO: Соседние пиксели на экране могут запрашивать разные текстуры
-        //.shaderSampledImageArrayNonUniformIndexing = vk::True,
+        .descriptorIndexing = vk::True,
+
+        // Разрешает использовать GL_EXT_nonuniform_qualifier в шейдере.
+        // Соседние пиксели на экране могут запрашивать разные текстуры
+        .shaderSampledImageArrayNonUniformIndexing = vk::True,
+
+        .descriptorBindingSampledImageUpdateAfterBind = vk::True,
 
         // Разрешаем частично заполненные массивы
         .descriptorBindingPartiallyBound = vk::True,
@@ -569,9 +575,8 @@ bool OsWindow::vk_create_device()
 
     vk::DeviceCreateInfo device_info
     {
-        // Требуется для VK_EXT_descriptor_indexing:
         // https://docs.vulkan.org/refpages/latest/refpages/source/VK_EXT_descriptor_indexing.html
-        .pNext = &indexing_features,
+        .pNext = &features_1_2,
 
         .pEnabledFeatures = &features, // TODO: Включать только то, что нужно
     };

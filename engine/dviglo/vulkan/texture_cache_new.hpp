@@ -34,6 +34,8 @@ public:
     ~TextureCacheNew() override;
 
     bool is_valid() const { return is_valid_; }
+
+    VulkanImage& white_pixel() const { return *white_pixel_; }
 };
 
 } // namespace dviglo

@@ -5,14 +5,13 @@
 
 #include "../vulkan/vulkan_image.hpp"
 
-#define VULKAN_HPP_NO_CONSTRUCTORS
+//#define VULKAN_HPP_NO_CONSTRUCTORS
 #include <vulkan/vulkan.hpp>
 #include <vk_mem_alloc.hpp>
 #include <glm/glm.hpp>
 #include <vector>
+#include <unordered_map>
 #include <stdexcept>
-
-
 
 namespace dviglo
 {
@@ -38,8 +37,6 @@ static_assert(!std::is_copy_assignable_v<SpriteBatch>);
 // Можно перемещать
 static_assert(std::is_move_constructible_v<SpriteBatch>);
 static_assert(std::is_move_assignable_v<SpriteBatch>);
-
-
 */
 
 // Максимально плотная структура (24 байта). Идеально ложится в кэшлинии GPU.
@@ -57,9 +54,18 @@ public:
     static constexpr uint32_t MAX_VERTICES_PER_CHUNK = 65536; // 1.5 MB
     static constexpr uint32_t MAX_INDICES_PER_CHUNK  = 98304; // 384 KB
 
-    SpriteBatch(vk::Device device, vma::Allocator allocator) 
+    // Максимальное количество уникальных текстур в одном кадре/пуле
+    static constexpr uint32_t MAX_BINDLESS_TEXTURES  = 1024; 
+
+    // В конструктор передаем девайс, аллокатор и белую текстуру 1x1 для инициализации нулевого индекса.
+    SpriteBatch(vk::Device device, vma::Allocator allocator, vk::ImageView whiteTexture) 
         : m_device(device), m_allocator(allocator) 
     {
+        InitBindlessSystem();
+        
+        // Индекс 0 всегда резервируем под белую текстуру (для отрисовки геометрии)
+        GetTextureIndex(whiteTexture); 
+
         AllocateChunk(); // Выделяем первый чанк при запуске
     }
 
@@ -68,13 +74,57 @@ public:
             m_allocator.destroyBuffer(chunk.vertexBuffer, chunk.vertexAlloc);
             m_allocator.destroyBuffer(chunk.indexBuffer, chunk.indexAlloc); // Используем поле indexBuffer из структуры
         }
+
+        m_device.destroySampler(m_sampler);
+        m_device.destroyDescriptorSetLayout(m_bindlessLayout);
+        m_device.destroyDescriptorPool(m_descriptorPool);
     }
 
     // Запрет копирования
     SpriteBatch(const SpriteBatch&) = delete;
     SpriteBatch& operator=(const SpriteBatch&) = delete;
 
-    void Begin(vk::CommandBuffer cmdBuffer) {
+    // ------------------------------------------------------------------------
+    // РЕГИСТРАЦИЯ ТЕКСТУР
+    // ------------------------------------------------------------------------
+    // Передаешь сюда свой ImageView, получаешь индекс для записи в BatchVertex
+    uint32_t GetTextureIndex(vk::ImageView imageView) 
+    {
+        // Проверяем кэш: если текстура уже в массиве, просто возвращаем ее индекс
+        if (auto it = m_textureCache.find(imageView); it != m_textureCache.end()) {
+            return it->second;
+        }
+
+        if (m_currentTextureIndex >= MAX_BINDLESS_TEXTURES) {
+            throw std::runtime_error("SpriteBatch: Exceeded MAX_BINDLESS_TEXTURES limit!");
+        }
+
+        uint32_t index = m_currentTextureIndex++;
+
+        // Обновляем дескриптор на видеокарте
+        vk::DescriptorImageInfo imageInfo {
+            .sampler     = m_sampler,
+            .imageView   = imageView,
+            .imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal,
+        };
+
+        vk::WriteDescriptorSet writeDesc {
+            .dstSet          = m_bindlessSet,
+            .dstBinding      = 0,
+            .dstArrayElement = index, // Записываем именно по этому индексу!
+            .descriptorCount = 1,
+            .descriptorType  = vk::DescriptorType::eCombinedImageSampler,
+            .pImageInfo      = &imageInfo,
+        };
+
+        m_device.updateDescriptorSets(1, &writeDesc, 0, nullptr);
+
+        // Сохраняем в кэш
+        m_textureCache[imageView] = index;
+        return index;
+    }
+
+    void Begin(vk::CommandBuffer cmdBuffer, vk::PipelineLayout pipelineLayout) {
         m_cmd = cmdBuffer;
         m_currentChunkIndex = 0;
         m_vertexCount = 0;
@@ -83,6 +133,15 @@ public:
         // Переводим горячие указатели на начало первого чанка
         m_mappedVertices = m_chunks[0].mappedVertices;
         m_mappedIndices  = m_chunks[0].mappedIndices;
+
+        // Биндим наш огромный массив текстур на 0 слот один раз за весь Begin!
+        m_cmd.bindDescriptorSets(
+            vk::PipelineBindPoint::eGraphics, 
+            pipelineLayout, 
+            0, // первый set
+            1, &m_bindlessSet, 
+            0, nullptr
+        );
     }
 
     // ------------------------------------------------------------------------
@@ -149,6 +208,9 @@ public:
         m_cmd = nullptr;
     }
 
+    // Возвращает DescriptorSetLayout (понадобится при создании VkPipelineLayout)
+    vk::DescriptorSetLayout GetDescriptorSetLayout() const { return m_bindlessLayout; }
+
 private:
     struct Chunk {
         vk::Buffer vertexBuffer;
@@ -172,6 +234,87 @@ private:
     uint32_t m_indexCount = 0;
     BatchVertex* m_mappedVertices = nullptr;
     uint32_t*    m_mappedIndices  = nullptr;
+
+    // --- BINDLESS DATA ---
+    vk::Sampler m_sampler;
+    vk::DescriptorSetLayout m_bindlessLayout;
+    vk::DescriptorPool m_descriptorPool;
+    vk::DescriptorSet m_bindlessSet;
+    
+    uint32_t m_currentTextureIndex = 0;
+
+
+    // Структура, которая объясняет C++, как хэшировать vk::ImageView
+    struct ImageViewHasher {
+        std::size_t operator()(vk::ImageView iv) const {
+            // Приводим C++ обертку к голому C-типу (VkImageView) и хэшируем его
+            return std::hash<VkImageView>()(static_cast<VkImageView>(iv));
+        }
+    };
+
+    // Передаем наш кастомный хэшер третьим параметром шаблона
+    std::unordered_map<vk::ImageView, uint32_t, ImageViewHasher> m_textureCache;
+
+
+    void InitBindlessSystem() {
+        // 1. Создаем Sampler для 2D-спрайтов
+        vk::SamplerCreateInfo samplerInfo {
+            .magFilter    = vk::Filter::eLinear, 
+            .minFilter    = vk::Filter::eLinear,
+            .mipmapMode   = vk::SamplerMipmapMode::eLinear,
+            .addressModeU = vk::SamplerAddressMode::eRepeat,
+            .addressModeV = vk::SamplerAddressMode::eRepeat,
+            .addressModeW = vk::SamplerAddressMode::eRepeat,
+        };
+        m_sampler = m_device.createSampler(samplerInfo).value;
+
+        // 2. Создаем DescriptorSetLayout (Массив)
+        vk::DescriptorSetLayoutBinding texturesBinding {
+            .binding         = 0,
+            .descriptorType  = vk::DescriptorType::eCombinedImageSampler,
+            .descriptorCount = MAX_BINDLESS_TEXTURES,
+            .stageFlags      = vk::ShaderStageFlagBits::eFragment,
+        };
+
+        vk::DescriptorBindingFlags bindingFlags = 
+            vk::DescriptorBindingFlagBits::ePartiallyBound | 
+            vk::DescriptorBindingFlagBits::eUpdateAfterBind;
+
+        vk::DescriptorSetLayoutBindingFlagsCreateInfo layoutFlagsInfo {
+            .bindingCount  = 1,
+            .pBindingFlags = &bindingFlags,
+        };
+
+        vk::DescriptorSetLayoutCreateInfo layoutInfo {
+            .pNext        = &layoutFlagsInfo,
+            .flags        = vk::DescriptorSetLayoutCreateFlagBits::eUpdateAfterBindPool,
+            .bindingCount = 1,
+            .pBindings    = &texturesBinding,
+        };
+        m_bindlessLayout = m_device.createDescriptorSetLayout(layoutInfo).value;
+
+        // 3. Создаем Pool
+        vk::DescriptorPoolSize poolSize {
+            .type            = vk::DescriptorType::eCombinedImageSampler,
+            .descriptorCount = MAX_BINDLESS_TEXTURES,
+        };
+
+        vk::DescriptorPoolCreateInfo poolInfo {
+            .flags         = vk::DescriptorPoolCreateFlagBits::eUpdateAfterBind,
+            .maxSets       = 1,
+            .poolSizeCount = 1,
+            .pPoolSizes    = &poolSize,
+        };
+        m_descriptorPool = m_device.createDescriptorPool(poolInfo).value;
+
+        // 4. Выделяем DescriptorSet
+        vk::DescriptorSetAllocateInfo allocInfo {
+            .descriptorPool     = m_descriptorPool,
+            .descriptorSetCount = 1,
+            .pSetLayouts        = &m_bindlessLayout,
+        };
+        m_bindlessSet = m_device.allocateDescriptorSets(allocInfo).value.front();
+    }
 
     void AllocateChunk() {
         Chunk newChunk{};

@@ -136,6 +136,10 @@ public:
 
         static std::vector<vk::Image> swapchain_images;
 
+        // --- НОВОЕ: Глобальный SpriteBatch (Создаем ОДИН РАЗ, чтобы память не текла!) ---
+        static std::unique_ptr<SpriteBatch> sprite_batch;
+        // -----------------------------------------------------------------------------
+
         vk::Result result;
 
         if (!image_available_sem_)
@@ -179,6 +183,17 @@ public:
 
             std::tie(result, swapchain_images) = DV_OS_WINDOW->vk_device_->getSwapchainImagesKHR(DV_OS_WINDOW->swapchain_->get()).asTuple();
         }
+
+        // --- НОВОЕ: Инициализируем SpriteBatch один раз при старте приложения ---
+        if (!sprite_batch)
+        {
+            sprite_batch = std::make_unique<SpriteBatch>(
+                DV_OS_WINDOW->vk_device_.get(), 
+                DV_OS_WINDOW->vma_allocator_.get(), 
+                DV_TEXTURE_CACHE_NEW->white_pixel().view.get()
+            );
+        }
+        // ----------------------------------------------------------------------
 
         DV_OS_WINDOW->vk_device_->resetFences(1, &acquire_fence.get());
 
@@ -441,7 +456,7 @@ public:
 
         // =================================================================== Была очистка, а теперь рисуем
 
-#if 1
+#if 0
 
         {
             // TODO: Тест рендеринга треугольника
@@ -572,7 +587,7 @@ public:
             if (vk_result != vk::Result::eSuccess)
             {
                 Log::writef_error("{} | vk_device_->createPipelineLayoutUnique(...) | {}", DV_FUNC_SIG, vk::to_string(vk_result));
-               // return;
+                // return;
             }
 
             // -------------------------------- Пайплайн
@@ -603,7 +618,7 @@ public:
             if (vk_result != vk::Result::eSuccess)
             {
                 Log::writef_error("{} | vk_device_->createGraphicsPipelineUnique(...) | {}", DV_FUNC_SIG, vk::to_string(vk_result));
-               // return;
+                // return;
             }
 
             // -------------------------------- Рендерим
@@ -622,7 +637,7 @@ public:
             if (vk_result != vk::Result::eSuccess)
             {
                 Log::writef_error("{} | vk_device_->allocateCommandBuffersUnique(...) | {}", DV_FUNC_SIG, vk::to_string(vk_result));
-               // return;
+                // return;
             }
 
             vk::CommandBuffer command_buffer = *(command_buffers[0]);
@@ -715,7 +730,7 @@ public:
             if (vk_result != vk::Result::eSuccess)
             {
                 Log::writef_error("{} | vk_device_->createFenceUnique(...) | {}", DV_FUNC_SIG, vk::to_string(vk_result));
-               // return;
+                // return;
             }
 
             // -------------------------------- Отправляем в очередь
@@ -765,12 +780,11 @@ public:
             if (vk_result != vk::Result::eSuccess)
             {
                 Log::writef_error("{} | vk_device_->waitForFences(...) | {}", DV_FUNC_SIG, vk::to_string(vk_result));
-               // return;
+                // return;
             }
 
             // TODO Передавать фреймбуфер в draw();
         }
-
 #endif
 
 
@@ -877,8 +891,15 @@ public:
             .pAttachments = &color_blend_attachment,
         };
 
-        // Макет пайплайна (здесь в будущем вы привяжете DescriptorSetLayout для Bindless текстур)
-        vk::PipelineLayoutCreateInfo pipeline_layout_info;
+        // --- НОВОЕ: Привязываем DescriptorSetLayout для Bindless текстур из батчера ---
+        vk::DescriptorSetLayout bindless_layout = sprite_batch->GetDescriptorSetLayout();
+
+        vk::PipelineLayoutCreateInfo pipeline_layout_info{
+            .setLayoutCount = 1,
+            .pSetLayouts = &bindless_layout
+        };
+        // -----------------------------------------------------------------------------
+
         vk::UniquePipelineLayout vk_graphics_pipeline_layout;
         std::tie(vk_result, vk_graphics_pipeline_layout) = DV_OS_WINDOW->vk_device_->createPipelineLayoutUnique(pipeline_layout_info).asTuple();
 
@@ -942,22 +963,24 @@ public:
         // (Инициализировать батчер лучше 1 раз при старте движка, а не каждый кадр!)
         // =========================================================================
 
-        // Предположим, VMA аллокатор у вас доступен тут:
-        SpriteBatch batcher(DV_OS_WINDOW->vk_device_.get(), DV_OS_WINDOW->vma_allocator_.get());
-
-        batcher.Begin(command_buffer2);
+        // 0. ОТКРЫВАЕМ БАТЧ И БИНДИМ ТЕКСТУРЫ
+        sprite_batch->Begin(command_buffer2, *vk_graphics_pipeline_layout);
 
         // 1. Рисуем квадрат (например, фон окна)
         // Аргументы: Pos, Size, UV, Color(ABGR в памяти), TextureIndex
-        batcher.DrawSprite({ 50.f, 50.f }, { 200.f, 200.f }, { 0.f, 0.f, 1.f, 1.f }, 0xFF0000FF, 0); // Красный квадрат
+        sprite_batch->DrawSprite({ 50.f, 50.f }, { 200.f, 200.f }, { 0.f, 0.f, 1.f, 1.f }, 0xFF0000FF, 0); // Красный квадрат
 
         // 2. Рисуем зеленый треугольник ПОВЕРХ квадрата
-        //batcher.DrawTriangle({ 300.f, 100.f }, { 400.f, 300.f }, { 200.f, 300.f }, 0xFF00FF00, 0);
+        sprite_batch->DrawTriangle({ 300.f, 100.f }, { 400.f, 300.f }, { 200.f, 300.f }, 0xFF00FF00, 0);
 
         // 3. Рисуем полупрозрачный синий квадрат
-        batcher.DrawSprite({ 150.f, 150.f }, { 150.f, 150.f }, { 0.f, 0.f, 1.f, 1.f }, 0x88FF0000, 0);
+        sprite_batch->DrawSprite({ 150.f, 150.f }, { 150.f, 150.f }, { 0.f, 0.f, 1.f, 1.f }, 0x88FF0000, 0);
 
-        batcher.End(); // Здесь вызываются vkCmdBindVertexBuffers и vkCmdDrawIndexed !
+
+        //sprite_batch->DrawSprite({ 150.f, 150.f }, { 300.f, 300.f }, { 0.f, 0.f, 1.f, 1.f }, 0xFFFFFFFF, 0);
+
+        // 4. ЗАКРЫВАЕМ БАТЧ
+        sprite_batch->End(); // Здесь вызываются vkCmdBindVertexBuffers и vkCmdDrawIndexed !
 
         // =========================================================================
 
