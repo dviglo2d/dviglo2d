@@ -3,6 +3,8 @@
 
 #include "vulkan_image.hpp"
 
+#include "../main/graphics.hpp"
+
 #include <dv_log.hpp>
 
 
@@ -99,7 +101,7 @@ void transition(vk::CommandBuffer cmd, vk::Image image, vk::ImageLayout old_layo
     cmd.pipelineBarrier2(dependency_info);
 }
 
-std::optional<VulkanImage> VulkanImage::create(const vma::Allocator& vma_allocator, glm::uvec2 size, vk::ImageUsageFlags usage)
+std::optional<VulkanImage> VulkanImage::create(glm::uvec2 size, vk::ImageUsageFlags usage)
 {
     VulkanImage ret;
     vk::Result vk_result;
@@ -130,7 +132,7 @@ std::optional<VulkanImage> VulkanImage::create(const vma::Allocator& vma_allocat
             .usage = vma::MemoryUsage::eAuto,
         };
 
-        std::tie(vk_result, ret.allocated_image) = vma_allocator.createImageUnique(image_create_info, vma_allocation_create_info).asTuple();
+        std::tie(vk_result, ret.allocated_image) = DV_GRAPHICS->vma_allocator().createImageUnique(image_create_info, vma_allocation_create_info).asTuple();
 
         if (vk_result != vk::Result::eSuccess)
         {
@@ -157,8 +159,7 @@ std::optional<VulkanImage> VulkanImage::create(const vma::Allocator& vma_allocat
             }
         };
 
-        vk::Device device = vma_allocator.getAllocatorInfo().device;
-        std::tie(vk_result, ret.view) = device.createImageViewUnique(image_view_create_info).asTuple();
+        std::tie(vk_result, ret.view) = DV_GRAPHICS->device().createImageViewUnique(image_view_create_info).asTuple();
 
         if (vk_result != vk::Result::eSuccess)
         {

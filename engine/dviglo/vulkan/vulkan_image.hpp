@@ -29,7 +29,7 @@ struct VulkanImage
     vk::ImageLayout     layout = vk::ImageLayout::eUndefined;
     vk::Format          format = vk::Format::eR8G8B8A8Unorm;
 
-    static std::optional<VulkanImage> create(const vma::Allocator& vma_allocator, glm::uvec2 size, vk::ImageUsageFlags usage);
+    static std::optional<VulkanImage> create(glm::uvec2 size, vk::ImageUsageFlags usage);
 
     vk::Image vk_image() const noexcept { return allocated_image.second.get(); }
 

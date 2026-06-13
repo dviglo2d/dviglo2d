@@ -60,7 +60,10 @@ public:
 
     bool is_valid() const { return is_valid_; }
 
+    vk::Device device() const { return *vk_device_; }
+
     vma::Allocator vma_allocator() const { return *vma_allocator_; }
+
     vk::Queue graphics_queue() const { return vk_present_queue_; }
     u32 graphics_queue_index() const { return 0; } // TODO
 

@@ -40,7 +40,7 @@ TextureCacheNew::TextureCacheNew(vma::Allocator vma_allocator, vk::Queue queue, 
 
     // Изображение - белый пиксель
     {
-        optional<VulkanImage> optional_texture = VulkanImage::create(vma_allocator, uvec2(1, 1), vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled);
+        optional<VulkanImage> optional_texture = VulkanImage::create(uvec2(1, 1), vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled);
 
         if (!optional_texture)
         {
