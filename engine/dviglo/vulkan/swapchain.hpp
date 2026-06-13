@@ -46,10 +46,8 @@ private:
     vk::UniquePipelineLayout pipeline_layout;
     vk::UniquePipeline pipeline;
 
-    vk::UniqueCommandPool command_pool_; // Не обязательно, но пусть будет свой командный пул, чтобы не передавать
-
     // Отдельный статический командный буфер для каждого изображения.
-    // Будут уничтожены при уничтожении/резете пула
+    // Будут уничтожены при уничтожении Graphics::static_command_pool_
     std::vector<vk::CommandBuffer> command_buffers_;
 
     vk::UniqueFence fence;

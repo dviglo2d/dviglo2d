@@ -750,6 +750,22 @@ Graphics::Graphics(const ConfigBase& config)
         }
     }
 
+    // vk::UniqueCommandPool static_command_pool_
+    {
+        vk::CommandPoolCreateInfo command_pool_create_info
+        {
+            .queueFamilyIndex = graphics_queue_index_,
+        };
+
+        tie(vk_result, static_command_pool_) = vk_device_->createCommandPoolUnique(command_pool_create_info).asTuple();
+
+        if (vk_result != vk::Result::eSuccess)
+        {
+            Log::writef_error("{} | vk_device_->createCommandPoolUnique(...) | {}", DV_FUNC_SIG, vk::to_string(vk_result));
+            return;
+        }
+    }
+
     // Командный пул
     {
         vk::CommandPoolCreateInfo command_pool_info

@@ -3,6 +3,8 @@
 
 #include "swapchain.hpp"
 
+#include "../main/graphics.hpp"
+
 #include <dv_log.hpp>
 
 using namespace glm;
@@ -458,26 +460,9 @@ std::optional<Swapchain> Swapchain::construct(vk::PhysicalDevice physical_device
             assert(vk_result == vk::Result::eSuccess);
         }
 
-        // Заранее готовим командные буферы для каждого фреймбуфера (TODO: фреймбуферов больше нет, но изображения разные)
-        // Свой командный пул
-        {
-            vk::CommandPoolCreateInfo command_pool_info
-            {
-                .queueFamilyIndex = 0, // TODO: Индекс может быть другим
-            };
-
-            tie(vk_result, ret.command_pool_) = device.createCommandPoolUnique(command_pool_info).asTuple();
-
-            if (vk_result != vk::Result::eSuccess)
-            {
-                Log::writef_error("{} | device.createCommandPoolUnique(...) | {}", DV_FUNC_SIG, vk::to_string(vk_result));
-                return std::nullopt;
-            }
-        }
-
         {
             vk::CommandBufferAllocateInfo cb_alloc_info{
-                .commandPool = ret.command_pool_.get(),
+                .commandPool = DV_GRAPHICS->static_command_pool(),
                 .level = vk::CommandBufferLevel::ePrimary,
                 .commandBufferCount = image_count,
             };
