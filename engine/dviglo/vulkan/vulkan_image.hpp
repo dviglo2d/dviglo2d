@@ -31,7 +31,7 @@ struct VulkanImage
 
     static std::optional<VulkanImage> create(const vma::Allocator& vma_allocator, glm::uvec2 size, vk::ImageUsageFlags usage);
 
-    vk::Image image() const noexcept { return allocated_image.second.get(); }
+    vk::Image vk_image() const noexcept { return allocated_image.second.get(); }
 
     // Меняет раскладку изображения
     void transition(vk::CommandBuffer cmd, vk::ImageLayout new_layout);

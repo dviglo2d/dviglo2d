@@ -19,7 +19,7 @@ private:
     // Инициализируется в конструкторе
     inline static TextureCacheNew* instance_ = nullptr;
 
-    // Отдельный командный пул для пересылки изображений в видеопамять
+    // Отдельный командный пул для пересылки изображений из ОЗУ в видеопамять
     vk::UniqueCommandPool vk_command_pool_;
 
     vma::Allocator vma_allocator_;

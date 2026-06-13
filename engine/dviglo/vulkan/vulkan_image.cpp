@@ -172,14 +172,14 @@ std::optional<VulkanImage> VulkanImage::create(const vma::Allocator& vma_allocat
 
 void VulkanImage::transition(vk::CommandBuffer cmd, vk::ImageLayout new_layout)
 {
-    ::dviglo::transition(cmd, image(), layout, new_layout);
+    ::dviglo::transition(cmd, vk_image(), layout, new_layout);
     layout = new_layout;
 }
 
 void VulkanImage::transition_from_undefined(vk::CommandBuffer cmd, vk::ImageLayout new_layout)
 {
     layout = vk::ImageLayout::eUndefined;
-    ::dviglo::transition(cmd, image(), layout, new_layout);
+    ::dviglo::transition(cmd, vk_image(), layout, new_layout);
     layout = new_layout;
 }
 
