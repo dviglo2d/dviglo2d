@@ -20,7 +20,7 @@ App::App()
     // Возвращаемся к рендерингу в default framebuffer, так как текущий FBO меняется при генерации шрифта
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     ivec2 screen_size;
-    SDL_GetWindowSizeInPixels(DV_OS_WINDOW->window(), &screen_size.x, &screen_size.y);
+    SDL_GetWindowSizeInPixels(DV_GRAPHICS->window(), &screen_size.x, &screen_size.y);
     glViewport(0, 0, screen_size.x, screen_size.y);
 
     // Загружаем слова из файла
@@ -28,7 +28,7 @@ App::App()
     random_current_word();
 
     // Без этого событие SDL_EVENT_TEXT_INPUT не будет возникать
-    SDL_StartTextInput(DV_OS_WINDOW->window());
+    SDL_StartTextInput(DV_GRAPHICS->window());
 }
 
 App::~App()
@@ -149,7 +149,7 @@ void App::update(i64 ns)
 void App::draw()
 {
     ivec2 screen_size;
-    SDL_GetWindowSizeInPixels(DV_OS_WINDOW->window(), &screen_size.x, &screen_size.y);
+    SDL_GetWindowSizeInPixels(DV_GRAPHICS->window(), &screen_size.x, &screen_size.y);
 
     glClearColor(0.f, 0.f, 0.f, 0.f);
     glClear(GL_COLOR_BUFFER_BIT);

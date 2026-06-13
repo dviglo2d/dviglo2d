@@ -3,12 +3,12 @@
 #include "ecs_main.hpp"
 
 #include <dviglo/gl_utils/texture_cache.hpp>
-#include <dviglo/main/os_window.hpp>
+#include <dviglo/main/graphics.hpp>
 
 
 App::App()
 {
-    SDL_SetWindowRelativeMouseMode(DV_OS_WINDOW->window(), true);
+    SDL_SetWindowRelativeMouseMode(DV_GRAPHICS->window(), true);
 
     global_ = make_unique<Global>();
 
@@ -110,7 +110,7 @@ void App::draw()
     // Вычисляем положение вьюпорта в окне
 
     ivec2 window_size;
-    SDL_GetWindowSizeInPixels(DV_OS_WINDOW->window(), &window_size.x, &window_size.y);
+    SDL_GetWindowSizeInPixels(DV_GRAPHICS->window(), &window_size.x, &window_size.y);
     f32 real_aspect = (f32)window_size.x / window_size.y;
     f32 fbo_aspect = (f32)fbo_size.x / fbo_size.y;
 

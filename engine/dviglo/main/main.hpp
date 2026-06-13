@@ -22,7 +22,7 @@ struct MainSubsystems
     std::unique_ptr<MainArgs> main_args;
     std::unique_ptr<Log> log;
     std::unique_ptr<DV_CONFIG_CLASS> config;
-    std::unique_ptr<OsWindow> os_window;
+    std::unique_ptr<Graphics> graphics;
     std::unique_ptr<ShaderCacheOld> shader_cache_old;
     std::unique_ptr<TextureCache> texture_cache;
     std::unique_ptr<TextureCacheNew> texture_cache_new;
@@ -46,17 +46,17 @@ struct MainSubsystems
 
         config = std::make_unique<DV_CONFIG_CLASS>();
 
-        os_window = std::make_unique<OsWindow>(*config);
-        if (!os_window->is_valid())
+        graphics = std::make_unique<Graphics>(*config);
+        if (!graphics->is_valid())
         {
-            Log::writef_error("{} | !os_window->is_valid()", DV_FUNC_SIG);
+            Log::writef_error("{} | !Graphics->is_valid()", DV_FUNC_SIG);
             return SDL_APP_FAILURE;
         }
 
         shader_cache_old = std::make_unique<ShaderCacheOld>();
         texture_cache = std::make_unique<TextureCache>();
 
-        texture_cache_new = std::make_unique<TextureCacheNew>(DV_OS_WINDOW->vma_allocator(), DV_OS_WINDOW->graphics_queue(), DV_OS_WINDOW->graphics_queue_index());
+        texture_cache_new = std::make_unique<TextureCacheNew>(DV_GRAPHICS->vma_allocator(), DV_GRAPHICS->graphics_queue(), DV_GRAPHICS->graphics_queue_index());
 
         if (!texture_cache_new->is_valid())
         {

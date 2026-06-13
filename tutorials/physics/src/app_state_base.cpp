@@ -1,6 +1,6 @@
 #include "app_state_base.hpp"
 
-#include <dviglo/main/os_window.hpp>
+#include <dviglo/main/graphics.hpp>
 
 
 AppStateBase::AppStateBase()
@@ -12,6 +12,6 @@ AppStateBase::AppStateBase()
     // Возвращаемся к рендерингу в default framebuffer, так как текущий FBO меняется при генерации шрифта
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     ivec2 screen_size;
-    SDL_GetWindowSizeInPixels(DV_OS_WINDOW->window(), &screen_size.x, &screen_size.y);
+    SDL_GetWindowSizeInPixels(DV_GRAPHICS->window(), &screen_size.x, &screen_size.y);
     glViewport(0, 0, screen_size.x, screen_size.y);
 }

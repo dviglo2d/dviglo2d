@@ -1,6 +1,6 @@
 #include "preview_window.hpp"
 
-#include <dviglo/main/os_window.hpp>
+#include <dviglo/main/graphics.hpp>
 
 #include <misc/cpp/imgui_stdlib.h>
 
@@ -40,7 +40,7 @@ void PreviewWindow::render_text_to_texture(SpriteFont* font)
     // Возвращаемся к рендерингу в default framebuffer
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     ivec2 screen_size;
-    SDL_GetWindowSizeInPixels(DV_OS_WINDOW->window(), &screen_size.x, &screen_size.y);
+    SDL_GetWindowSizeInPixels(DV_GRAPHICS->window(), &screen_size.x, &screen_size.y);
     glViewport(0, 0, screen_size.x, screen_size.y);
 }
 

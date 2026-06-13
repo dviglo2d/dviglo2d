@@ -17,7 +17,7 @@ App::App()
     fs::path font_path = base_path / "engine_test_data/fonts/ubuntu/Ubuntu-R.ttf";
 
     ImGui::CreateContext();
-    ImGui_ImplSDL3_InitForOpenGL(DV_OS_WINDOW->window(), nullptr);
+    ImGui_ImplSDL3_InitForOpenGL(DV_GRAPHICS->window(), nullptr);
     ImGui_ImplOpenGL3_Init("#version 330 core");
 
     ImGuiIO& io = ImGui::GetIO();

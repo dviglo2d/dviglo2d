@@ -61,7 +61,7 @@ protected:
     ImGuiApplication()
     {
         ImGui::CreateContext();
-        ImGui_ImplSDL3_InitForOpenGL(DV_OS_WINDOW->window(), nullptr);
+        ImGui_ImplSDL3_InitForOpenGL(DV_GRAPHICS->window(), nullptr);
         ImGui_ImplOpenGL3_Init("#version 330 core");
     }
 

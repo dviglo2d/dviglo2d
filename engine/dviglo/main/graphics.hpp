@@ -15,13 +15,13 @@
 namespace dviglo
 {
 
-class OsWindow final : public SubsystemIndex
+class Graphics final : public SubsystemIndex
 {
 private:
     friend class ApplicationBase;
 
     // Инициализируется в конструкторе
-    inline static OsWindow* instance_ = nullptr;
+    inline static Graphics* instance_ = nullptr;
 
     bool is_valid_ = false;
 
@@ -53,10 +53,10 @@ private:
     std::unique_ptr<Swapchain> swapchain_;
 
 public:
-    static OsWindow* instance() { return instance_; }
+    static Graphics* instance() { return instance_; }
 
-    OsWindow(const ConfigBase& config);
-    ~OsWindow() final;
+    Graphics(const ConfigBase& config);
+    ~Graphics() final;
 
     bool is_valid() const { return is_valid_; }
 
@@ -71,4 +71,4 @@ public:
 
 } // namespace dviglo
 
-#define DV_OS_WINDOW (dviglo::OsWindow::instance())
+#define DV_GRAPHICS (dviglo::Graphics::instance())

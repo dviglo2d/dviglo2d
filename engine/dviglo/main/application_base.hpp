@@ -3,8 +3,8 @@
 
 #pragma once
 
+#include "graphics.hpp"
 #include "main_args.hpp"
-#include "os_window.hpp"
 #include "timer.hpp"
 
 #include "../audio/audio.hpp"
@@ -145,13 +145,13 @@ public:
         if (!image_available_sem_)
         {
             vk::SemaphoreCreateInfo sem_info{ .sType = vk::StructureType::eSemaphoreCreateInfo };
-            std::tie(result, image_available_sem_) = DV_OS_WINDOW->vk_device_->createSemaphoreUnique(sem_info).asTuple();
+            std::tie(result, image_available_sem_) = DV_GRAPHICS->vk_device_->createSemaphoreUnique(sem_info).asTuple();
         }
 
         // Создаем семафор окончания рендера один раз
         if (!render_finished_sem_)
         {
-            std::tie(result, render_finished_sem_) = DV_OS_WINDOW->vk_device_->createSemaphoreUnique({}).asTuple();
+            std::tie(result, render_finished_sem_) = DV_GRAPHICS->vk_device_->createSemaphoreUnique({}).asTuple();
         }
 
 
@@ -159,7 +159,7 @@ public:
         {
             vk::FenceCreateInfo fence_info{};
             // Без флага eSignaled, так как мы сначала делаем Reset+Submit, потом Wait
-            std::tie(result, in_flight_fence_) = DV_OS_WINDOW->vk_device_->createFenceUnique(fence_info).asTuple();
+            std::tie(result, in_flight_fence_) = DV_GRAPHICS->vk_device_->createFenceUnique(fence_info).asTuple();
             if (result != vk::Result::eSuccess) Log::writef_error("Failed to create in_flight_fence: {}", vk::to_string(result));
         }
 
@@ -167,39 +167,39 @@ public:
         {
             vk::FenceCreateInfo fence_info{};
             // Без флага eSignaled, так как мы сначала делаем Reset+Submit, потом Wait
-            std::tie(result, acquire_fence) = DV_OS_WINDOW->vk_device_->createFenceUnique(fence_info).asTuple();
+            std::tie(result, acquire_fence) = DV_GRAPHICS->vk_device_->createFenceUnique(fence_info).asTuple();
             if (result != vk::Result::eSuccess) Log::writef_error("Failed to create acquire_fence: {}", vk::to_string(result));
         }
 
         if (!command_pool)
         {
-            vk::CommandPoolCreateInfo pool_info{ .flags = vk::CommandPoolCreateFlagBits::eResetCommandBuffer, .queueFamilyIndex = DV_OS_WINDOW->vk_graphics_queue_family_index_ };
-            std::tie(result, command_pool) = DV_OS_WINDOW->vk_device_->createCommandPoolUnique(pool_info).asTuple();
+            vk::CommandPoolCreateInfo pool_info{ .flags = vk::CommandPoolCreateFlagBits::eResetCommandBuffer, .queueFamilyIndex = DV_GRAPHICS->vk_graphics_queue_family_index_ };
+            std::tie(result, command_pool) = DV_GRAPHICS->vk_device_->createCommandPoolUnique(pool_info).asTuple();
 
             vk::CommandBufferAllocateInfo alloc_info{ .commandPool = *command_pool, .level = vk::CommandBufferLevel::ePrimary, .commandBufferCount = 1 };
             std::vector<vk::UniqueCommandBuffer> bufs;
-            std::tie(result, bufs) = DV_OS_WINDOW->vk_device_->allocateCommandBuffersUnique(alloc_info).asTuple();
+            std::tie(result, bufs) = DV_GRAPHICS->vk_device_->allocateCommandBuffersUnique(alloc_info).asTuple();
             command_buffer = std::move(bufs[0]);
 
-            std::tie(result, swapchain_images) = DV_OS_WINDOW->vk_device_->getSwapchainImagesKHR(DV_OS_WINDOW->swapchain_->get()).asTuple();
+            std::tie(result, swapchain_images) = DV_GRAPHICS->vk_device_->getSwapchainImagesKHR(DV_GRAPHICS->swapchain_->get()).asTuple();
         }
 
         // --- НОВОЕ: Инициализируем SpriteBatch один раз при старте приложения ---
         if (!sprite_batch)
         {
             sprite_batch = std::make_unique<SpriteBatch>(
-                DV_OS_WINDOW->vk_device_.get(), 
-                DV_OS_WINDOW->vma_allocator_.get(), 
+                DV_GRAPHICS->vk_device_.get(),
+                DV_GRAPHICS->vma_allocator_.get(),
                 DV_TEXTURE_CACHE_NEW->white_pixel().view.get()
             );
         }
         // ----------------------------------------------------------------------
 
-        DV_OS_WINDOW->vk_device_->resetFences(1, &acquire_fence.get());
+        DV_GRAPHICS->vk_device_->resetFences(1, &acquire_fence.get());
 
 
         // Запрашиваем картинку. Заблокирует поток при vk::PresentModeKHR::eFifo
-        auto [res, idx] = DV_OS_WINDOW->swapchain_->acquire_next_image(*DV_OS_WINDOW->vk_device_, *acquire_fence);
+        auto [res, idx] = DV_GRAPHICS->swapchain_->acquire_next_image(*DV_GRAPHICS->vk_device_, *acquire_fence);
 
 
         vk::Result acquire_result = res;
@@ -213,7 +213,7 @@ public:
         }
 
         // То, что acquire_next_image вернул картинку, ещё не значит, что presentation engine уже закончил из неё читать, поэтому ждём
-        DV_OS_WINDOW->vk_device_->waitForFences(1, &acquire_fence.get(), vk::True, UINT64_MAX);
+        DV_GRAPHICS->vk_device_->waitForFences(1, &acquire_fence.get(), vk::True, UINT64_MAX);
 
 
         // =====================================================================
@@ -433,7 +433,7 @@ public:
 
 
 
-       // DV_OS_WINDOW->vk_device_->resetFences(1, &(*in_flight_fence_));
+       // DV_GRAPHICS->vk_device_->resetFences(1, &(*in_flight_fence_));
 
 #if 0 // Отправка оистки не нужна
 
@@ -450,7 +450,7 @@ public:
             .pSignalSemaphores = nullptr  // Сигналим, что "рендер" (пустой) окончен
         };
 
-        //DV_OS_WINDOW->vk_graphics_queue_.submit(submit_info, *in_flight_fence_);
+        //DV_GRAPHICS->vk_graphics_queue_.submit(submit_info, *in_flight_fence_);
 #endif
 
 
@@ -466,7 +466,7 @@ public:
             // -------------------------------- Загружаем шейдеры из файлов
 
             fs::path base_path = get_base_path();
-            vk::UniqueShaderModule vert_shader_module = load_shader(DV_OS_WINDOW->vk_device_.get(), base_path / "engine_data/shaders/simple.vert.spv");
+            vk::UniqueShaderModule vert_shader_module = load_shader(DV_GRAPHICS->vk_device_.get(), base_path / "engine_data/shaders/simple.vert.spv");
 
             if (!vert_shader_module)
             {
@@ -474,7 +474,7 @@ public:
                 //return;
             }
 
-            vk::UniqueShaderModule frag_shader_module = load_shader(DV_OS_WINDOW->vk_device_.get(), base_path / "engine_data/shaders/simple.frag.spv");
+            vk::UniqueShaderModule frag_shader_module = load_shader(DV_GRAPHICS->vk_device_.get(), base_path / "engine_data/shaders/simple.frag.spv");
 
             if (!frag_shader_module)
             {
@@ -582,7 +582,7 @@ public:
             vk::PipelineLayoutCreateInfo pipeline_layout_info; // Всё пусто
 
             vk::UniquePipelineLayout vk_graphics_pipeline_layout;
-            std::tie(vk_result, vk_graphics_pipeline_layout) = DV_OS_WINDOW->vk_device_->createPipelineLayoutUnique(pipeline_layout_info).asTuple();
+            std::tie(vk_result, vk_graphics_pipeline_layout) = DV_GRAPHICS->vk_device_->createPipelineLayoutUnique(pipeline_layout_info).asTuple();
 
             if (vk_result != vk::Result::eSuccess)
             {
@@ -595,7 +595,7 @@ public:
             vk::PipelineRenderingCreateInfo pipeline_rendering_info
             {
                 .colorAttachmentCount = 1,
-                .pColorAttachmentFormats = &DV_OS_WINDOW->swapchain_->offscreen_image_.format,
+                .pColorAttachmentFormats = &DV_GRAPHICS->swapchain_->offscreen_image_.format,
             };
 
             vk::GraphicsPipelineCreateInfo graphics_pipeline_info
@@ -613,7 +613,7 @@ public:
             };
 
             vk::UniquePipeline vk_graphics_pipeline;
-            std::tie(vk_result, vk_graphics_pipeline) = DV_OS_WINDOW->vk_device_->createGraphicsPipelineUnique(nullptr, graphics_pipeline_info).asTuple();
+            std::tie(vk_result, vk_graphics_pipeline) = DV_GRAPHICS->vk_device_->createGraphicsPipelineUnique(nullptr, graphics_pipeline_info).asTuple();
 
             if (vk_result != vk::Result::eSuccess)
             {
@@ -627,12 +627,12 @@ public:
 
             vk::CommandBufferAllocateInfo cb_alloc_info
             {
-                .commandPool = DV_OS_WINDOW->vk_command_pool_.get(),
+                .commandPool = DV_GRAPHICS->vk_command_pool_.get(),
                 .commandBufferCount = 1,
             };
 
             std::vector<vk::UniqueCommandBuffer> command_buffers;
-            std::tie(vk_result, command_buffers) = DV_OS_WINDOW->vk_device_->allocateCommandBuffersUnique(cb_alloc_info).asTuple();
+            std::tie(vk_result, command_buffers) = DV_GRAPHICS->vk_device_->allocateCommandBuffersUnique(cb_alloc_info).asTuple();
 
             if (vk_result != vk::Result::eSuccess)
             {
@@ -657,7 +657,7 @@ public:
             // В Vulkan 1.4 без RenderPass мы сами должны подготовить картинку к рендеру.
             // Переводим её из eUndefined в eColorAttachmentOptimal.
             // =========================================================================
-            DV_OS_WINDOW->swapchain_->offscreen_image_.transition_from_undefined(command_buffer, vk::ImageLayout::eColorAttachmentOptimal);
+            DV_GRAPHICS->swapchain_->offscreen_image_.transition_from_undefined(command_buffer, vk::ImageLayout::eColorAttachmentOptimal);
 
             /*
             vk::ClearValue clear_color
@@ -670,9 +670,9 @@ public:
 
             vk::RenderPassBeginInfo rp_info
             {
-                .renderPass = DV_OS_WINDOW->swapchain_->offscreen_image_.render_pass.get(),
-                .framebuffer = DV_OS_WINDOW->swapchain_->offscreen_framebuffer(),
-                .renderArea = {.offset = {0, 0}, .extent = DV_OS_WINDOW->swapchain_->offscreen_image_extent()},
+                .renderPass = DV_GRAPHICS->swapchain_->offscreen_image_.render_pass.get(),
+                .framebuffer = DV_GRAPHICS->swapchain_->offscreen_framebuffer(),
+                .renderArea = {.offset = {0, 0}, .extent = DV_GRAPHICS->swapchain_->offscreen_image_extent()},
                 .clearValueCount = 1,
                 .pClearValues = &clear_color,
             };
@@ -682,7 +682,7 @@ public:
 
             vk::RenderingAttachmentInfo color_attachment
             {
-                .imageView = DV_OS_WINDOW->swapchain_->offscreen_image_.view.get(),
+                .imageView = DV_GRAPHICS->swapchain_->offscreen_image_.view.get(),
                 .imageLayout = vk::ImageLayout::eColorAttachmentOptimal,
                 .loadOp = vk::AttachmentLoadOp::eClear,
                 .storeOp = vk::AttachmentStoreOp::eStore,
@@ -691,7 +691,7 @@ public:
 
             vk::RenderingInfo rendering_info
             {
-                .renderArea = { {0, 0}, DV_OS_WINDOW->swapchain_->offscreen_image_extent() },
+                .renderArea = { {0, 0}, DV_GRAPHICS->swapchain_->offscreen_image_extent() },
                 .layerCount = 1,
                 .colorAttachmentCount = 1,
                 .pColorAttachments = &color_attachment
@@ -709,7 +709,7 @@ public:
 
             // Подготавливаем отрендеренную картинку для функции Swapchain::present.
             // Переводим в ShaderReadOnlyOptimal, так как на неё будет накладываться гамма
-            DV_OS_WINDOW->swapchain_->offscreen_image_.transition(command_buffer, vk::ImageLayout::eShaderReadOnlyOptimal);
+            DV_GRAPHICS->swapchain_->offscreen_image_.transition(command_buffer, vk::ImageLayout::eShaderReadOnlyOptimal);
 
             vk_result = command_buffer.end();
 
@@ -725,7 +725,7 @@ public:
 
             vk::FenceCreateInfo fence_info;
 
-            std::tie(vk_result, fence) = DV_OS_WINDOW->vk_device_->createFenceUnique(fence_info).asTuple();
+            std::tie(vk_result, fence) = DV_GRAPHICS->vk_device_->createFenceUnique(fence_info).asTuple();
 
             if (vk_result != vk::Result::eSuccess)
             {
@@ -742,7 +742,7 @@ public:
                 .pCommandBuffers = &command_buffer,
             };
 
-            vk_result = DV_OS_WINDOW->vk_graphics_queue_.submit(1, &submit_info, *fence);
+            vk_result = DV_GRAPHICS->vk_graphics_queue_.submit(1, &submit_info, *fence);
 
 
             if (vk_result != vk::Result::eSuccess)
@@ -771,11 +771,11 @@ public:
                 .pSignalSemaphoreInfos = &signal_info
             };
 
-            DV_OS_WINDOW->vk_graphics_queue_.submit2(1, &submit_info_2, *fence);
+            DV_GRAPHICS->vk_graphics_queue_.submit2(1, &submit_info_2, *fence);
 
             // -------------------------------- Ждем результат
 
-            vk_result = DV_OS_WINDOW->vk_device_->waitForFences(1, &fence.get(), vk::True, 100000000000);
+            vk_result = DV_GRAPHICS->vk_device_->waitForFences(1, &fence.get(), vk::True, 100000000000);
 
             if (vk_result != vk::Result::eSuccess)
             {
@@ -793,10 +793,10 @@ public:
 
         // -------------------------------- Загружаем шейдеры из файлов
         fs::path base_path = get_base_path();
-        vk::UniqueShaderModule vert_shader_module = load_shader(DV_OS_WINDOW->vk_device_.get(), base_path / "engine_data/shaders/sb.vert.spv");
+        vk::UniqueShaderModule vert_shader_module = load_shader(DV_GRAPHICS->vk_device_.get(), base_path / "engine_data/shaders/sb.vert.spv");
         if (!vert_shader_module) { Log::writef_error("{} | !vert_shader_module", DV_FUNC_SIG); }
 
-        vk::UniqueShaderModule frag_shader_module = load_shader(DV_OS_WINDOW->vk_device_.get(), base_path / "engine_data/shaders/sb.frag.spv");
+        vk::UniqueShaderModule frag_shader_module = load_shader(DV_GRAPHICS->vk_device_.get(), base_path / "engine_data/shaders/sb.frag.spv");
         if (!frag_shader_module) { Log::writef_error("{} | !frag_shader_module", DV_FUNC_SIG); }
 
         // -------------------------------- Шейдерные стадии
@@ -901,11 +901,11 @@ public:
         // -----------------------------------------------------------------------------
 
         vk::UniquePipelineLayout vk_graphics_pipeline_layout;
-        std::tie(vk_result, vk_graphics_pipeline_layout) = DV_OS_WINDOW->vk_device_->createPipelineLayoutUnique(pipeline_layout_info).asTuple();
+        std::tie(vk_result, vk_graphics_pipeline_layout) = DV_GRAPHICS->vk_device_->createPipelineLayoutUnique(pipeline_layout_info).asTuple();
 
         vk::PipelineRenderingCreateInfo pipeline_rendering_info{
             .colorAttachmentCount = 1,
-            .pColorAttachmentFormats = &DV_OS_WINDOW->swapchain_->offscreen_image_.format,
+            .pColorAttachmentFormats = &DV_GRAPHICS->swapchain_->offscreen_image_.format,
         };
 
         vk::GraphicsPipelineCreateInfo graphics_pipeline_info{
@@ -922,26 +922,26 @@ public:
         };
 
         vk::UniquePipeline vk_graphics_pipeline;
-        std::tie(vk_result, vk_graphics_pipeline) = DV_OS_WINDOW->vk_device_->createGraphicsPipelineUnique(nullptr, graphics_pipeline_info).asTuple();
+        std::tie(vk_result, vk_graphics_pipeline) = DV_GRAPHICS->vk_device_->createGraphicsPipelineUnique(nullptr, graphics_pipeline_info).asTuple();
 
         // -------------------------------- Рендерим
 
         vk::CommandBufferAllocateInfo cb_alloc_info{
-            .commandPool = DV_OS_WINDOW->vk_command_pool_.get(),
+            .commandPool = DV_GRAPHICS->vk_command_pool_.get(),
             .commandBufferCount = 1,
         };
 
         std::vector<vk::UniqueCommandBuffer> command_buffers;
-        std::tie(vk_result, command_buffers) = DV_OS_WINDOW->vk_device_->allocateCommandBuffersUnique(cb_alloc_info).asTuple();
+        std::tie(vk_result, command_buffers) = DV_GRAPHICS->vk_device_->allocateCommandBuffersUnique(cb_alloc_info).asTuple();
         vk::CommandBuffer command_buffer2 = *(command_buffers[0]);
 
         vk::CommandBufferBeginInfo command_buffer_begin_info;
         command_buffer2.begin(command_buffer_begin_info);
 
-        DV_OS_WINDOW->swapchain_->offscreen_image_.transition_from_undefined(command_buffer2, vk::ImageLayout::eColorAttachmentOptimal);
+        DV_GRAPHICS->swapchain_->offscreen_image_.transition_from_undefined(command_buffer2, vk::ImageLayout::eColorAttachmentOptimal);
 
         vk::RenderingAttachmentInfo color_attachment{
-            .imageView = DV_OS_WINDOW->swapchain_->offscreen_image_.view.get(),
+            .imageView = DV_GRAPHICS->swapchain_->offscreen_image_.view.get(),
             .imageLayout = vk::ImageLayout::eColorAttachmentOptimal,
             .loadOp = vk::AttachmentLoadOp::eClear,
             .storeOp = vk::AttachmentStoreOp::eStore,
@@ -949,7 +949,7 @@ public:
         };
 
         vk::RenderingInfo rendering_info{
-            .renderArea = { {0, 0}, DV_OS_WINDOW->swapchain_->offscreen_image_extent() },
+            .renderArea = { {0, 0}, DV_GRAPHICS->swapchain_->offscreen_image_extent() },
             .layerCount = 1,
             .colorAttachmentCount = 1,
             .pColorAttachments = &color_attachment
@@ -986,13 +986,13 @@ public:
 
         command_buffer2.endRendering();
 
-        DV_OS_WINDOW->swapchain_->offscreen_image_.transition(command_buffer2, vk::ImageLayout::eShaderReadOnlyOptimal);
+        DV_GRAPHICS->swapchain_->offscreen_image_.transition(command_buffer2, vk::ImageLayout::eShaderReadOnlyOptimal);
         command_buffer2.end();
 
         // -------------------------------- Забор
         vk::UniqueFence fence;
         vk::FenceCreateInfo fence_info;
-        std::tie(vk_result, fence) = DV_OS_WINDOW->vk_device_->createFenceUnique(fence_info).asTuple();
+        std::tie(vk_result, fence) = DV_GRAPHICS->vk_device_->createFenceUnique(fence_info).asTuple();
 
         // -------------------------------- Отправляем в очередь
         vk::CommandBufferSubmitInfo cmd_info{ .commandBuffer = command_buffer2 };
@@ -1008,8 +1008,8 @@ public:
             .pSignalSemaphoreInfos = &signal_info
         };
 
-        DV_OS_WINDOW->vk_graphics_queue_.submit2(1, &submit_info_2, *fence);
-        DV_OS_WINDOW->vk_device_->waitForFences(1, &fence.get(), vk::True, 100000000000);
+        DV_GRAPHICS->vk_graphics_queue_.submit2(1, &submit_info_2, *fence);
+        DV_GRAPHICS->vk_device_->waitForFences(1, &fence.get(), vk::True, 100000000000);
 
 
 
@@ -1022,14 +1022,14 @@ public:
 
         // 5. ДОБАВИЛ: Ожидание (Синхронный режим)
 // Блокируем CPU, пока видеокарта не обработает submit
-        //DV_OS_WINDOW->vk_device_->waitForFences(1, &(*in_flight_fence_), VK_TRUE, UINT64_MAX);
+        //DV_GRAPHICS->vk_device_->waitForFences(1, &(*in_flight_fence_), VK_TRUE, UINT64_MAX);
 
-       // vk::Result present_result = DV_OS_WINDOW->swapchain_->present(DV_OS_WINDOW->vk_graphics_queue_, DV_OS_WINDOW->vk_present_queue_, idx,
-       //     DV_OS_WINDOW->vk_device_.get(), DV_OS_WINDOW->vk_command_pool_.get());
+       // vk::Result present_result = DV_GRAPHICS->swapchain_->present(DV_GRAPHICS->vk_graphics_queue_, DV_GRAPHICS->vk_present_queue_, idx,
+       //     DV_GRAPHICS->vk_device_.get(), DV_GRAPHICS->vk_command_pool_.get());
 
         // TODO: Надо передалть на семафор, чтобы ждало треугольник на GPU
-        vk::Result present_result = DV_OS_WINDOW->swapchain_->present(DV_OS_WINDOW->vk_graphics_queue_, DV_OS_WINDOW->vk_present_queue_, idx,
-            DV_OS_WINDOW->vk_device_.get(), DV_OS_WINDOW->vk_command_pool_.get(),
+        vk::Result present_result = DV_GRAPHICS->swapchain_->present(DV_GRAPHICS->vk_graphics_queue_, DV_GRAPHICS->vk_present_queue_, idx,
+            DV_GRAPHICS->vk_device_.get(), DV_GRAPHICS->vk_command_pool_.get(),
             render_finished_sem_.get());
 
         if (present_result == vk::Result::eErrorOutOfDateKHR || present_result == vk::Result::eSuboptimalKHR)
@@ -1040,11 +1040,11 @@ public:
         // смена режима через пересозданеи свпочейна
         // recreate_swapchain(vk::PresentModeKHR::eMailbox);
 
-        //DV_OS_WINDOW->swapchain_->present();
+        //DV_GRAPHICS->swapchain_->present();
 
 
 
-        //SDL_GL_SwapWindow(DV_OS_WINDOW->window());
+        //SDL_GL_SwapWindow(DV_GRAPHICS->window());
 
         // Убираем буферизацию и инпут лаг при включённой вертикалке на NVIDIA в Windows.
         // По ощущениям работает лучше, когда стоит после SDL_GL_SwapWindow(...), а не до

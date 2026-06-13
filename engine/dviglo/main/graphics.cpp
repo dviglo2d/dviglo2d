@@ -1,7 +1,7 @@
 // Copyright (c) the Dviglo project
 // License: MIT
 
-#include "os_window.hpp"
+#include "graphics.hpp"
 
 #include "../vulkan/vulkan_utils.hpp"
 
@@ -129,7 +129,7 @@ static vector<const char*> get_required_instance_extensions()
     return ret;
 }
 
-bool OsWindow::vk_create_instance()
+bool Graphics::vk_create_instance()
 {
     assert(window_); // Читайте описание get_required_instance_extensions()
 
@@ -478,7 +478,7 @@ static bool save_screenshot(vk::Device device, vk::PhysicalDevice physical_devic
 }
 
 
-bool OsWindow::vk_pick_physical_device(const vector<vk::PhysicalDevice>& physical_devices)
+bool Graphics::vk_pick_physical_device(const vector<vk::PhysicalDevice>& physical_devices)
 {
     vk_graphics_queue_family_index_ = 0;
     vk_present_queue_family_index_ = 0;
@@ -497,7 +497,7 @@ bool OsWindow::vk_pick_physical_device(const vector<vk::PhysicalDevice>& physica
     }
 }
 
-bool OsWindow::vk_create_device()
+bool Graphics::vk_create_device()
 {
     assert(vk_physical_device_);
     assert(vk_graphics_queue_family_index_ != numeric_limits<u32>::max() && vk_present_queue_family_index_ != numeric_limits<u32>::max());
@@ -605,7 +605,7 @@ bool OsWindow::vk_create_device()
     return true;
 }
 
-OsWindow::OsWindow(const ConfigBase& config)
+Graphics::Graphics(const ConfigBase& config)
 {
     assert(!instance_); // Объект должен быть только один
     instance_ = this;
@@ -1557,7 +1557,7 @@ OsWindow::OsWindow(const ConfigBase& config)
     is_valid_ = true;
 }
 
-OsWindow::~OsWindow()
+Graphics::~Graphics()
 {
     instance_ = nullptr;
 
@@ -1565,7 +1565,7 @@ OsWindow::~OsWindow()
         SDL_DestroyWindow(window_);
 }
 
-ivec2 OsWindow::get_size_in_pixels() const
+ivec2 Graphics::get_size_in_pixels() const
 {
     ivec2 ret;
     SDL_GetWindowSizeInPixels(window_, &ret.x, &ret.y);
