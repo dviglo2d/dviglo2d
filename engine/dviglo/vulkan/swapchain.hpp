@@ -48,7 +48,7 @@ private:
 
     // Отдельный статический командный буфер для каждого изображения.
     // Будут уничтожены при уничтожении Graphics::persistent_command_pool_
-    std::vector<vk::CommandBuffer> command_buffers_;
+    std::vector<vk::UniqueCommandBuffer> command_buffers_;
 
     vk::UniqueFence fence;
 

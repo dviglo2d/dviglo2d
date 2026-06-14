@@ -69,7 +69,7 @@ TextureCacheNew::TextureCacheNew(vma::Allocator vma_allocator, vk::Queue queue, 
         }
 
         // Выделяем командный буфер из пула
-        vk::CommandBuffer cmd;
+        vk::UniqueCommandBuffer cmd;
 
         {
             vk::CommandBufferAllocateInfo command_buffer_allocate_info
@@ -79,8 +79,8 @@ TextureCacheNew::TextureCacheNew(vma::Allocator vma_allocator, vk::Queue queue, 
                 .commandBufferCount = 1,
             };
 
-            vector<vk::CommandBuffer> cmds;
-            tie(vk_result, cmds) = vk_device.allocateCommandBuffers(command_buffer_allocate_info).asTuple();
+            vector<vk::UniqueCommandBuffer> cmds;
+            tie(vk_result, cmds) = vk_device.allocateCommandBuffersUnique(command_buffer_allocate_info).asTuple();
 
             if (vk_result != vk::Result::eSuccess)
             {
@@ -88,7 +88,7 @@ TextureCacheNew::TextureCacheNew(vma::Allocator vma_allocator, vk::Queue queue, 
                 return;
             }
 
-            cmd = cmds.front();
+            cmd = std::move(cmds.front());
         }
 
         // Заполняем командный буфер командами
@@ -98,10 +98,10 @@ TextureCacheNew::TextureCacheNew(vma::Allocator vma_allocator, vk::Queue queue, 
                 .flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit,
             };
 
-            cmd.begin(command_buffer_begin_info);
+            cmd->begin(command_buffer_begin_info);
 
             // Меняем раскладку изображения
-            transition(cmd, image, vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal);
+            transition(*cmd, image, vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal);
 
             // Копируем данные из перевалочного буфера в видеопамять
             vk::BufferImageCopy buffer_image_copy
@@ -122,12 +122,12 @@ TextureCacheNew::TextureCacheNew(vma::Allocator vma_allocator, vk::Queue queue, 
                 .imageExtent = { 1, 1, 1 }
             };
 
-            cmd.copyBufferToImage(staging_buffer.second.get(), image, vk::ImageLayout::eTransferDstOptimal, 1, &buffer_image_copy);
+            cmd->copyBufferToImage(staging_buffer.second.get(), image, vk::ImageLayout::eTransferDstOptimal, 1, &buffer_image_copy);
 
             // Меняем раскладку изображения
-            transition(cmd, image, vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eShaderReadOnlyOptimal);
+            transition(*cmd, image, vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eShaderReadOnlyOptimal);
 
-            cmd.end();
+            cmd->end();
         }
 
         // Выполняем команды
@@ -135,7 +135,7 @@ TextureCacheNew::TextureCacheNew(vma::Allocator vma_allocator, vk::Queue queue, 
             vk::SubmitInfo submit_info
             {
                 .commandBufferCount = 1,
-                .pCommandBuffers = &cmd
+                .pCommandBuffers = &cmd.get(),
             };
 
             vk_result = queue.submit(submit_info, nullptr);

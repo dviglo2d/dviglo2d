@@ -466,14 +466,14 @@ std::optional<Swapchain> Swapchain::construct(vk::PhysicalDevice physical_device
                 .level = vk::CommandBufferLevel::ePrimary,
                 .commandBufferCount = image_count,
             };
-            std::tie(vk_result, ret.command_buffers_) = device.allocateCommandBuffers(cb_alloc_info).asTuple();
+            std::tie(vk_result, ret.command_buffers_) = device.allocateCommandBuffersUnique(cb_alloc_info).asTuple();
             assert(vk_result == vk::Result::eSuccess); // LOG
 
 
             // Сразу заполняем все
             for (size_t image_index = 0; image_index < image_count; ++image_index)
             {
-                vk::CommandBuffer cmd = ret.command_buffers_[image_index];
+                vk::CommandBuffer cmd = ret.command_buffers_[image_index].get();
                 vk::Image swapchain_image = ret.swapchain_images_[image_index];
 
                 vk::CommandBufferBeginInfo command_buffer_begin_info;
@@ -565,7 +565,7 @@ vk::Result Swapchain::present(vk::Queue graphics_queue, vk::Queue present_queue,
 
  // --- Вывод offscreen-текстуры с преобразованием через to_srgb.frag -------------------------------
 
-    vk::CommandBuffer cmd = command_buffers_[image_index];
+    vk::CommandBuffer cmd = command_buffers_[image_index].get();
 
 // Сабмит (как в #if 1)
 /*vk::SubmitInfo submit_info{

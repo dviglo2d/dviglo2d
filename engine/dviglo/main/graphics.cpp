@@ -346,7 +346,7 @@ static bool save_screenshot(vk::Device device, vk::PhysicalDevice physical_devic
 
     if (vk_result != vk::Result::eSuccess)
     {
-        Log::writef_error("{} | vk_device_->allocateCommandBuffersUnique(...) | {}", DV_FUNC_SIG, vk::to_string(vk_result));
+        Log::writef_error("{} | device.allocateCommandBuffersUnique(...) | {}", DV_FUNC_SIG, vk::to_string(vk_result));
         return false;
     }
 
