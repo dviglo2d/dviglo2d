@@ -126,7 +126,6 @@ public:
         static vk::UniqueSemaphore     image_available_sem_;
 
         static vk::UniqueFence     in_flight_fence_; // <--- Добавил Забор
-        static vk::UniqueCommandPool command_pool;
         static vk::UniqueCommandBuffer command_buffer;
 
         static vk::UniqueFence     acquire_fence;
@@ -171,19 +170,6 @@ public:
             if (result != vk::Result::eSuccess) Log::writef_error("Failed to create acquire_fence: {}", vk::to_string(result));
         }
 
-        if (!command_pool)
-        {
-            vk::CommandPoolCreateInfo pool_info{ .flags = vk::CommandPoolCreateFlagBits::eResetCommandBuffer, .queueFamilyIndex = DV_GRAPHICS->vk_graphics_queue_family_index_ };
-            std::tie(result, command_pool) = DV_GRAPHICS->vk_device_->createCommandPoolUnique(pool_info).asTuple();
-
-            vk::CommandBufferAllocateInfo alloc_info{ .commandPool = *command_pool, .level = vk::CommandBufferLevel::ePrimary, .commandBufferCount = 1 };
-            std::vector<vk::UniqueCommandBuffer> bufs;
-            std::tie(result, bufs) = DV_GRAPHICS->vk_device_->allocateCommandBuffersUnique(alloc_info).asTuple();
-            command_buffer = std::move(bufs[0]);
-
-            std::tie(result, swapchain_images) = DV_GRAPHICS->vk_device_->getSwapchainImagesKHR(DV_GRAPHICS->swapchain_->get()).asTuple();
-        }
-
         // --- НОВОЕ: Инициализируем SpriteBatch один раз при старте приложения ---
         if (!sprite_batch)
         {
@@ -195,7 +181,13 @@ public:
         }
         // ----------------------------------------------------------------------
 
+        // TODO: Здесь надо ждать забор предыдущего кадра
+        // device->waitForFences(1, &render_fence_.get(), VK_TRUE, UINT64_MAX);
+        // а потом  device->resetFences(1, &render_fence_.get());
+        // или как-то так
+
         DV_GRAPHICS->vk_device_->resetFences(1, &acquire_fence.get());
+        DV_GRAPHICS->vk_device_->resetCommandPool(DV_GRAPHICS->transient_command_pool());
 
 
         // Запрашиваем картинку. Заблокирует поток при vk::PresentModeKHR::eFifo
