@@ -3,6 +3,8 @@
 
 #include "texture_cache_new.hpp"
 
+#include "../main/graphics.hpp"
+
 #include <dv_log.hpp>
 
 using namespace glm;
@@ -20,23 +22,6 @@ TextureCacheNew::TextureCacheNew(vma::Allocator vma_allocator, vk::Queue queue, 
 
     vk::Device vk_device = vma_allocator.getAllocatorInfo().device;
     vk::Result vk_result;
-
-    // ============================= vk::UniqueCommandPool command_pool_ =============================
-    {
-        vk::CommandPoolCreateInfo command_pool_create_info
-        {
-            .flags = vk::CommandPoolCreateFlagBits::eTransient, // Короткоживущие командные буферы
-            .queueFamilyIndex = queue_family_index,
-        };
-
-        tie(vk_result, vk_command_pool_) = vk_device.createCommandPoolUnique(command_pool_create_info).asTuple();
-
-        if (vk_result != vk::Result::eSuccess)
-        {
-            Log::writef_error("{} | vk_device.createCommandPoolUnique(...) | {}", DV_FUNC_SIG, vk::to_string(vk_result));
-            return;
-        }
-    }
 
     // Изображение - белый пиксель
     {
@@ -75,7 +60,7 @@ TextureCacheNew::TextureCacheNew(vma::Allocator vma_allocator, vk::Queue queue, 
 
             if (vk_result != vk::Result::eSuccess)
             {
-                Log::writef_error("{} | vk_device.createCommandPoolUnique(...) | {}", DV_FUNC_SIG, vk::to_string(vk_result));
+                Log::writef_error("{} | vma_allocator.createBufferUnique(...) | {}", DV_FUNC_SIG, vk::to_string(vk_result));
                 return;
             }
 
@@ -89,7 +74,7 @@ TextureCacheNew::TextureCacheNew(vma::Allocator vma_allocator, vk::Queue queue, 
         {
             vk::CommandBufferAllocateInfo command_buffer_allocate_info
             {
-                .commandPool = *vk_command_pool_,
+                .commandPool = DV_GRAPHICS->transient_command_pool(),
                 .level = vk::CommandBufferLevel::ePrimary,
                 .commandBufferCount = 1,
             };
