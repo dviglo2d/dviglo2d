@@ -761,7 +761,26 @@ Graphics::Graphics(const ConfigBase& config)
 
         if (vk_result != vk::Result::eSuccess)
         {
-            Log::writef_error("{} | vk_device_->createCommandPoolUnique(...) | {}", DV_FUNC_SIG, vk::to_string(vk_result));
+            Log::writef_error("{} | persistent_command_pool_ | vk_device_->createCommandPoolUnique(...) | {}", DV_FUNC_SIG, vk::to_string(vk_result));
+            return;
+        }
+    }
+
+    // vk::UniqueCommandPool transient_command_pool_
+    {
+        vk::CommandPoolCreateInfo command_pool_create_info
+        {
+            // Включаем оптимизацию для короткоживущих командных буферов
+            .flags = vk::CommandPoolCreateFlagBits::eTransient,
+
+            .queueFamilyIndex = graphics_queue_index_,
+        };
+
+        tie(vk_result, transient_command_pool_) = vk_device_->createCommandPoolUnique(command_pool_create_info).asTuple();
+
+        if (vk_result != vk::Result::eSuccess)
+        {
+            Log::writef_error("{} | transient_command_pool_ | vk_device_->createCommandPoolUnique(...) | {}", DV_FUNC_SIG, vk::to_string(vk_result));
             return;
         }
     }

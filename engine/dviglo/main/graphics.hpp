@@ -52,6 +52,9 @@ private:
     // Выделенные из него буферы существуют до завершения программы
     vk::UniqueCommandPool persistent_command_pool_;
 
+    // Командный пул, который сбрасывается каждый кадр
+    vk::UniqueCommandPool transient_command_pool_;
+
     vma::UniqueAllocator vma_allocator_;
     vk::UniqueCommandPool vk_command_pool_;
     std::unique_ptr<Swapchain> swapchain_;
@@ -74,6 +77,7 @@ public:
     u32 graphics_queue_index() const { return graphics_queue_index_; }
 
     vk::CommandPool persistent_command_pool() const { return *persistent_command_pool_; }
+    vk::CommandPool transient_command_pool() const { return *transient_command_pool_; }
 
     SDL_Window* window() const { return window_; }
 
