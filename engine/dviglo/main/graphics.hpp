@@ -50,7 +50,7 @@ private:
 
     // Командный пул, который никогда не сбрасывается.
     // Выделенные из него буферы существуют до завершения программы
-    vk::UniqueCommandPool static_command_pool_;
+    vk::UniqueCommandPool persistent_command_pool_;
 
     vma::UniqueAllocator vma_allocator_;
     vk::UniqueCommandPool vk_command_pool_;
@@ -73,7 +73,7 @@ public:
     vk::Queue graphics_queue() const { return vk_present_queue_; }
     u32 graphics_queue_index() const { return graphics_queue_index_; }
 
-    vk::CommandPool static_command_pool() const { return *static_command_pool_; }
+    vk::CommandPool persistent_command_pool() const { return *persistent_command_pool_; }
 
     SDL_Window* window() const { return window_; }
 

@@ -462,7 +462,7 @@ std::optional<Swapchain> Swapchain::construct(vk::PhysicalDevice physical_device
 
         {
             vk::CommandBufferAllocateInfo cb_alloc_info{
-                .commandPool = DV_GRAPHICS->static_command_pool(),
+                .commandPool = DV_GRAPHICS->persistent_command_pool(),
                 .level = vk::CommandBufferLevel::ePrimary,
                 .commandBufferCount = image_count,
             };

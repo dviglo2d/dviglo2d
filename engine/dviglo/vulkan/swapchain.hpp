@@ -47,7 +47,7 @@ private:
     vk::UniquePipeline pipeline;
 
     // Отдельный статический командный буфер для каждого изображения.
-    // Будут уничтожены при уничтожении Graphics::static_command_pool_
+    // Будут уничтожены при уничтожении Graphics::persistent_command_pool_
     std::vector<vk::CommandBuffer> command_buffers_;
 
     vk::UniqueFence fence;
