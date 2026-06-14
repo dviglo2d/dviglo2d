@@ -919,7 +919,7 @@ public:
         // -------------------------------- Рендерим
 
         vk::CommandBufferAllocateInfo cb_alloc_info{
-            .commandPool = DV_GRAPHICS->vk_command_pool_.get(),
+            .commandPool = DV_GRAPHICS->transient_command_pool(),
             .commandBufferCount = 1,
         };
 
@@ -1021,7 +1021,7 @@ public:
 
         // TODO: Надо передалть на семафор, чтобы ждало треугольник на GPU
         vk::Result present_result = DV_GRAPHICS->swapchain_->present(DV_GRAPHICS->vk_graphics_queue_, DV_GRAPHICS->vk_present_queue_, idx,
-            DV_GRAPHICS->vk_device_.get(), DV_GRAPHICS->vk_command_pool_.get(),
+            DV_GRAPHICS->vk_device_.get(), DV_GRAPHICS->transient_command_pool(),
             render_finished_sem_.get());
 
         if (present_result == vk::Result::eErrorOutOfDateKHR || present_result == vk::Result::eSuboptimalKHR)

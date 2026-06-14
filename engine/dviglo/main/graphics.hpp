@@ -56,7 +56,6 @@ private:
     vk::UniqueCommandPool transient_command_pool_;
 
     vma::UniqueAllocator vma_allocator_;
-    vk::UniqueCommandPool vk_command_pool_;
     std::unique_ptr<Swapchain> swapchain_;
 
     u32 graphics_queue_index_ = 0; // TODO

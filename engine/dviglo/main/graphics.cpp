@@ -785,22 +785,6 @@ Graphics::Graphics(const ConfigBase& config)
         }
     }
 
-    // Командный пул
-    {
-        vk::CommandPoolCreateInfo command_pool_info
-        {
-            .queueFamilyIndex = 0, // TODO: Индекс может быть другим
-        };
-
-        tie(vk_result, vk_command_pool_) = vk_device_->createCommandPoolUnique(command_pool_info).asTuple();
-
-        if (vk_result != vk::Result::eSuccess)
-        {
-            Log::writef_error("{} | vk_device_->createCommandPoolUnique(...) | {}", DV_FUNC_SIG, vk::to_string(vk_result));
-            return;
-        }
-    }
-
     // TODO: Проверка лимита для Push Constants в функции выбора устройства
 
 
