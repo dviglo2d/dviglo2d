@@ -238,6 +238,21 @@ static void vk_print_physical_devices(const vector<vk::PhysicalDevice>& physical
         // В стандарте гарантируется не менее 128 байтов
         Log::writef_info("   Push constants limit = {} B", properties.limits.maxPushConstantsSize);
 
+        // Максимум элементов в массиве текстур
+        {
+            vk::PhysicalDeviceDescriptorIndexingProperties pd_descriptor_indexing_properties;
+
+            vk::PhysicalDeviceProperties2 physical_device_properties_2
+            {
+                .pNext = pd_descriptor_indexing_properties,
+            };
+
+            physical_device.getProperties2(&physical_device_properties_2);
+
+            u32 max_sampled_images = pd_descriptor_indexing_properties.maxPerStageDescriptorUpdateAfterBindSampledImages;
+            Log::writef_info("   maxPerStageDescriptorUpdateAfterBindSampledImages = {}", max_sampled_images);
+        }
+
         // Печатаем доступные расширений для устройства
         {
             auto [vk_result, extensions] = physical_device.enumerateDeviceExtensionProperties();

@@ -14,6 +14,15 @@ using namespace std;
 namespace dviglo
 {
 
+u32 TextureSet::allocate_index()
+{
+    u32 ret = empty_index_ + 1;
+
+    ++empty_index_;
+
+    return ret;
+}
+
 // TODO: queue_family_index не используется
 TextureSet::TextureSet(vma::Allocator vma_allocator, vk::Queue queue, u32 queue_family_index)
     : vma_allocator_(vma_allocator)

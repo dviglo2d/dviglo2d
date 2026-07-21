@@ -10,6 +10,7 @@
 #include <vk_mem_alloc.hpp>
 #include <glm/glm.hpp>
 #include <vector>
+#include <array>
 #include <unordered_map>
 #include <stdexcept>
 
@@ -103,17 +104,16 @@ public:
 
         // Обновляем дескриптор на видеокарте
         vk::DescriptorImageInfo imageInfo {
-            .sampler     = m_sampler,
             .imageView   = imageView,
             .imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal,
         };
 
         vk::WriteDescriptorSet writeDesc {
             .dstSet          = m_bindlessSet,
-            .dstBinding      = 0,
+            .dstBinding      = 1,
             .dstArrayElement = index, // Записываем именно по этому индексу!
             .descriptorCount = 1,
-            .descriptorType  = vk::DescriptorType::eCombinedImageSampler,
+            .descriptorType  = vk::DescriptorType::eSampledImage,
             .pImageInfo      = &imageInfo,
         };
 
@@ -268,52 +268,82 @@ private:
         };
         m_sampler = m_device.createSampler(samplerInfo).value;
 
-        // 2. Создаем DescriptorSetLayout (Массив)
-        vk::DescriptorSetLayoutBinding texturesBinding {
-            .binding         = 0,
-            .descriptorType  = vk::DescriptorType::eCombinedImageSampler,
+        // Binding 0: Единственный сэмплер
+        vk::DescriptorSetLayoutBinding samplerBinding{
+            .binding = 0,
+            .descriptorType = vk::DescriptorType::eSampler, // !!!!!!!! -- Только сэмплер
+            .descriptorCount = 1,
+            .stageFlags = vk::ShaderStageFlagBits::eFragment,
+        };
+
+        // Binding 1: Массив раздельных текстур (без сэмплера)
+        vk::DescriptorSetLayoutBinding texturesBinding{
+            .binding = 1,
+            .descriptorType = vk::DescriptorType::eSampledImage, // !!!!!!!! -- Только картинки
             .descriptorCount = MAX_BINDLESS_TEXTURES,
-            .stageFlags      = vk::ShaderStageFlagBits::eFragment,
+            .stageFlags = vk::ShaderStageFlagBits::eFragment,
         };
 
-        vk::DescriptorBindingFlags bindingFlags = 
-            vk::DescriptorBindingFlagBits::ePartiallyBound | 
-            vk::DescriptorBindingFlagBits::eUpdateAfterBind;
+        std::array<vk::DescriptorSetLayoutBinding, 2> bindings = { samplerBinding, texturesBinding };
 
-        vk::DescriptorSetLayoutBindingFlagsCreateInfo layoutFlagsInfo {
-            .bindingCount  = 1,
-            .pBindingFlags = &bindingFlags,
+        // Флаги Bindless применяются ТОЛЬКО к массиву текстур (binding 1)
+        std::array<vk::DescriptorBindingFlags, 2> bindingFlags = {
+            vk::DescriptorBindingFlags{}, // Для сэмплера (binding 0) флаги не нужны
+            vk::DescriptorBindingFlagBits::ePartiallyBound | vk::DescriptorBindingFlagBits::eUpdateAfterBind
         };
 
-        vk::DescriptorSetLayoutCreateInfo layoutInfo {
-            .pNext        = &layoutFlagsInfo,
-            .flags        = vk::DescriptorSetLayoutCreateFlagBits::eUpdateAfterBindPool,
-            .bindingCount = 1,
-            .pBindings    = &texturesBinding,
+        vk::DescriptorSetLayoutBindingFlagsCreateInfo layoutFlagsInfo{
+           .bindingCount = static_cast<uint32_t>(bindingFlags.size()), // !!!!!!!! -- 
+           .pBindingFlags = bindingFlags.data(),                        // !!!!!!!! -- 
+        };
+
+        vk::DescriptorSetLayoutCreateInfo layoutInfo{
+            .pNext = &layoutFlagsInfo,
+            .flags = vk::DescriptorSetLayoutCreateFlagBits::eUpdateAfterBindPool,
+            .bindingCount = static_cast<uint32_t>(bindings.size()), // !!!!!!!! --
+            .pBindings = bindings.data(),                        // !!!!!!!! --
         };
         m_bindlessLayout = m_device.createDescriptorSetLayout(layoutInfo).value;
 
-        // 3. Создаем Pool
-        vk::DescriptorPoolSize poolSize {
-            .type            = vk::DescriptorType::eCombinedImageSampler,
-            .descriptorCount = MAX_BINDLESS_TEXTURES,
-        };
+        // 3. Создаем Pool для ОБЕИХ сущностей
+        // !!!!!!!! --
+        std::array<vk::DescriptorPoolSize, 2> poolSizes = { {
+            { vk::DescriptorType::eSampler, 1 },
+            { vk::DescriptorType::eSampledImage, MAX_BINDLESS_TEXTURES }
+        } };
+        // !!!!!!!! --
 
-        vk::DescriptorPoolCreateInfo poolInfo {
-            .flags         = vk::DescriptorPoolCreateFlagBits::eUpdateAfterBind,
-            .maxSets       = 1,
-            .poolSizeCount = 1,
-            .pPoolSizes    = &poolSize,
+        vk::DescriptorPoolCreateInfo poolInfo{
+            .flags = vk::DescriptorPoolCreateFlagBits::eUpdateAfterBind,
+            .maxSets = 1,
+            .poolSizeCount = static_cast<uint32_t>(poolSizes.size()), // !!!!!!!! --
+            .pPoolSizes = poolSizes.data(),                        // !!!!!!!! --
         };
         m_descriptorPool = m_device.createDescriptorPool(poolInfo).value;
 
-        // 4. Выделяем DescriptorSet
-        vk::DescriptorSetAllocateInfo allocInfo {
-            .descriptorPool     = m_descriptorPool,
+        // 4. Выделяем DescriptorSet (Здесь без изменений)
+        vk::DescriptorSetAllocateInfo allocInfo{
+            .descriptorPool = m_descriptorPool,
             .descriptorSetCount = 1,
-            .pSetLayouts        = &m_bindlessLayout,
+            .pSetLayouts = &m_bindlessLayout,
         };
         m_bindlessSet = m_device.allocateDescriptorSets(allocInfo).value.front();
+
+        // 5. Единожды записываем Сэмплер в binding 0 (НОВАЯ ОПЕРАЦИЯ)
+        // !!!!!!!! -- ЭТОГО БЛОКА РАНЬШЕ НЕ БЫЛО ВООВЩЕ -- !!!!!!!!
+        vk::DescriptorImageInfo samplerDescInfo{
+            .sampler = m_sampler,
+        };
+        vk::WriteDescriptorSet writeSampler{
+            .dstSet = m_bindlessSet,
+            .dstBinding = 0,
+            .dstArrayElement = 0,
+            .descriptorCount = 1,
+            .descriptorType = vk::DescriptorType::eSampler,
+            .pImageInfo = &samplerDescInfo,
+        };
+        m_device.updateDescriptorSets(1, &writeSampler, 0, nullptr);
+
     }
 
     void AllocateChunk() {

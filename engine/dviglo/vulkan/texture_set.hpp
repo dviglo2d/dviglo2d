@@ -11,7 +11,7 @@
 namespace dviglo
 {
 
-// Набор всех текстур передаётся в каждый шейдер
+// Массив всех текстур передаётся в каждый шейдер
 class TextureSet final : public SubsystemIndex
 {
 private:
@@ -24,6 +24,12 @@ private:
     VulkanImage white_pixel_;
     std::unordered_map<fs::path, VulkanImage> umap_storage_;
 
+    // Первый пустой индекс массива
+    u32 empty_index_ = 0;
+
+    // Возвращает пустой индекс массива или UINT32_MAX, если индексы кончились
+    u32 allocate_index();
+
 public:
     static TextureSet* instance() { return instance_; }
 
@@ -33,7 +39,7 @@ public:
     bool is_valid() const { return is_valid_; }
 
     const VulkanImage& white_pixel() const { return white_pixel_; }
-    const VulkanImage& get(const fs::path& path, vk::Format format = vk::Format::eR8G8B8A8Unorm);
+    const VulkanImage& get(const fs::path& path, vk::Format format = vk::Format::eR8G8B8A8Srgb);
 };
 
 } // namespace dviglo
