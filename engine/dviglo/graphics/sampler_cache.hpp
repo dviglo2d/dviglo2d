@@ -14,7 +14,7 @@ namespace dviglo
 class SamplerCache final : public SubsystemIndex
 {
 private:
-    // Инициализируется в конструкторе, если не было ошибок
+    // Инициализируется в конструкторе
     inline static SamplerCache* instance_ = nullptr;
 
     // Этот сэмплер возвращается, если что-то идёт не так
